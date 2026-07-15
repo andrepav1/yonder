@@ -19,10 +19,11 @@ export default tseslint.config(
     },
   },
   {
-    // Build/data scripts are plain Node ESM.
+    // Build/data scripts are Node ESM; the screenshot harness also has browser
+    // globals inside Playwright page callbacks.
     files: ['scripts/**/*.mjs'],
     languageOptions: {
-      globals: { ...globals.node },
+      globals: { ...globals.node, ...globals.browser },
     },
   },
 )

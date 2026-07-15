@@ -6,8 +6,11 @@ great-circle (haversine) distance from the start is as close as possible to the
 target. 6 guesses. See `README.md` for the player-facing picture and `DECISIONS.md`
 for _why_ the rules are what they are.
 
-> **Status:** steps 1–3 (distance/bearing utils, dataset + autocomplete, seeded
-> puzzle generator) are built and tested. The UI (steps 4–6) is **not built yet**.
+> **Status:** v1 is fully built — the pure core (distance/bearing, dataset +
+> autocomplete, seeded generator, scoring, engine, share, stats) **and** the React
+> UI (guess loop, feedback, result, stats, onboarding). All green under Vitest +
+> ESLint + typecheck, and verified end-to-end in a real browser. Deploys static to
+> Cloudflare Pages. See `DESIGN.md` for the visual system.
 
 ## How to work here (non-negotiable)
 
@@ -41,24 +44,49 @@ for _why_ the rules are what they are.
 - `src/lib/puzzle.ts` — `generatePuzzle(date, {cities?, rules?})`: population-weighted
   start city + validated target so every day has ≥ `minValidAnswers` cities in the
   win band. Deterministic in `date`.
+- `src/lib/scoring.ts` — **pure**: `evaluateGuess` (distance/delta/bearing/win),
+  `proximityBase`, `scoreRound`, and `tempLevel` (the shared hot→cold level).
+- `src/lib/engine.ts` — **pure** round state machine: `createRound`, `applyGuess`
+  (rejects finished / start-city / duplicate without using a turn), `guessesLeft`.
+  Every transition returns a new serializable `RoundState`.
+- `src/lib/share.ts` — **pure** Wordle-style share string (hot/cold squares + arrows,
+  score line, no city names).
+- `src/lib/format.ts` — **pure** display helpers (`formatDistance`, `deltaPhrase`,
+  `formatBearing`), unit-aware.
 - `src/data/cities.json` — **committed** compact dataset (array-of-arrays; see
   `fields`). Built by `scripts/build-cities.mjs`.
-- **Not built yet:** `src/lib/scoring.ts`, `src/lib/share.ts`, `src/lib/engine.ts`
-  (pure round state machine), `src/modes/daily.ts` (the single `GameMode` descriptor,
-  registry-ready), `src/store/statsStore.ts` (interface + localStorage adapter), and
-  the React `src/ui/*` shell.
+- `src/modes/daily.ts` — the single `GameMode` descriptor (`generate`/`evaluate`/
+  `score`/`share`) + a `modes` registry. Adding a mode = adding a descriptor.
+- `src/store/` — persistence behind a `KeyValueStore` seam (`storage.ts`, memory +
+  localStorage adapters): `statsStore.ts` (pure `updateStats` streak logic + the
+  `StatsStore` wrapper: stats, streaks, guess distribution, per-day round save +
+  idempotent `recordResult`) and `prefs.ts` (unit + onboarding flag).
+- `src/App.tsx` — orchestrates the day: generate puzzle, load/restore the saved
+  round (daily lock), handle guesses, record the result, share.
+- `src/ui/*` — React shell: `GuessInput` (fuzzy typeahead), `GuessRow` (distance,
+  delta, bearing, hot/cold), `ResultCard` (score + reveal + share), `HowToPlay`,
+  `StatsPanel`, `Modal` (bottom-sheet), `GlobeMotif` (decorative), `icons.tsx`
+  (inline SVG — no emoji chrome).
+- `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it
 
 ```bash
 npm install
-npm test            # vitest — pure-logic suites (geo, cities, puzzle)
-npm run lint        # eslint (flat config)
-npm run typecheck   # tsc -b --noEmit
-npm run data:build  # rebuild src/data/cities.json from ./data-src (see below)
-npx vite-node scripts/preview-puzzles.mts   # eyeball generated puzzles
-# npm run dev       # (once the UI exists)
+npm run dev          # Vite dev server → http://localhost:5173
+npm test             # vitest — all pure-logic suites
+npm run lint         # eslint (flat config)
+npm run typecheck    # tsc -b --noEmit
+npm run build        # production build → dist/ (static, Cloudflare Pages)
+npm run data:build   # rebuild src/data/cities.json from ./data-src (see below)
+npm run preview:puzzles   # eyeball generated puzzles for several dates
+npm run build && npm run screenshot   # phone-sized screenshots of the real UI
 ```
+
+`npm run screenshot` (`scripts/screenshot.mjs`) serves `dist/` and drives the
+sandbox's pre-installed Chromium (`playwright-core`, pinned to the baked revision)
+at 390×844 to capture the board / play / win states in light + dark → `./shots/`.
+Use it to verify UI/UX changes on a narrow viewport.
 
 ## Dataset pipeline
 

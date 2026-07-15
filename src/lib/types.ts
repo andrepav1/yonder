@@ -21,6 +21,46 @@ export interface AnswerCity {
   distanceKm: number
 }
 
+/** Outcome of evaluating one guessed city against a puzzle. Serializable. */
+export interface GuessResult {
+  city: City
+  /** Great-circle distance from the start city, in km. */
+  distanceKm: number
+  /** Signed distance from target (distanceKm − targetKm): + = too far, − = too close. */
+  deltaKm: number
+  /** |deltaKm| ÷ targetKm — the fraction used for win + score + temperature. */
+  errorPct: number
+  /** Initial bearing from the start city to this guess, degrees [0,360). */
+  bearingDeg: number
+  /** True when errorPct ≤ rules.tolerancePct (inside the win band). */
+  won: boolean
+}
+
+export type RoundStatus = 'playing' | 'won' | 'lost'
+
+/** The full state of one day's round. Plain JSON — savable + (later) syncable. */
+export interface RoundState {
+  date: string
+  status: RoundStatus
+  guesses: GuessResult[]
+}
+
+/** Graded score breakdown for a finished (or in-progress) round. */
+export interface ScoreBreakdown {
+  won: boolean
+  /** base (proximity) + bonus. */
+  score: number
+  /** Proximity points from the best guess. */
+  base: number
+  /** Fewer-guesses bonus (0 unless won). */
+  bonus: number
+  guessesUsed: number
+  /** Best (smallest) errorPct across guesses; Infinity if no guesses. */
+  bestErrorPct: number
+  /** Signed delta of the best guess in km (NaN if no guesses). */
+  bestDeltaKm: number
+}
+
 /** A fully-specified daily puzzle. Pure output of the generator — serializable. */
 export interface PuzzleSpec {
   /** UTC date string "YYYY-MM-DD" this puzzle is keyed to. */

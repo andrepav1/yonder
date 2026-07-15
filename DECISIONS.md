@@ -77,3 +77,27 @@ modes / multiplayer, but only the solo daily game ships first.
   so modes/multiplayer are additive later.
 - **Config format:** typed TS module (`src/config/rules.ts`) for type-safety and
   autocomplete over a raw JSON file.
+
+## 2026-07-15 — UI build (steps 4–6)
+
+**Context.** Built the React shell on top of the pure core, using the `ui-ux-pro-max`
+skill for the visual system.
+
+- **Design system "Terra"** (`DESIGN.md`): warm sand/paper + terracotta, hot→cold ramp,
+  Calistoga (display) + Inter (UI) + JetBrains Mono (figures). Light + dark auto by
+  `prefers-color-scheme`. Semantic CSS-variable tokens; no raw hex in components.
+- **Fonts self-hosted** via `@fontsource` (imported in `main.tsx`) rather than a Google
+  Fonts CDN link — no runtime network dependency, better for Cloudflare + offline, and
+  it works in the CDN-blocked sandbox.
+- **Icons are inline SVG** (`ui/icons.tsx`), not an icon dependency or emoji chrome —
+  small bundle, offline-safe. (Emoji squares in the _share string_ are content, fine.)
+- **Hot/cold never colour-alone**: every cue carries text ("142 km too far", "Inside
+  the band!") + the win row a distinct border, satisfying the a11y rule.
+- **Daily lock** = the in-progress/finished `RoundState` is saved per date in
+  localStorage and restored on load; `recordResult` folds into stats idempotently.
+- **Dataset stays inlined** into the JS bundle (import of `cities.json`) so `cities.ts`
+  and puzzle generation remain synchronous. Costs ~150 KB gzip in the main chunk;
+  `chunkSizeWarningLimit` raised to acknowledge it. A future optimisation is to emit it
+  as a fetched asset + lazy-load, if bundle size becomes a concern.
+- **Verification**: `scripts/screenshot.mjs` drives the built app in the pre-installed
+  Chromium at 390×844; the board / play / win / dark states were captured and checked.

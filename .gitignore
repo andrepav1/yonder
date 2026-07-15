@@ -20,3 +20,6 @@ pnpm-debug.log*
 
 # TypeScript build info
 *.tsbuildinfo
+
+# Screenshot output (dev harness)
+/shots/
