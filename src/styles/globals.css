@@ -311,11 +311,6 @@ button {
   stroke: var(--globe-edge);
   stroke-width: 1;
 }
-.globe__answer {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.4;
-}
 .globe__pin {
   fill: var(--temp);
   stroke: var(--surface);

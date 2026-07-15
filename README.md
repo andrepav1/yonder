@@ -53,8 +53,7 @@ identical either way).
 
 On a win or after 6 guesses, the globe reveals the dashed **target ring** — the
 geodesic circle whose radius _is_ the target distance, so every point on it is a
-perfect answer — with the **closest possible** answer cities pinned along it, and the
-result card shows your score and best delta. A
+perfect answer — and the result card shows your score and best delta. A
 Wordle-style shareable summary (hot/cold squares + direction arrows, no city names)
 copies to the clipboard.
 

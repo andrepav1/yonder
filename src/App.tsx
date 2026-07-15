@@ -168,7 +168,6 @@ export default function App() {
           targetKm={puzzle.targetKm}
           guesses={round.guesses}
           rules={rules}
-          answers={puzzle.answers.map((a) => a.city)}
           finished={finished}
         />
 

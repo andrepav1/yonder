@@ -42,8 +42,8 @@ export function ResultCard({
       </div>
 
       <div className="result__answer-note">
-        The ring on the globe marks every perfect answer — the closest cities are
-        pinned along it.
+        The ring on the globe traces every perfect answer — a city anywhere on it is
+        exactly the target distance away.
       </div>
 
       <button className="btn" onClick={onShare}>

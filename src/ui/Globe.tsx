@@ -48,12 +48,10 @@ interface GlobeProps {
   targetKm: number
   guesses: GuessResult[]
   rules: GameRules
-  /** Closest possible answers, revealed on the globe once the round is over. */
-  answers?: City[]
   finished?: boolean
 }
 
-export function Globe({ start, targetKm, guesses, rules, answers, finished }: GlobeProps) {
+export function Globe({ start, targetKm, guesses, rules, finished }: GlobeProps) {
   // Rotation is [λ, φ]: spin the globe so the start city faces the viewer first.
   const [rotation, setRotation] = useState<LngLat>([-start.lng, -start.lat])
   const svgRef = useRef<SVGSVGElement>(null)
@@ -147,15 +145,6 @@ export function Globe({ start, targetKm, guesses, rules, answers, finished }: Gl
           cy={SIZE / 2}
           r={RADIUS}
         />
-
-        {/* Revealed closest answers (after the round ends) */}
-        {finished &&
-          answers?.map((c) => {
-            const p = place(c.lng, c.lat)
-            return p ? (
-              <circle key={`ans-${c.id}`} className="globe__answer" cx={p[0]} cy={p[1]} r={3.5} />
-            ) : null
-          })}
 
         {/* Guess pins, coloured on the hot→cold ramp */}
         {guesses.map((g, i) => {

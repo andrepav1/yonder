@@ -116,7 +116,8 @@ around the start city whose radius is the target distance** instead of a text li
   dashed accent ring. It _is_ the answer, continuously — every city on it scores a
   bullseye — so it stays **hidden during play** and is only drawn once the round is
   over (win or out of guesses). The old "3 closest possible answers" text list in
-  `ResultCard` is gone; those cities are now pinned along the ring when it's revealed.
+  `ResultCard` is gone. (A later change also removed the answer-city pins that had been
+  drawn on the ring — see below.)
 - **"Target city" = the start/departure city.** It's the only city known at the start
   of a round and the centre everything is measured from; the ring is drawn around it.
 - **d3-geo orthographic, not a 3D/WebGL globe.** `geoOrthographic` + `geoPath` render
@@ -131,3 +132,21 @@ around the start city whose radius is the target distance** instead of a text li
 - **New deps** (all UI-only, none in the pure `lib/` core): `d3-geo`,
   `topojson-client`, `world-atlas` (+ `@types/*`). This resolves the "interactive map
   with pins" item that was deferred from v1.
+
+## 2026-07-15 — Drop the revealed answer-city pins
+
+**Context.** When the round ended the globe drew the closest dataset cities as small
+accent (terracotta) markers along the target ring, alongside the start-city dot (also
+accent) and any close guess pins. On the small 607-km-class rings these clustered and
+read as ambiguous — hard to tell an "answer" marker from the start city or a guess.
+
+- **Decision:** remove the answer pins entirely. The **ring itself is the answer** —
+  it already traces every perfect-distance point — so the extra city markers added
+  clutter without new information. The globe now shows only the start marker, guess
+  pins, and (once finished) the ring. `Globe`'s `answers` prop, the `.globe__answer`
+  style, and the `ResultCard` "pinned along it" note were dropped with it.
+- `PuzzleSpec.answers` / `rules.generation.revealCount` are untouched — the core still
+  computes the closest cities (used for solvability + still available to the share/
+  stats layer); we simply no longer render them on the globe.
+- **Follow-up after merge:** PR #3 was already merged, so this shipped as a fresh
+  change branched from the updated `main` (not stacked on the merged history).
