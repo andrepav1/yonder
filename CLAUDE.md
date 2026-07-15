@@ -63,10 +63,12 @@ for _why_ the rules are what they are.
   idempotent `recordResult`) and `prefs.ts` (unit + onboarding flag).
 - `src/App.tsx` — orchestrates the day: generate puzzle, load/restore the saved
   round (daily lock), handle guesses, record the result, share.
-- `src/ui/*` — React shell: `GuessInput` (fuzzy typeahead), `GuessRow` (distance,
-  delta, bearing, hot/cold), `ResultCard` (score + reveal + share), `HowToPlay`,
-  `StatsPanel`, `Modal` (bottom-sheet), `GlobeMotif` (decorative), `icons.tsx`
-  (inline SVG — no emoji chrome).
+- `src/ui/*` — React shell: `GlobeView` (the play surface — an azimuthal-equidistant
+  globe centred on the start city; plots each guess at true distance + bearing and
+  draws a target-radius circle around it, so a good guess rings the centre), `GuessInput`
+  (fuzzy typeahead), `GuessRow` (distance, delta, bearing, hot/cold), `ResultCard`
+  (score + reveal + share), `HowToPlay`, `StatsPanel`, `Modal` (bottom-sheet),
+  `icons.tsx` (inline SVG — no emoji chrome).
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it

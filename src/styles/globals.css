@@ -130,21 +130,6 @@ button {
   overflow: hidden;
 }
 
-.app__globe {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  display: flex;
-  justify-content: center;
-}
-.app__globe svg {
-  width: min(140vw, 44rem);
-  height: auto;
-  margin-top: -6rem;
-  opacity: 0.5;
-}
-
 .shell {
   position: relative;
   z-index: 1;
@@ -270,6 +255,57 @@ button {
 }
 .pip--win {
   background: var(--win);
+}
+
+/* ---------- Globe (play surface) ---------- */
+
+.globe {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+.globe__svg {
+  width: 100%;
+  max-width: 20rem;
+  height: auto;
+  display: block;
+}
+.globe__num {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 600;
+}
+.globe__compass text {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-anchor: middle;
+  letter-spacing: 0.04em;
+}
+.globe__start-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  text-anchor: middle;
+  fill: var(--fg);
+  /* Halo so the name stays legible over rings passing through the centre. */
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.globe__caption {
+  margin: 0;
+  max-width: 24rem;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--fg-muted);
+}
+.globe__caption strong {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- Guess input ---------- */

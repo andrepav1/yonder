@@ -14,7 +14,7 @@ import { createStatsStore, type Stats } from '@/store/statsStore'
 import { loadUnit, saveUnit, isOnboarded, setOnboarded } from '@/store/prefs'
 import { formatDistance } from '@/lib/format'
 import { cityLabel } from '@/lib/cities'
-import { GlobeMotif } from '@/ui/GlobeMotif'
+import { GlobeView } from '@/ui/GlobeView'
 import { GuessInput } from '@/ui/GuessInput'
 import { GuessRow } from '@/ui/GuessRow'
 import { ResultCard } from '@/ui/ResultCard'
@@ -111,7 +111,6 @@ export default function App() {
 
   return (
     <div className="app">
-      <GlobeMotif />
       <div className="shell">
         <header className="hdr">
           <div className="hdr__brand">
@@ -163,6 +162,8 @@ export default function App() {
             })}
           </div>
         </section>
+
+        <GlobeView puzzle={puzzle} guesses={round.guesses} rules={rules} unit={unit} />
 
         {!finished && <GuessInput onGuess={handleGuess} />}
         {toast && (

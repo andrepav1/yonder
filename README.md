@@ -33,11 +33,21 @@ start — measured as the great-circle (haversine) distance. You get **6 guesses
   hit, decaying smoothly to 0 once you're 50% off, plus a bonus for finishing in fewer
   guesses.
 
+### The globe
+
+The board is a **globe centred on the start city** (an azimuthal-equidistant map, so
+distance from the centre is true to scale). A dashed accent ring marks the target
+distance. Each guess is plotted at its real distance + bearing and draws its own circle
+of that **same target radius** — so a guess's circle passes through the start city
+exactly when it's the target distance away. Ringing the centre = a bullseye; the ramp
+colours each circle hot→cold by percent error. The globe renders from first load, guess
+circles animate in below the prompt, and the guess list sits under it.
+
 ### Per-guess feedback
 
-After each guess you see the guessed city's actual distance from the start, the delta
-from target ("142 km too far" / "37 km too close"), the exact **bearing in degrees +
-an arrow** (e.g. `47° ↗`), and a hot→cold colour cue by percent error. A km/mi toggle
+Below the globe, each guess also lists the city's actual distance from the start, the
+delta from target ("142 km too far" / "37 km too close"), the exact **bearing in degrees
++ an arrow** (e.g. `47° ↗`), and a hot→cold colour cue by percent error. A km/mi toggle
 switches all displayed distances (the win band is a percentage, so it's identical
 either way).
 
@@ -87,7 +97,7 @@ src/
     storage.ts        # memory + localStorage adapters
     statsStore.ts     # stats, streaks, distribution, daily round save
     prefs.ts          # unit + onboarding flag
-  ui/                 # React shell (GuessInput, GuessRow, ResultCard, …)
+  ui/                 # React shell (GlobeView, GuessInput, GuessRow, ResultCard, …)
   styles/globals.css  # the "Terra" design system (see DESIGN.md)
   App.tsx  main.tsx   # app shell + entry
   data/cities.json    # committed compact dataset (built artifact)

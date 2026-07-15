@@ -101,3 +101,28 @@ skill for the visual system.
   as a fetched asset + lazy-load, if bundle size becomes a concern.
 - **Verification**: `scripts/screenshot.mjs` drives the built app in the pre-installed
   Chromium at 390×844; the board / play / win / dark states were captured and checked.
+
+## 2026-07-15 — Globe play surface + guess circles
+
+**Context.** The board led with the text prompt and rendered guesses as a stacked list
+of distance/delta/bearing rows; the globe was only a faint background motif. We wanted
+the globe to be the thing you play *on*, visible from first load, with a spatial read on
+each guess instead of numbers alone.
+
+- **Azimuthal-equidistant projection centred on the start city.** This is the one
+  projection where distance from the centre is linear and true, so a guess plotted at
+  its real great-circle distance + initial bearing sits at its exact projected position
+  — no fudging. It also makes the core mechanic *exact* (below).
+- **A guess draws a circle of the target radius around itself.** Because the projection
+  is true-to-distance from the centre, that circle passes through the start city exactly
+  when the guess is the target distance away. "Ring the centre" is a literal bullseye —
+  a spatial restatement of the same win rule, not a second source of truth.
+- **View auto-fits with a cap.** Scale fits the target ring (always ≥ ~45% radius at
+  zero guesses) and every guess point; a wild/antipodal guess is clamped to the rim
+  (`min(dist, target×5)`) so one huge miss can't shrink the map to nothing. Guess
+  circles are clipped to the disc.
+- **The row list stays, below the globe.** The globe is the primary read; the rows keep
+  the exact figures (distance, delta, bearing) for players who want them. Colours reuse
+  the shared `tempLevel` ramp so globe and rows always agree.
+- **Retired `GlobeMotif`** (the decorative background graticule) — the real globe
+  replaces it, so a second faint globe behind it was redundant.

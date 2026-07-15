@@ -1,8 +1,9 @@
 # Yondle — "Terra" design system
 
 The visual language: **warm, muted, wandering — "somewhere far off."** Exaggerated
-minimalism, a single mobile-first column, generous whitespace, a decorative globe
-graticule, and a hot→cold proximity ramp. Tokens live in `src/styles/globals.css`;
+minimalism, a single mobile-first column, generous whitespace, a globe play surface
+(start city at centre, dashed target ring, a target-radius circle per guess), and a
+hot→cold proximity ramp. Tokens live in `src/styles/globals.css`;
 this file is the intent behind them. (Generated with the `ui-ux-pro-max` skill, then
 tuned for the travel feel.)
 
