@@ -71,11 +71,11 @@ for _why_ the rules are what they are.
 - `src/ui/Globe.tsx` — the main guessing surface: a drag-to-spin **orthographic
   globe** (d3-geo) over a bundled land outline (`world-atlas` land-110m TopoJSON,
   hydrated once with `topojson-client`). Purely presentational — all geometry comes
-  from props. Renders the start-city marker, a geodesic **target ring**
-  (`geoCircle` radius = `targetKm`, the locus of perfect answers), guess pins coloured
-  by `tempLevel`, and (once finished) the closest answers pinned along the ring.
-  Far-hemisphere points are hidden via a `geoDistance` great-circle test. No runtime
-  network; the land JSON is bundled.
+  from props. Renders the start-city marker and guess pins coloured by `tempLevel`
+  during play, and — only once `finished` — the geodesic **target ring** (`geoCircle`
+  radius = `targetKm`, the locus of perfect answers) with the closest answers pinned
+  along it. The ring is the answer, so it stays hidden mid-round. Far-hemisphere points
+  are hidden via a `geoDistance` great-circle test. No runtime network; land is bundled.
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it

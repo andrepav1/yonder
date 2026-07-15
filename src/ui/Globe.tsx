@@ -87,10 +87,12 @@ export function Globe({ start, targetKm, guesses, rules, answers, finished }: Gl
 
   const landPath = useMemo(() => path(land) ?? '', [path])
   const graticulePath = useMemo(() => path(geoGraticule10()) ?? '', [path])
+  // The target ring is the answer — only reveal it once the round is over.
   const targetRingPath = useMemo(() => {
+    if (!finished) return ''
     const circle = geoCircle().center([start.lng, start.lat]).radius(kmToDegrees(targetKm))
     return path(circle()) ?? ''
-  }, [path, start.lng, start.lat, targetKm])
+  }, [path, start.lng, start.lat, targetKm, finished])
 
   const startXY = place(start.lng, start.lat)
 

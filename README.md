@@ -36,11 +36,10 @@ start — measured as the great-circle (haversine) distance. You get **6 guesses
 ### The globe
 
 The board is an **interactive orthographic globe** (drag to spin), centred on the
-day's start city when the page loads. Around the start it draws a dashed **target
-ring** — the geodesic circle whose radius _is_ the target distance, so every point on
-it is a perfect answer. Each guess drops a pin on the globe, coloured on the same
-hot→cold ramp as the list below it; pins on the far side of the Earth are hidden until
-you rotate them into view.
+day's start city when the page loads. Each guess drops a pin on the globe, coloured on
+the same hot→cold ramp as the list below it; pins on the far side of the Earth are
+hidden until you rotate them into view. The **target ring** (see below) stays hidden
+while you play — it's the answer, so it's only revealed once the round is over.
 
 ### Per-guess feedback
 
@@ -52,8 +51,10 @@ identical either way).
 
 ### End of round
 
-On a win or after 6 guesses, the globe reveals the **closest possible** answer cities
-as pins along the target ring, and the result card shows your score and best delta. A
+On a win or after 6 guesses, the globe reveals the dashed **target ring** — the
+geodesic circle whose radius _is_ the target distance, so every point on it is a
+perfect answer — with the **closest possible** answer cities pinned along it, and the
+result card shows your score and best delta. A
 Wordle-style shareable summary (hot/cold squares + direction arrows, no city names)
 copies to the clipboard.
 

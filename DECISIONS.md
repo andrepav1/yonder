@@ -114,8 +114,9 @@ around the start city whose radius is the target distance** instead of a text li
   exactly the geodesic circle of radius `targetKm` around the start, so we draw that
   circle (`d3.geoCircle`, radius in degrees = `km / EARTH_RADIUS_KM · 180/π`) as a
   dashed accent ring. It _is_ the answer, continuously — every city on it scores a
-  bullseye. The old "3 closest possible answers" text list in `ResultCard` is gone;
-  those cities are now pinned along the ring when the round ends.
+  bullseye — so it stays **hidden during play** and is only drawn once the round is
+  over (win or out of guesses). The old "3 closest possible answers" text list in
+  `ResultCard` is gone; those cities are now pinned along the ring when it's revealed.
 - **"Target city" = the start/departure city.** It's the only city known at the start
   of a round and the centre everything is measured from; the ring is drawn around it.
 - **d3-geo orthographic, not a 3D/WebGL globe.** `geoOrthographic` + `geoPath` render
