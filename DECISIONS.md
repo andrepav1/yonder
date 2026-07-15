@@ -101,3 +101,32 @@ skill for the visual system.
   as a fetched asset + lazy-load, if bundle size becomes a concern.
 - **Verification**: `scripts/screenshot.mjs` drives the built app in the pre-installed
   Chromium at 390×844; the board / play / win / dark states were captured and checked.
+
+## 2026-07-15 — Interactive globe board
+
+**Context.** The v1 board was a text prompt (start city + target distance) over a
+decorative graticule, with guesses as rows and the answers revealed as a text list.
+Requested change: make the **Earth globe the primary surface** — show it on load
+centred on the start city, put guesses below it, and render the answer as a **circle
+around the start city whose radius is the target distance** instead of a text list.
+
+- **The "target ring" is the answer visualization.** The set of perfect answers is
+  exactly the geodesic circle of radius `targetKm` around the start, so we draw that
+  circle (`d3.geoCircle`, radius in degrees = `km / EARTH_RADIUS_KM · 180/π`) as a
+  dashed accent ring. It _is_ the answer, continuously — every city on it scores a
+  bullseye. The old "3 closest possible answers" text list in `ResultCard` is gone;
+  those cities are now pinned along the ring when the round ends.
+- **"Target city" = the start/departure city.** It's the only city known at the start
+  of a round and the centre everything is measured from; the ring is drawn around it.
+- **d3-geo orthographic, not a 3D/WebGL globe.** `geoOrthographic` + `geoPath` render
+  to plain SVG path strings we hand to React. It gives correct back-hemisphere
+  clipping (`clipAngle(90)`), a trivial geodesic circle, and drag-to-spin, without a
+  Three.js/WebGL dependency or a canvas render loop. Markers on the far side are
+  hidden with a `geoDistance ≤ 90°` test against the point facing the viewer.
+- **Land outline is bundled, not fetched.** `world-atlas` land-110m TopoJSON (~56 KB),
+  hydrated once at module load with `topojson-client` — keeps the app fully static and
+  offline-safe (matches the fonts/dataset "no runtime CDN" stance). Land-only (no
+  country borders) suits the minimal look and stays legible at ~320 px.
+- **New deps** (all UI-only, none in the pure `lib/` core): `d3-geo`,
+  `topojson-client`, `world-atlas` (+ `@types/*`). This resolves the "interactive map
+  with pins" item that was deferred from v1.

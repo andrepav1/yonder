@@ -1,13 +1,11 @@
-import type { PuzzleSpec, RoundState } from '@/lib/types'
+import type { RoundState } from '@/lib/types'
 import type { GameRules, Unit } from '@/config/rules'
 import { scoreRound } from '@/lib/scoring'
-import { cityLabel } from '@/lib/cities'
-import { formatDistance, deltaPhrase } from '@/lib/format'
+import { deltaPhrase } from '@/lib/format'
 import { ShareIcon, CheckIcon } from './icons'
 
 interface ResultCardProps {
   state: RoundState
-  puzzle: PuzzleSpec
   rules: GameRules
   unit: Unit
   onShare: () => void
@@ -16,7 +14,6 @@ interface ResultCardProps {
 
 export function ResultCard({
   state,
-  puzzle,
   rules,
   unit,
   onShare,
@@ -44,14 +41,9 @@ export function ResultCard({
         best guess {deltaPhrase(breakdown.bestDeltaKm, unit)}
       </div>
 
-      <div className="answers">
-        <div className="answers__title">Closest possible answers</div>
-        {puzzle.answers.map((a) => (
-          <div className="answers__item" key={a.city.id}>
-            <span>{cityLabel(a.city)}</span>
-            <span className="mono">{formatDistance(a.distanceKm, unit)}</span>
-          </div>
-        ))}
+      <div className="result__answer-note">
+        The ring on the globe marks every perfect answer — the closest cities are
+        pinned along it.
       </div>
 
       <button className="btn" onClick={onShare}>

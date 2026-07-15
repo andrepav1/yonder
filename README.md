@@ -7,9 +7,9 @@ start — measured as the great-circle (haversine) distance. You get **6 guesses
 
 > **Project status:** v1 is complete — the pure, tested game core (distance/bearing,
 > dataset + fuzzy autocomplete, deterministic generator, scoring, engine, share, stats)
-> **and** the React UI (guess loop, hot/cold feedback, result, stats, onboarding, light
->
-> - dark). Fully static; deploys to Vercel. `npm run dev` to play.
+> **and** the React UI (an interactive 3D **globe** as the board, guess loop, hot/cold
+> feedback, result, stats, onboarding, light + dark). Fully static; deploys to Vercel.
+> `npm run dev` to play.
 
 ## How it works
 
@@ -33,19 +33,29 @@ start — measured as the great-circle (haversine) distance. You get **6 guesses
   hit, decaying smoothly to 0 once you're 50% off, plus a bonus for finishing in fewer
   guesses.
 
+### The globe
+
+The board is an **interactive orthographic globe** (drag to spin), centred on the
+day's start city when the page loads. Around the start it draws a dashed **target
+ring** — the geodesic circle whose radius _is_ the target distance, so every point on
+it is a perfect answer. Each guess drops a pin on the globe, coloured on the same
+hot→cold ramp as the list below it; pins on the far side of the Earth are hidden until
+you rotate them into view.
+
 ### Per-guess feedback
 
-After each guess you see the guessed city's actual distance from the start, the delta
-from target ("142 km too far" / "37 km too close"), the exact **bearing in degrees +
-an arrow** (e.g. `47° ↗`), and a hot→cold colour cue by percent error. A km/mi toggle
-switches all displayed distances (the win band is a percentage, so it's identical
-either way).
+Below the globe, each guess shows the guessed city's actual distance from the start,
+the delta from target ("142 km too far" / "37 km too close"), the exact **bearing in
+degrees + an arrow** (e.g. `47° ↗`), and a hot→cold colour cue by percent error. A
+km/mi toggle switches all displayed distances (the win band is a percentage, so it's
+identical either way).
 
 ### End of round
 
-On a win or after 6 guesses, Yondle reveals the **3 closest possible** answer cities
-and your best delta. A Wordle-style shareable summary (hot/cold squares + direction
-arrows, no city names) copies to the clipboard.
+On a win or after 6 guesses, the globe reveals the **closest possible** answer cities
+as pins along the target ring, and the result card shows your score and best delta. A
+Wordle-style shareable summary (hot/cold squares + direction arrows, no city names)
+copies to the clipboard.
 
 ## Development
 
@@ -87,7 +97,7 @@ src/
     storage.ts        # memory + localStorage adapters
     statsStore.ts     # stats, streaks, distribution, daily round save
     prefs.ts          # unit + onboarding flag
-  ui/                 # React shell (GuessInput, GuessRow, ResultCard, …)
+  ui/                 # React shell (Globe, GuessInput, GuessRow, ResultCard, …)
   styles/globals.css  # the "Terra" design system (see DESIGN.md)
   App.tsx  main.tsx   # app shell + entry
   data/cities.json    # committed compact dataset (built artifact)
@@ -111,4 +121,7 @@ compact `cities.json` is committed, so the app is fully static — it deploys to
 
 ## Tech
 
-React + Vite + TypeScript, ESLint + Prettier, Vitest, GitHub Actions CI.
+React + Vite + TypeScript, ESLint + Prettier, Vitest, GitHub Actions CI. The globe is
+rendered with **d3-geo** (orthographic projection + geodesic circle) over a bundled
+low-res land outline (**world-atlas** TopoJSON, hydrated with **topojson-client**) —
+all client-side, no runtime network.
