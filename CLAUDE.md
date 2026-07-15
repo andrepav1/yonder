@@ -8,9 +8,9 @@ for _why_ the rules are what they are.
 
 > **Status:** v1 is fully built — the pure core (distance/bearing, dataset +
 > autocomplete, seeded generator, scoring, engine, share, stats) **and** the React
-> UI (guess loop, feedback, result, stats, onboarding). All green under Vitest +
-> ESLint + typecheck, and verified end-to-end in a real browser. Deploys static to
-> Vercel. See `DESIGN.md` for the visual system.
+> UI (an interactive **globe** board, guess loop, feedback, result, stats,
+> onboarding). All green under Vitest + ESLint + typecheck, and verified end-to-end
+> in a real browser. Deploys static to Vercel. See `DESIGN.md` for the visual system.
 
 ## How to work here (non-negotiable)
 
@@ -63,10 +63,19 @@ for _why_ the rules are what they are.
   idempotent `recordResult`) and `prefs.ts` (unit + onboarding flag).
 - `src/App.tsx` — orchestrates the day: generate puzzle, load/restore the saved
   round (daily lock), handle guesses, record the result, share.
-- `src/ui/*` — React shell: `GuessInput` (fuzzy typeahead), `GuessRow` (distance,
-  delta, bearing, hot/cold), `ResultCard` (score + reveal + share), `HowToPlay`,
-  `StatsPanel`, `Modal` (bottom-sheet), `GlobeMotif` (decorative), `icons.tsx`
-  (inline SVG — no emoji chrome).
+- `src/ui/*` — React shell: `Globe` (the interactive board — see below), `GuessInput`
+  (fuzzy typeahead), `GuessRow` (distance, delta, bearing, hot/cold), `ResultCard`
+  (score + share; the answer *reveal* now lives on the globe, not a text list),
+  `HowToPlay`, `StatsPanel`, `Modal` (bottom-sheet), `icons.tsx` (inline SVG — no
+  emoji chrome).
+- `src/ui/Globe.tsx` — the main guessing surface: a drag-to-spin **orthographic
+  globe** (d3-geo) over a bundled land outline (`world-atlas` land-110m TopoJSON,
+  hydrated once with `topojson-client`). Purely presentational — all geometry comes
+  from props. Renders the start-city marker and guess pins coloured by `tempLevel`
+  during play, and — only once `finished` — the geodesic **target ring** (`geoCircle`
+  radius = `targetKm`, the locus of perfect answers) with the closest answers pinned
+  along it. The ring is the answer, so it stays hidden mid-round. Far-hemisphere points
+  are hidden via a `geoDistance` great-circle test. No runtime network; land is bundled.
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it

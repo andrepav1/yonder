@@ -37,6 +37,12 @@
   --temp-0: #3f6c93;
   --on-temp: #fffaf5;
 
+  /* Globe — muted ocean/land so the accent ring + pins carry the eye */
+  --globe-ocean: #d5e3e8;
+  --globe-land: #e7d6ba;
+  --globe-graticule: #bacdd3;
+  --globe-edge: #aebfc6;
+
   /* Type */
   --font-display: 'Calistoga', Georgia, 'Times New Roman', serif;
   --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -80,6 +86,11 @@
     --temp-1: #6fb0c4;
     --temp-0: #6aa0c8;
     --on-temp: #1a120c;
+
+    --globe-ocean: #142027;
+    --globe-land: #34291c;
+    --globe-graticule: #25343b;
+    --globe-edge: #35464d;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.45);
@@ -128,21 +139,6 @@ button {
   align-items: center;
   padding: env(safe-area-inset-top) 1rem calc(env(safe-area-inset-bottom) + 1rem);
   overflow: hidden;
-}
-
-.app__globe {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  display: flex;
-  justify-content: center;
-}
-.app__globe svg {
-  width: min(140vw, 44rem);
-  height: auto;
-  margin-top: -6rem;
-  opacity: 0.5;
 }
 
 .shell {
@@ -270,6 +266,81 @@ button {
 }
 .pip--win {
   background: var(--win);
+}
+
+/* ---------- Globe (main guessing surface) ---------- */
+
+.globe {
+  display: flex;
+  justify-content: center;
+  padding: 0.15rem 0;
+}
+.globe__svg {
+  width: 100%;
+  max-width: 20rem;
+  height: auto;
+  touch-action: none; /* drag spins the globe instead of scrolling the page */
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.globe__svg:active {
+  cursor: grabbing;
+}
+.globe__sphere {
+  fill: var(--globe-ocean);
+}
+.globe__graticule {
+  fill: none;
+  stroke: var(--globe-graticule);
+  stroke-width: 0.4;
+}
+.globe__land {
+  fill: var(--globe-land);
+  stroke: var(--globe-edge);
+  stroke-width: 0.3;
+}
+.globe__ring {
+  fill: color-mix(in srgb, var(--accent) 9%, transparent);
+  stroke: var(--accent);
+  stroke-width: 1.4;
+  stroke-dasharray: 3 3;
+}
+.globe__edge {
+  fill: none;
+  stroke: var(--globe-edge);
+  stroke-width: 1;
+}
+.globe__answer {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.4;
+}
+.globe__pin {
+  fill: var(--temp);
+  stroke: var(--surface);
+  stroke-width: 1;
+}
+.globe__pin--win {
+  fill: var(--win);
+}
+.globe__start-halo {
+  fill: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.globe__start-dot {
+  fill: var(--accent);
+  stroke: var(--on-accent);
+  stroke-width: 1;
+}
+.globe__start-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  fill: var(--fg);
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 3;
+  stroke-linejoin: round;
 }
 
 /* ---------- Guess input ---------- */
@@ -483,26 +554,11 @@ button {
   color: var(--fg-muted);
   margin-top: 0.15rem;
 }
-.answers {
-  margin-top: 1rem;
-  text-align: left;
+.result__answer-note {
+  margin-top: 0.9rem;
   border-top: 1px solid var(--border);
   padding-top: 0.85rem;
-}
-.answers__title {
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--fg-muted);
-  margin-bottom: 0.5rem;
-}
-.answers__item {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.3rem 0;
-  font-size: 0.92rem;
-}
-.answers__item .mono {
+  font-size: 0.85rem;
   color: var(--fg-muted);
 }
 

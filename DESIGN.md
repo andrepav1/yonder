@@ -1,10 +1,10 @@
 # Yondle — "Terra" design system
 
 The visual language: **warm, muted, wandering — "somewhere far off."** Exaggerated
-minimalism, a single mobile-first column, generous whitespace, a decorative globe
-graticule, and a hot→cold proximity ramp. Tokens live in `src/styles/globals.css`;
-this file is the intent behind them. (Generated with the `ui-ux-pro-max` skill, then
-tuned for the travel feel.)
+minimalism, a single mobile-first column, generous whitespace, an interactive Earth
+globe as the board, and a hot→cold proximity ramp. Tokens live in
+`src/styles/globals.css`; this file is the intent behind them. (Generated with the
+`ui-ux-pro-max` skill, then tuned for the travel feel.)
 
 ## Type
 
@@ -31,8 +31,13 @@ components.
 
 **Hot → cold proximity ramp** (`--temp-4` … `--temp-0`): ember → amber → gold → dusty
 teal → deep blue. `4` = win/bullseye (hottest), `0` = way off (coldest). Set by
-`tempLevel()` in `lib/scoring.ts` so the guess-row swatch and the share squares always
-agree.
+`tempLevel()` in `lib/scoring.ts` so the guess-row swatch, the **globe guess pins**,
+and the share squares always agree.
+
+**Globe** (`--globe-ocean/-land/-graticule/-edge`): a muted, low-contrast Earth so the
+terracotta target ring and the ramp-coloured pins carry the eye — pale slate ocean +
+warm sand land in light, deep ink ocean + warm umber land in dark. The **target ring**
+is the accent, dashed; the start city is an accent halo + dot with a Calistoga label.
 
 ## Accessibility
 
@@ -49,4 +54,5 @@ from the bottom. Nothing decorative-only. All disabled under reduced-motion.
 
 ## Deferred (logged, not built)
 
-Colorblind-safe ramp, installable PWA, interactive map with pins. See `DECISIONS.md`.
+Colorblind-safe ramp, installable PWA. (The interactive map with pins — once deferred —
+is now the globe board; see `DECISIONS.md`.)
