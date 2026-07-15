@@ -46,8 +46,10 @@ win band is a percentage, so it's identical either way).
 ### End of round
 
 On a win or after 6 guesses, Yondle reveals the **3 closest possible** answer cities
-and your best delta. A Wordle-style shareable summary (hot/cold squares + direction
-arrows, no city names) copies to the clipboard.
+and your best delta, plus an **orthographic globe** centred on the start city that
+draws a great-circle arc out to each guess and marks the answer cities — the "here's
+where you actually wandered" payoff. A Wordle-style shareable summary (hot/cold squares
+and direction arrows, no city names) copies to the clipboard.
 
 ## Development
 
@@ -89,7 +91,7 @@ src/
     storage.ts        # memory + localStorage adapters
     statsStore.ts     # stats, streaks, distribution, daily round save
     prefs.ts          # unit + onboarding flag
-  ui/                 # React shell (GuessInput, GuessRow, GuessMap, ResultCard, …)
+  ui/                 # React shell (GuessInput, GuessRow, GuessMap, GlobeMap, ResultCard, …)
   styles/globals.css  # the "Terra" design system (see DESIGN.md)
   App.tsx  main.tsx   # app shell + entry
   data/cities.json    # committed compact dataset (built artifact)
@@ -107,10 +109,14 @@ behind each rule.
 ## Data & deployment
 
 City data © [GeoNames](https://www.geonames.org/), licensed **CC BY 4.0**. The
-compact `cities.json` is committed, so the app is fully static — it deploys to
+reveal globe's coastlines come from [Natural Earth](https://www.naturalearthdata.com/)
+(public domain) via the bundled `world-atlas` 110m land data — no map tiles, no CDN.
+The compact `cities.json` is committed, so the app is fully static — it deploys to
 **Vercel** (framework preset **Vite**, build command `npm run build`, output
 `dist/`) with no backend.
 
 ## Tech
 
-React + Vite + TypeScript, ESLint + Prettier, Vitest, GitHub Actions CI.
+React + Vite + TypeScript, ESLint + Prettier, Vitest, GitHub Actions CI. The reveal
+globe uses `d3-geo` (orthographic projection) + `world-atlas` land data, code-split and
+lazy-loaded so they stay out of the initial bundle.

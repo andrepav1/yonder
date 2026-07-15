@@ -119,5 +119,23 @@ board wanted a spatial view of where guesses landed.
   and direction — which is exactly the cue we removed from the rows. It **auto-scales**
   to fit every pin, so far-off early guesses shrink the target ring toward the centre
   and it zooms in as you close on the target (honest to how far off you are).
-- **Deferred:** a true geographic map with coastlines (would need a bundled outline
-  dataset; logged in `DESIGN.md`).
+- **Followed up** with a true geographic map (the reveal globe) — see the next entry.
+
+## 2026-07-16 — Reveal globe (and it in play too)
+
+**Context.** Follow-up to the compass map: add a *proper* geographic map.
+
+- **Orthographic globe** (`GlobeMap`) centred on the start city, with a great-circle arc
+  out to each guess. Chose an orthographic **globe** over a flat basemap because it leans
+  into the app's existing globe motif and centering on the start makes each guess's true
+  bearing + distance read directly; it also lets far guesses fall "over the horizon"
+  (past 90°), which is honest and needs no extra UI.
+- **Coastlines: Natural Earth 110m land** via the `world-atlas` npm package (55 KB raw /
+  ~20 KB gzip, public domain). No tiles, no CDN — keeps the offline-pure ethos. Projection
+  + clipping via `d3-geo` (pure). **Lazy-loaded** (`React.lazy` → its own chunk, ~32 KB
+  gzip) so neither d3 nor the land data touches the initial bundle.
+- **Shown in both play and reveal**, but **answer cities are gated behind `showAnswers`** —
+  off during play (plotting the closest answers would spoil the puzzle), on only for the
+  finished result card. The compass map stays the in-play aiming aid; the globe adds
+  geographic context in play and becomes the "where you wandered" payoff at the end.
+- **Deferred:** drag-to-rotate on the globe (logged in `DESIGN.md`).

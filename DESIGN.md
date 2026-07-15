@@ -59,6 +59,17 @@ and N/E/S/W axes echo the decorative globe. The map auto-scales to fit every pin
 zooms in as guesses close on the target. Self-contained SVG — no tiles, no CDN, matches
 the offline-pure core.
 
+## Globe (reveal)
+
+On the result card, `GlobeMap` renders a real Earth — an **orthographic globe** (Natural
+Earth 110m land, bundled) rotated so the start city sits at the centre. Land is warm
+sand (`--globe-land`), sea a muted paper (`--globe-ocean`), with a faint graticule; a
+great-circle arc in the guess's temperature colour runs out to each guess, answer cities
+get `--win` rings, and guesses on the far hemisphere are noted as "over the horizon."
+It's lazy-loaded (d3-geo + land data code-split), so it never touches the initial bundle.
+Where the compass map is the in-play aiming tool, the globe is the geographic payoff.
+
 ## Deferred (logged, not built)
 
-Colorblind-safe ramp, installable PWA, a geographic (coastline) map. See `DECISIONS.md`.
+Colorblind-safe ramp, installable PWA, drag-to-rotate on the reveal globe. See
+`DECISIONS.md`.

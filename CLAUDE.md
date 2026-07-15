@@ -66,8 +66,11 @@ for _why_ the rules are what they are.
 - `src/ui/*` — React shell: `GuessInput` (fuzzy typeahead), `GuessRow` (distance,
   delta, compass direction, hot/cold), `GuessMap` (azimuthal-equidistant "compass map":
   start at centre, each guess plotted by bearing + distance, target win-band ring),
-  `ResultCard` (score + reveal + share), `HowToPlay`, `StatsPanel`, `Modal`
-  (bottom-sheet), `GlobeMotif` (decorative), `icons.tsx` (inline SVG — no emoji chrome).
+  `GlobeMap` (reveal-only orthographic globe centred on the start city, great-circle arc
+  to each guess + answer markers; lazy-loaded so its `d3-geo` + `world-atlas` land data
+  stay off the initial bundle), `ResultCard` (score + reveal + share), `HowToPlay`,
+  `StatsPanel`, `Modal` (bottom-sheet), `GlobeMotif` (decorative), `icons.tsx`
+  (inline SVG — no emoji chrome).
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it

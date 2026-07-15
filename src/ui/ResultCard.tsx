@@ -1,9 +1,14 @@
+import { lazy, Suspense } from 'react'
 import type { PuzzleSpec, RoundState } from '@/lib/types'
 import type { GameRules, Unit } from '@/config/rules'
 import { scoreRound } from '@/lib/scoring'
 import { cityLabel } from '@/lib/cities'
 import { formatDistance, deltaPhrase } from '@/lib/format'
 import { ShareIcon, CheckIcon } from './icons'
+
+// The globe pulls in d3-geo + the bundled land data; lazy-load it so those stay
+// out of the initial bundle and only arrive when a round ends.
+const GlobeMap = lazy(() => import('./GlobeMap'))
 
 interface ResultCardProps {
   state: RoundState
@@ -43,6 +48,10 @@ export function ResultCard({
           `${breakdown.base} base + ${breakdown.bonus} speed · `}
         best guess {deltaPhrase(breakdown.bestDeltaKm, unit)}
       </div>
+
+      <Suspense fallback={<div className="globe__fallback" aria-hidden="true" />}>
+        <GlobeMap puzzle={puzzle} guesses={state.guesses} rules={rules} showAnswers />
+      </Suspense>
 
       <div className="answers">
         <div className="answers__title">Closest possible answers</div>
