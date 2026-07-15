@@ -17,6 +17,7 @@ import { cityLabel } from '@/lib/cities'
 import { GlobeMotif } from '@/ui/GlobeMotif'
 import { GuessInput } from '@/ui/GuessInput'
 import { GuessRow } from '@/ui/GuessRow'
+import { GuessMap } from '@/ui/GuessMap'
 import { ResultCard } from '@/ui/ResultCard'
 import { HowToPlay } from '@/ui/HowToPlay'
 import { StatsPanel } from '@/ui/StatsPanel'
@@ -172,11 +173,14 @@ export default function App() {
         )}
 
         {round.guesses.length > 0 && (
-          <div className="guesses">
-            {[...round.guesses].reverse().map((g, i) => (
-              <GuessRow key={`${g.city.id}-${i}`} result={g} rules={rules} unit={unit} />
-            ))}
-          </div>
+          <>
+            <GuessMap puzzle={puzzle} guesses={round.guesses} rules={rules} unit={unit} />
+            <div className="guesses">
+              {[...round.guesses].reverse().map((g, i) => (
+                <GuessRow key={`${g.city.id}-${i}`} result={g} rules={rules} unit={unit} />
+              ))}
+            </div>
+          </>
         )}
 
         {finished && (

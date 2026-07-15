@@ -52,7 +52,7 @@ for _why_ the rules are what they are.
 - `src/lib/share.ts` — **pure** Wordle-style share string (hot/cold squares + arrows,
   score line, no city names).
 - `src/lib/format.ts` — **pure** display helpers (`formatDistance`, `deltaPhrase`,
-  `formatBearing`), unit-aware.
+  `formatDirection` — 16-point compass label + arrow, e.g. `NE ↗`), unit-aware.
 - `src/data/cities.json` — **committed** compact dataset (array-of-arrays; see
   `fields`). Built by `scripts/build-cities.mjs`.
 - `src/modes/daily.ts` — the single `GameMode` descriptor (`generate`/`evaluate`/
@@ -64,9 +64,10 @@ for _why_ the rules are what they are.
 - `src/App.tsx` — orchestrates the day: generate puzzle, load/restore the saved
   round (daily lock), handle guesses, record the result, share.
 - `src/ui/*` — React shell: `GuessInput` (fuzzy typeahead), `GuessRow` (distance,
-  delta, bearing, hot/cold), `ResultCard` (score + reveal + share), `HowToPlay`,
-  `StatsPanel`, `Modal` (bottom-sheet), `GlobeMotif` (decorative), `icons.tsx`
-  (inline SVG — no emoji chrome).
+  delta, compass direction, hot/cold), `GuessMap` (azimuthal-equidistant "compass map":
+  start at centre, each guess plotted by bearing + distance, target win-band ring),
+  `ResultCard` (score + reveal + share), `HowToPlay`, `StatsPanel`, `Modal`
+  (bottom-sheet), `GlobeMotif` (decorative), `icons.tsx` (inline SVG — no emoji chrome).
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it

@@ -1,7 +1,7 @@
 // Display formatting for distances + bearings. Pure.
 
 import type { Unit } from '@/config/rules'
-import { toUnit, bearingArrow } from './geo'
+import { toUnit, bearingArrow, compass16 } from './geo'
 
 /** e.g. formatDistance(1234, 'km') -> "1,234 km". Rounds to whole units. */
 export function formatDistance(km: number, unit: Unit): string {
@@ -20,7 +20,7 @@ export function deltaPhrase(deltaKm: number, unit: Unit): string {
   return deltaKm > 0 ? `${magnitude} too far` : `${magnitude} too close`
 }
 
-/** e.g. "47° ↗" — exact degrees plus the nearest 8-way arrow. */
-export function formatBearing(bearingDeg: number): string {
-  return `${Math.round(bearingDeg) % 360}° ${bearingArrow(bearingDeg)}`
+/** e.g. "NE ↗" — the 16-point compass label plus the nearest 8-way arrow. */
+export function formatDirection(bearingDeg: number): string {
+  return `${compass16(bearingDeg)} ${bearingArrow(bearingDeg)}`
 }

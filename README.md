@@ -36,10 +36,12 @@ start — measured as the great-circle (haversine) distance. You get **6 guesses
 ### Per-guess feedback
 
 After each guess you see the guessed city's actual distance from the start, the delta
-from target ("142 km too far" / "37 km too close"), the exact **bearing in degrees +
-an arrow** (e.g. `47° ↗`), and a hot→cold colour cue by percent error. A km/mi toggle
-switches all displayed distances (the win band is a percentage, so it's identical
-either way).
+from target ("142 km too far" / "37 km too close"), the **compass direction + an
+arrow** (e.g. `NE ↗`), and a hot→cold colour cue by percent error. A **compass map**
+plots the start city at its centre and every guess by its bearing (angle) and distance
+(radius), with the target win-band drawn as a ring — so you can see, at a glance, which
+direction to steer and how far. A km/mi toggle switches all displayed distances (the
+win band is a percentage, so it's identical either way).
 
 ### End of round
 
@@ -81,13 +83,13 @@ src/
     scoring.ts        # evaluate guess, proximity score, hot/cold level
     engine.ts         # pure RoundState machine
     share.ts          # Wordle-style share string
-    format.ts         # distance / delta / bearing display
+    format.ts         # distance / delta / direction display
   modes/daily.ts      # the one GameMode descriptor (+ registry)
   store/              # persistence behind a KeyValueStore seam
     storage.ts        # memory + localStorage adapters
     statsStore.ts     # stats, streaks, distribution, daily round save
     prefs.ts          # unit + onboarding flag
-  ui/                 # React shell (GuessInput, GuessRow, ResultCard, …)
+  ui/                 # React shell (GuessInput, GuessRow, GuessMap, ResultCard, …)
   styles/globals.css  # the "Terra" design system (see DESIGN.md)
   App.tsx  main.tsx   # app shell + entry
   data/cities.json    # committed compact dataset (built artifact)

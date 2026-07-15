@@ -12,8 +12,9 @@ Three self-hosted families (via `@fontsource`, imported in `main.tsx` — no run
 
 - **Calistoga** (`--font-display`) — warm display serif. Brand, city names, headlines.
 - **Inter** (`--font-body`) — UI, copy, labels.
-- **JetBrains Mono** (`--font-mono`) — the data face: distances, deltas, bearings,
-  scores, the date. Always `font-variant-numeric: tabular-nums` so figures don't jitter.
+- **JetBrains Mono** (`--font-mono`) — the data face: distances, deltas, directions,
+  scores, the date, compass-map labels. Always `font-variant-numeric: tabular-nums` so
+  figures don't jitter.
 
 ## Colour
 
@@ -47,6 +48,17 @@ agree.
 Entrances only, 150–320ms, ease-out; guess rows and cards `rise`, the sheet slides up
 from the bottom. Nothing decorative-only. All disabled under reduced-motion.
 
+## Compass map
+
+`GuessMap` reuses the globe-graticule language as a live game aid: an
+**azimuthal-equidistant** plot centred on the start city. Each guess is a spoke +
+temperature-coloured pin placed at its bearing (angle, clockwise from N) and distance
+(radius); the latest guess gets a `--fg` ring. The target win-band is a `--win-weak`
+annulus with a dashed `--accent` ring at the exact target. Faint concentric range rings
+and N/E/S/W axes echo the decorative globe. The map auto-scales to fit every pin, so it
+zooms in as guesses close on the target. Self-contained SVG — no tiles, no CDN, matches
+the offline-pure core.
+
 ## Deferred (logged, not built)
 
-Colorblind-safe ramp, installable PWA, interactive map with pins. See `DECISIONS.md`.
+Colorblind-safe ramp, installable PWA, a geographic (coastline) map. See `DECISIONS.md`.

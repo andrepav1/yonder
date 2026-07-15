@@ -101,3 +101,23 @@ skill for the visual system.
   as a fetched asset + lazy-load, if bundle size becomes a concern.
 - **Verification**: `scripts/screenshot.mjs` drives the built app in the pre-installed
   Chromium at 390×844; the board / play / win / dark states were captured and checked.
+
+## 2026-07-16 — Compass map + direction-not-degrees
+
+**Context.** Feedback: the raw bearing number in the guess rows read as noise, and the
+board wanted a spatial view of where guesses landed.
+
+- **Dropped the degree readout** (`47° ↗`) for a **16-point compass label + arrow**
+  (`NE ↗`) via `formatDirection`. Degrees are precise but not actionable for a human
+  aiming a next guess; a named heading is. The exact `bearingDeg` stays in
+  `GuessResult` (unchanged data), so scoring/share are untouched.
+- **`GuessMap`** — an **azimuthal-equidistant** plot centred on the start city: guesses
+  placed by bearing (angle) + distance (radius), target win-band as a ring. Chose this
+  over a geographic (coastline) map because it (a) needs **no basemap/tiles/CDN**,
+  keeping the offline-pure ethos; (b) reuses the existing globe-graticule design
+  language; and (c) directly visualises the two quantities the game turns on — distance
+  and direction — which is exactly the cue we removed from the rows. It **auto-scales**
+  to fit every pin, so far-off early guesses shrink the target ring toward the centre
+  and it zooms in as you close on the target (honest to how far off you are).
+- **Deferred:** a true geographic map with coastlines (would need a bundled outline
+  dataset; logged in `DESIGN.md`).
