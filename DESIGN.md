@@ -48,26 +48,17 @@ agree.
 Entrances only, 150–320ms, ease-out; guess rows and cards `rise`, the sheet slides up
 from the bottom. Nothing decorative-only. All disabled under reduced-motion.
 
-## Compass map
+## Globe (the map)
 
-`GuessMap` reuses the globe-graticule language as a live game aid: an
-**azimuthal-equidistant** plot centred on the start city. Each guess is a spoke +
-temperature-coloured pin placed at its bearing (angle, clockwise from N) and distance
-(radius); the latest guess gets a `--fg` ring. The target win-band is a `--win-weak`
-annulus with a dashed `--accent` ring at the exact target. Faint concentric range rings
-and N/E/S/W axes echo the decorative globe. The map auto-scales to fit every pin, so it
-zooms in as guesses close on the target. Self-contained SVG — no tiles, no CDN, matches
-the offline-pure core.
-
-## Globe (reveal)
-
-On the result card, `GlobeMap` renders a real Earth — an **orthographic globe** (Natural
-Earth 110m land, bundled) rotated so the start city sits at the centre. Land is warm
-sand (`--globe-land`), sea a muted paper (`--globe-ocean`), with a faint graticule; a
-great-circle arc in the guess's temperature colour runs out to each guess, answer cities
-get `--win` rings, and guesses on the far hemisphere are noted as "over the horizon."
-It's lazy-loaded (d3-geo + land data code-split), so it never touches the initial bundle.
-Where the compass map is the in-play aiming tool, the globe is the geographic payoff.
+`GlobeMap` makes the decorative globe motif the actual game map: a real Earth — an
+**orthographic globe** (Natural Earth 110m land, bundled) rotated so the start city sits
+at the centre. Land is warm sand (`--globe-land`), sea a muted paper (`--globe-ocean`),
+with a faint graticule; a great-circle arc in the guess's temperature colour runs out to
+each guess, and guesses on the far hemisphere are noted as "over the horizon." It's the
+live map **during play**, and returns on the **result card** where `showAnswers` also
+plots the answer cities with `--win` rings — hidden during play so they can't spoil.
+Lazy-loaded (d3-geo + land data code-split), so it never touches the initial bundle;
+self-contained — no tiles, no CDN, matching the offline-pure core.
 
 ## Deferred (logged, not built)
 

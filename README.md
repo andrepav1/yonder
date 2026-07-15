@@ -37,19 +37,19 @@ start — measured as the great-circle (haversine) distance. You get **6 guesses
 
 After each guess you see the guessed city's actual distance from the start, the delta
 from target ("142 km too far" / "37 km too close"), the **compass direction + an
-arrow** (e.g. `NE ↗`), and a hot→cold colour cue by percent error. A **compass map**
-plots the start city at its centre and every guess by its bearing (angle) and distance
-(radius), with the target win-band drawn as a ring — so you can see, at a glance, which
-direction to steer and how far. A km/mi toggle switches all displayed distances (the
-win band is a percentage, so it's identical either way).
+arrow** (e.g. `NE ↗`), and a hot→cold colour cue by percent error. A **globe** centred
+on the start city plots every guess with a great-circle arc — so you can see, at a
+glance, which direction to steer (guesses on the far side of the world fall "over the
+horizon"). A km/mi toggle switches all displayed distances (the win band is a
+percentage, so it's identical either way).
 
 ### End of round
 
 On a win or after 6 guesses, Yondle reveals the **3 closest possible** answer cities
-and your best delta, plus an **orthographic globe** centred on the start city that
-draws a great-circle arc out to each guess and marks the answer cities — the "here's
-where you actually wandered" payoff. A Wordle-style shareable summary (hot/cold squares
-and direction arrows, no city names) copies to the clipboard.
+and your best delta, and the globe now also **marks the answer cities** (hidden during
+play so they can't be a spoiler) — the "here's where you actually wandered" payoff. A
+Wordle-style shareable summary (hot/cold squares and direction arrows, no city names)
+copies to the clipboard.
 
 ## Development
 
@@ -91,7 +91,7 @@ src/
     storage.ts        # memory + localStorage adapters
     statsStore.ts     # stats, streaks, distribution, daily round save
     prefs.ts          # unit + onboarding flag
-  ui/                 # React shell (GuessInput, GuessRow, GuessMap, GlobeMap, ResultCard, …)
+  ui/                 # React shell (GuessInput, GuessRow, GlobeMap, ResultCard, …)
   styles/globals.css  # the "Terra" design system (see DESIGN.md)
   App.tsx  main.tsx   # app shell + entry
   data/cities.json    # committed compact dataset (built artifact)

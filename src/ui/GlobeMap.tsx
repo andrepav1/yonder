@@ -166,10 +166,10 @@ export default function GlobeMap({
         )}
       </svg>
 
-      <div className="map__legend">
-        <span className="map__key map__key--start">Start</span>
-        <span className="map__key map__key--guess">Your guesses</span>
-        {showAnswers && <span className="map__key map__key--answer">Answers</span>}
+      <div className="globe__legend">
+        <span className="globe__key globe__key--start">Start</span>
+        <span className="globe__key globe__key--guess">Your guesses</span>
+        {showAnswers && <span className="globe__key globe__key--answer">Answers</span>}
       </div>
       {scene.hidden > 0 && (
         <div className="globe__note">

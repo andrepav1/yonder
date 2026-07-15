@@ -17,10 +17,10 @@ import { cityLabel } from '@/lib/cities'
 import { GlobeMotif } from '@/ui/GlobeMotif'
 import { GuessInput } from '@/ui/GuessInput'
 import { GuessRow } from '@/ui/GuessRow'
-import { GuessMap } from '@/ui/GuessMap'
 
-// Same lazy globe used on the result card; kept out of the initial bundle and
-// only fetched once the first guess lands.
+// The globe is the live map (and the result-card reveal). Lazy-loaded so d3-geo
+// + the land data stay out of the initial bundle and only arrive with the first
+// guess.
 const GlobeMap = lazy(() => import('@/ui/GlobeMap'))
 import { ResultCard } from '@/ui/ResultCard'
 import { HowToPlay } from '@/ui/HowToPlay'
@@ -178,7 +178,6 @@ export default function App() {
 
         {round.guesses.length > 0 && (
           <>
-            <GuessMap puzzle={puzzle} guesses={round.guesses} rules={rules} unit={unit} />
             {!finished && (
               <Suspense fallback={<div className="globe__fallback" aria-hidden="true" />}>
                 <GlobeMap puzzle={puzzle} guesses={round.guesses} rules={rules} />
