@@ -3,7 +3,7 @@ import type { GuessResult } from '@/lib/types'
 import type { GameRules, Unit } from '@/config/rules'
 import { tempLevel } from '@/lib/scoring'
 import { cityLabel } from '@/lib/cities'
-import { formatDistance, deltaPhrase, formatBearing } from '@/lib/format'
+import { formatDistance, deltaPhrase, formatDirection } from '@/lib/format'
 
 interface GuessRowProps {
   result: GuessResult
@@ -28,7 +28,7 @@ export function GuessRow({ result, rules, unit }: GuessRowProps) {
       </div>
       <div className="grow__meta">
         <div className="grow__dist">{formatDistance(result.distanceKm, unit)}</div>
-        <div className="grow__bearing">{formatBearing(result.bearingDeg)}</div>
+        <div className="grow__dir">{formatDirection(result.bearingDeg)}</div>
       </div>
     </div>
   )

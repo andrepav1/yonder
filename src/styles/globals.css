@@ -37,6 +37,11 @@
   --temp-0: #3f6c93;
   --on-temp: #fffaf5;
 
+  /* Globe map — muted paper sea, warm sand land (within the Terra palette) */
+  --globe-ocean: #eaf0f1;
+  --globe-land: #ddccb2;
+  --globe-grat: #b9ab97;
+
   /* Type */
   --font-display: 'Calistoga', Georgia, 'Times New Roman', serif;
   --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -80,6 +85,10 @@
     --temp-1: #6fb0c4;
     --temp-0: #6aa0c8;
     --on-temp: #1a120c;
+
+    --globe-ocean: #141e22;
+    --globe-land: #3a2e21;
+    --globe-grat: #4a3c2d;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.45);
@@ -434,10 +443,137 @@ button {
   font-size: 0.95rem;
   font-weight: 500;
 }
-.grow__bearing {
+.grow__dir {
   font-family: var(--font-mono);
   font-size: 0.8rem;
   color: var(--fg-muted);
+}
+
+/* ---------- Globe map ---------- */
+
+.globe {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 1.1rem 1rem 0.9rem;
+  box-shadow: var(--shadow-sm);
+  animation: rise 0.3s ease both;
+}
+/* Inside the result card it's a subsection (a rule, no nested box). */
+.result .globe {
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  animation: none;
+  margin-top: 1rem;
+  padding: 0.9rem 0 0;
+  border-top: 1px solid var(--border);
+}
+.globe__title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--fg-muted);
+  text-align: left;
+  margin-bottom: 0.5rem;
+}
+.globe__svg {
+  display: block;
+  width: 100%;
+  max-width: 16.5rem;
+  height: auto;
+  margin: 0 auto;
+}
+.globe__ocean {
+  fill: var(--globe-ocean);
+  stroke: none;
+}
+.globe__ocean-edge {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+.globe__grat {
+  fill: none;
+  stroke: var(--globe-grat);
+  stroke-width: 0.5;
+  opacity: 0.55;
+}
+.globe__land {
+  fill: var(--globe-land);
+  stroke: var(--border-strong);
+  stroke-width: 0.4;
+}
+.globe__arc {
+  fill: none;
+  stroke: var(--arc);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+.globe__pin {
+  fill: var(--pin);
+  stroke: var(--surface);
+  stroke-width: 1.5;
+}
+.globe__pin--latest {
+  stroke: var(--fg);
+  stroke-width: 2;
+}
+.globe__answer {
+  fill: none;
+  stroke: var(--win);
+  stroke-width: 2;
+}
+.globe__start {
+  fill: var(--accent);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.globe__start-dot {
+  fill: var(--on-accent);
+}
+.globe__note {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--fg-muted);
+  margin-top: 0.35rem;
+}
+.globe__legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem 0.9rem;
+  margin-top: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--fg-muted);
+}
+.globe__key {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.globe__key::before {
+  content: '';
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: var(--r-pill);
+  flex: none;
+}
+.globe__key--start::before {
+  background: var(--accent);
+}
+.globe__key--guess::before {
+  background: var(--temp-3);
+}
+.globe__key--answer::before {
+  background: var(--win);
+}
+.globe__fallback {
+  height: 16.5rem;
+  margin-top: 1rem;
 }
 
 /* ---------- Result card ---------- */

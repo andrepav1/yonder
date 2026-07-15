@@ -54,6 +54,8 @@ modes / multiplayer, but only the solo daily game ships first.
   bounded Levenshtein), backed by a typeahead. Resolves to the closest dataset city;
   duplicate names are disambiguated by country (then admin-1 region).
 - Bearing shown as **exact degrees + arrow**. Reveal the **top 3 closest** answers.
+  _(Superseded 2026-07-16: bearing now shown as a 16-point compass direction, and the
+  spatial view is the globe map — see that entry.)_
 
 ### Persistence & sharing
 
@@ -66,8 +68,9 @@ modes / multiplayer, but only the solo daily game ships first.
 - **React + Vite + TypeScript**, ESLint + Prettier, Vitest, GitHub Actions CI,
   Vercel.
 - v1 includes: how-to-play onboarding, auto dark mode, decorative globe/map motif.
-- **Deferred from v1:** colorblind-safe palette, installable PWA, interactive map with
-  pins. (Easy to add later; flagged so we don't forget.)
+- **Deferred from v1:** colorblind-safe palette, installable PWA. (Easy to add later;
+  flagged so we don't forget.) _(The "map with pins" once deferred here shipped
+  2026-07-16 as the globe map — see that entry.)_
 
 ### Architecture
 
@@ -101,3 +104,27 @@ skill for the visual system.
   as a fetched asset + lazy-load, if bundle size becomes a concern.
 - **Verification**: `scripts/screenshot.mjs` drives the built app in the pre-installed
   Chromium at 390×844; the board / play / win / dark states were captured and checked.
+
+## 2026-07-16 — Direction-not-degrees + the globe map
+
+**Context.** Feedback: the raw bearing number in the guess rows read as noise, and the
+board wanted to *see* where guesses landed.
+
+- **Dropped the degree readout** (`47° ↗`) for a **16-point compass label + arrow**
+  (`NE ↗`) via `formatDirection`. Degrees are precise but not actionable for a human
+  aiming a next guess; a named heading is. The exact `bearingDeg` stays in
+  `GuessResult` (unchanged data), so scoring/share are untouched.
+- **The map is an orthographic globe** (`GlobeMap`) centred on the start city, with a
+  great-circle arc to each guess. (An interim azimuthal "compass map" was tried first,
+  then dropped — the real globe reads better and the two side-by-side was clutter.) The
+  globe leans into the app's existing globe motif; centering on the start makes each
+  guess's true bearing + distance read directly, and far guesses fall "over the horizon"
+  (past 90°), which is honest and needs no extra UI.
+- **Coastlines: Natural Earth 110m land** via the `world-atlas` npm package (55 KB raw /
+  ~20 KB gzip, public domain). No tiles, no CDN — keeps the offline-pure ethos. Projection
+  + clipping via `d3-geo` (pure). **Lazy-loaded** (`React.lazy` → its own chunk, ~32 KB
+  gzip) so neither d3 nor the land data touches the initial bundle.
+- **It's the live map during play and returns on the result card**, where answer cities
+  are plotted (`--win` rings) — gated behind `showAnswers`, **off during play** so the
+  closest answers can't spoil the puzzle, on only for the finished reveal.
+- **Deferred:** drag-to-rotate on the globe (logged in `DESIGN.md`).

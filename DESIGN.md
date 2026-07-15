@@ -12,8 +12,9 @@ Three self-hosted families (via `@fontsource`, imported in `main.tsx` — no run
 
 - **Calistoga** (`--font-display`) — warm display serif. Brand, city names, headlines.
 - **Inter** (`--font-body`) — UI, copy, labels.
-- **JetBrains Mono** (`--font-mono`) — the data face: distances, deltas, bearings,
-  scores, the date. Always `font-variant-numeric: tabular-nums` so figures don't jitter.
+- **JetBrains Mono** (`--font-mono`) — the data face: distances, deltas, directions,
+  scores, the date, compass-map labels. Always `font-variant-numeric: tabular-nums` so
+  figures don't jitter.
 
 ## Colour
 
@@ -47,6 +48,19 @@ agree.
 Entrances only, 150–320ms, ease-out; guess rows and cards `rise`, the sheet slides up
 from the bottom. Nothing decorative-only. All disabled under reduced-motion.
 
+## Globe (the map)
+
+`GlobeMap` makes the decorative globe motif the actual game map: a real Earth — an
+**orthographic globe** (Natural Earth 110m land, bundled) rotated so the start city sits
+at the centre. Land is warm sand (`--globe-land`), sea a muted paper (`--globe-ocean`),
+with a faint graticule; a great-circle arc in the guess's temperature colour runs out to
+each guess, and guesses on the far hemisphere are noted as "over the horizon." It's the
+live map **during play**, and returns on the **result card** where `showAnswers` also
+plots the answer cities with `--win` rings — hidden during play so they can't spoil.
+Lazy-loaded (d3-geo + land data code-split), so it never touches the initial bundle;
+self-contained — no tiles, no CDN, matching the offline-pure core.
+
 ## Deferred (logged, not built)
 
-Colorblind-safe ramp, installable PWA, interactive map with pins. See `DECISIONS.md`.
+Colorblind-safe ramp, installable PWA, drag-to-rotate on the globe. See
+`DECISIONS.md`.

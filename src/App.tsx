@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import type { City, RoundState } from '@/lib/types'
 import type { Unit } from '@/config/rules'
 import { dailyMode } from '@/modes/daily'
@@ -17,6 +17,11 @@ import { cityLabel } from '@/lib/cities'
 import { GlobeMotif } from '@/ui/GlobeMotif'
 import { GuessInput } from '@/ui/GuessInput'
 import { GuessRow } from '@/ui/GuessRow'
+
+// The globe is the live map (and the result-card reveal). Lazy-loaded so d3-geo
+// + the land data stay out of the initial bundle and only arrive with the first
+// guess.
+const GlobeMap = lazy(() => import('@/ui/GlobeMap'))
 import { ResultCard } from '@/ui/ResultCard'
 import { HowToPlay } from '@/ui/HowToPlay'
 import { StatsPanel } from '@/ui/StatsPanel'
@@ -172,11 +177,18 @@ export default function App() {
         )}
 
         {round.guesses.length > 0 && (
-          <div className="guesses">
-            {[...round.guesses].reverse().map((g, i) => (
-              <GuessRow key={`${g.city.id}-${i}`} result={g} rules={rules} unit={unit} />
-            ))}
-          </div>
+          <>
+            {!finished && (
+              <Suspense fallback={<div className="globe__fallback" aria-hidden="true" />}>
+                <GlobeMap puzzle={puzzle} guesses={round.guesses} rules={rules} />
+              </Suspense>
+            )}
+            <div className="guesses">
+              {[...round.guesses].reverse().map((g, i) => (
+                <GuessRow key={`${g.city.id}-${i}`} result={g} rules={rules} unit={unit} />
+              ))}
+            </div>
+          </>
         )}
 
         {finished && (

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDistance, deltaPhrase, formatBearing } from './format'
+import { formatDistance, deltaPhrase, formatDirection } from './format'
 
 describe('formatDistance', () => {
   it('formats km with thousands separators', () => {
@@ -22,10 +22,10 @@ describe('deltaPhrase', () => {
   })
 })
 
-describe('formatBearing', () => {
-  it('shows degrees and an arrow', () => {
-    expect(formatBearing(0)).toBe('0° ↑')
-    expect(formatBearing(90)).toBe('90° →')
-    expect(formatBearing(47)).toBe('47° ↗')
+describe('formatDirection', () => {
+  it('shows a compass label and an arrow', () => {
+    expect(formatDirection(0)).toBe('N ↑')
+    expect(formatDirection(90)).toBe('E →')
+    expect(formatDirection(47)).toBe('NE ↗')
   })
 })
