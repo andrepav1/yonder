@@ -23,7 +23,7 @@ import { StatsPanel } from '@/ui/StatsPanel'
 import { HelpIcon, StatsIcon } from '@/ui/icons'
 
 // The public URL appended to shared results. Update to your Vercel domain.
-const SITE_URL = 'https://yonder.vercel.app'
+const SITE_URL = 'https://yondle.vercel.app'
 
 const ERROR_TEXT: Record<GuessError, string> = {
   duplicate: 'You already guessed that city.',
@@ -115,7 +115,7 @@ export default function App() {
       <div className="shell">
         <header className="hdr">
           <div className="hdr__brand">
-            <span className="hdr__title">Yonder</span>
+            <span className="hdr__title">Yondle</span>
             <span className="hdr__sub">{humanDate(date)}</span>
           </div>
           <div className="hdr__actions">

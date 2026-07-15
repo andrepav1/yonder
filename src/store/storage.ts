@@ -23,7 +23,7 @@ export function memoryStore(seed: Record<string, string> = {}): KeyValueStore {
 export function defaultStore(): KeyValueStore {
   try {
     if (typeof localStorage !== 'undefined') {
-      const probe = '__yonder_probe__'
+      const probe = '__yondle_probe__'
       localStorage.setItem(probe, '1')
       localStorage.removeItem(probe)
       return localStorage

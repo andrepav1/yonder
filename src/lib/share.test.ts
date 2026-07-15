@@ -51,7 +51,7 @@ describe('buildShareText', () => {
     }
     const text = buildShareText(state, puzzle, defaultRules)
     const lines = text.split('\n')
-    expect(lines[0]).toBe('Yonder 2026-07-15 · 2/6')
+    expect(lines[0]).toBe('Yondle 2026-07-15 · 2/6')
     expect(lines).toHaveLength(4) // header + 2 rows + score
     expect(lines[2]).toContain('🟥') // the winning row is hottest
     expect(lines[3]).toMatch(/pts$/)
@@ -64,7 +64,7 @@ describe('buildShareText', () => {
       guesses: [guess(0.6, false), guess(0.4, false)],
     }
     const text = buildShareText(state, puzzle, defaultRules)
-    expect(text.split('\n')[0]).toBe('Yonder 2026-07-15 · X/6')
+    expect(text.split('\n')[0]).toBe('Yondle 2026-07-15 · X/6')
   })
 
   it('never leaks city names (no spoilers)', () => {
@@ -85,8 +85,8 @@ describe('buildShareText', () => {
       guesses: [guess(0.01, true)],
     }
     const text = buildShareText(state, puzzle, defaultRules, {
-      url: 'https://yonder.example',
+      url: 'https://yondle.example',
     })
-    expect(text.split('\n').at(-1)).toBe('https://yonder.example')
+    expect(text.split('\n').at(-1)).toBe('https://yondle.example')
   })
 })

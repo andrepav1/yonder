@@ -1,4 +1,4 @@
-# Yonder — working notes for Claude
+# Yondle — working notes for Claude
 
 A daily, mobile-first **geography guessing game**. Every UTC day everyone gets the
 same puzzle: one **start city** + one **target distance**. Name a real city whose

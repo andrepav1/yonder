@@ -1,4 +1,4 @@
-// Yonder — declarative game rules.
+// Yondle — declarative game rules.
 //
 // This is THE place to tune the game. Every pure module (geo, puzzle, scoring,
 // share, engine) takes a `GameRules` value as input and hard-codes nothing, so

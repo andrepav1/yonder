@@ -1,4 +1,4 @@
-# Yonder — decision log
+# Yondle — decision log
 
 Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or

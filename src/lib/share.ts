@@ -36,7 +36,7 @@ export function buildShareText(
       ? `${breakdown.guessesUsed}/${rules.guesses}`
       : `X/${rules.guesses}`
 
-  const header = `Yonder ${puzzle.date} · ${attemptLabel}`
+  const header = `Yondle ${puzzle.date} · ${attemptLabel}`
 
   const rows = state.guesses.map((g) => {
     const square = TEMP_SQUARE[tempLevel(g, rules)]

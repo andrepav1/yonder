@@ -3,7 +3,7 @@
 // the real UI in a few states + both themes.
 //
 // Usage: npm run build && node scripts/screenshot.mjs
-// Env:   YONDER_ANSWER = a city name that wins today (for the win shot)
+// Env:   YONDLE_ANSWER = a city name that wins today (for the win shot)
 //        OUT_DIR       = where to write PNGs (default ./shots)
 
 import { chromium } from 'playwright-core'
@@ -15,7 +15,7 @@ import { join, extname, resolve } from 'node:path'
 const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
 const DIST = resolve('dist')
 const OUT = resolve(process.env.OUT_DIR ?? 'shots')
-const ANSWER = process.env.YONDER_ANSWER ?? ''
+const ANSWER = process.env.YONDLE_ANSWER ?? ''
 const PORT = 4199
 
 const MIME = {
@@ -66,7 +66,7 @@ async function run() {
       colorScheme: dark ? 'dark' : 'light',
     })
     if (onboarded) {
-      await ctx.addInitScript(() => localStorage.setItem('yonder:onboarded:v1', '1'))
+      await ctx.addInitScript(() => localStorage.setItem('yondle:onboarded:v1', '1'))
     }
     const page = await ctx.newPage()
     await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle' })

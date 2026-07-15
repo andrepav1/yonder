@@ -1,4 +1,4 @@
-# Yonder — "Terra" design system
+# Yondle — "Terra" design system
 
 The visual language: **warm, muted, wandering — "somewhere far off."** Exaggerated
 minimalism, a single mobile-first column, generous whitespace, a decorative globe

@@ -77,8 +77,8 @@ export function updateStats(prev: Stats, result: ResultInput, rules: GameRules):
   }
 }
 
-const STATS_KEY = 'yonder:stats:v1'
-const roundKey = (date: string) => `yonder:round:${date}`
+const STATS_KEY = 'yondle:stats:v1'
+const roundKey = (date: string) => `yondle:round:${date}`
 
 export interface StatsStore {
   loadStats(): Stats

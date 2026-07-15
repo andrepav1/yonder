@@ -1,4 +1,4 @@
-# Yonder 🧭
+# Yondle 🧭
 
 A daily, mobile-first **geography guessing game**. Every day, everyone in the world
 gets the **same** puzzle: one **start city** and one **target distance**. Your job is
@@ -43,7 +43,7 @@ either way).
 
 ### End of round
 
-On a win or after 6 guesses, Yonder reveals the **3 closest possible** answer cities
+On a win or after 6 guesses, Yondle reveals the **3 closest possible** answer cities
 and your best delta. A Wordle-style shareable summary (hot/cold squares + direction
 arrows, no city names) copies to the clipboard.
 

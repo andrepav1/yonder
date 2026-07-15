@@ -2,7 +2,7 @@
 // a real winning guess). Dev-only.
 import { generatePuzzle, utcDateString } from '@/lib/puzzle'
 
-const date = process.env.YONDER_DATE ?? utcDateString()
+const date = process.env.YONDLE_DATE ?? utcDateString()
 const p = generatePuzzle(date)
 process.stdout.write(
   JSON.stringify({

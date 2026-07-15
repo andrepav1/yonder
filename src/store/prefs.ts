@@ -3,8 +3,8 @@
 import type { Unit } from '@/config/rules'
 import { type KeyValueStore, defaultStore } from './storage'
 
-const UNIT_KEY = 'yonder:unit:v1'
-const ONBOARDED_KEY = 'yonder:onboarded:v1'
+const UNIT_KEY = 'yondle:unit:v1'
+const ONBOARDED_KEY = 'yondle:onboarded:v1'
 
 export function loadUnit(fallback: Unit, storage: KeyValueStore = defaultStore()): Unit {
   const v = storage.getItem(UNIT_KEY)

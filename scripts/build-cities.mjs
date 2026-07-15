@@ -1,6 +1,6 @@
 // Builds the compact client-side city dataset from raw GeoNames dumps.
 //
-// Inputs (place these in ./data-src, or point YONDER_DATA_SRC at their folder):
+// Inputs (place these in ./data-src, or point YONDLE_DATA_SRC at their folder):
 //   - cities15000.txt        https://download.geonames.org/export/dump/cities15000.zip
 //   - countryInfo.txt        https://download.geonames.org/export/dump/countryInfo.txt
 //   - admin1CodesASCII.txt   https://download.geonames.org/export/dump/admin1CodesASCII.txt
@@ -18,8 +18,8 @@ import { dirname, join, resolve } from 'node:path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(__dirname, '..')
-const srcDir = process.env.YONDER_DATA_SRC
-  ? resolve(process.env.YONDER_DATA_SRC)
+const srcDir = process.env.YONDLE_DATA_SRC
+  ? resolve(process.env.YONDLE_DATA_SRC)
   : join(repoRoot, 'data-src')
 const outFile = join(repoRoot, 'src', 'data', 'cities.json')
 
