@@ -10,7 +10,7 @@ for _why_ the rules are what they are.
 > autocomplete, seeded generator, scoring, engine, share, stats) **and** the React
 > UI (guess loop, feedback, result, stats, onboarding). All green under Vitest +
 > ESLint + typecheck, and verified end-to-end in a real browser. Deploys static to
-> Cloudflare Pages. See `DESIGN.md` for the visual system.
+> Vercel. See `DESIGN.md` for the visual system.
 
 ## How to work here (non-negotiable)
 
@@ -77,7 +77,7 @@ npm run dev          # Vite dev server → http://localhost:5173
 npm test             # vitest — all pure-logic suites
 npm run lint         # eslint (flat config)
 npm run typecheck    # tsc -b --noEmit
-npm run build        # production build → dist/ (static, Cloudflare Pages)
+npm run build        # production build → dist/ (static, Vercel)
 npm run data:build   # rebuild src/data/cities.json from ./data-src (see below)
 npm run preview:puzzles   # eyeball generated puzzles for several dates
 npm run build && npm run screenshot   # phone-sized screenshots of the real UI
@@ -109,8 +109,8 @@ admin-1 names, rounds coordinates to 4 decimals, and writes a compact tuple arra
 - **Path alias `@/` → `src/`** (Vite + tsconfig + vitest all agree).
 - **Tests co-locate** as `*.test.ts` next to the module. Generation tests assert the
   determinism + solvability invariants across a full year of dates.
-- **Deploy:** static site → **Cloudflare Pages** (`npm run build` → `dist/`). All
-  logic is client-side; no backend in v1.
+- **Deploy:** static site → **Vercel** (framework preset **Vite**, build
+  `npm run build`, output `dist/`). All logic is client-side; no backend in v1.
 
 ## Data attribution
 

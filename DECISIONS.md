@@ -7,7 +7,7 @@ changed. The "why" matters as much as the "what".
 ## 2026-07-15 — Initial design (requirements interview)
 
 **Context.** Greenfield daily geography guessing game, mobile-first, static (no
-backend for v1), deploying to Cloudflare Pages. Built to eventually support multiple
+backend for v1), deploying to Vercel. Built to eventually support multiple
 modes / multiplayer, but only the solo daily game ships first.
 
 ### Game mechanics
@@ -64,7 +64,7 @@ modes / multiplayer, but only the solo daily game ships first.
 ### Platform & polish
 
 - **React + Vite + TypeScript**, ESLint + Prettier, Vitest, GitHub Actions CI,
-  Cloudflare Pages.
+  Vercel.
 - v1 includes: how-to-play onboarding, auto dark mode, decorative globe/map motif.
 - **Deferred from v1:** colorblind-safe palette, installable PWA, interactive map with
   pins. (Easy to add later; flagged so we don't forget.)
@@ -87,7 +87,7 @@ skill for the visual system.
   Calistoga (display) + Inter (UI) + JetBrains Mono (figures). Light + dark auto by
   `prefers-color-scheme`. Semantic CSS-variable tokens; no raw hex in components.
 - **Fonts self-hosted** via `@fontsource` (imported in `main.tsx`) rather than a Google
-  Fonts CDN link — no runtime network dependency, better for Cloudflare + offline, and
+  Fonts CDN link — no runtime network dependency, better for Vercel + offline, and
   it works in the CDN-blocked sandbox.
 - **Icons are inline SVG** (`ui/icons.tsx`), not an icon dependency or emoji chrome —
   small bundle, offline-safe. (Emoji squares in the _share string_ are content, fine.)

@@ -9,7 +9,7 @@ start — measured as the great-circle (haversine) distance. You get **6 guesses
 > dataset + fuzzy autocomplete, deterministic generator, scoring, engine, share, stats)
 > **and** the React UI (guess loop, hot/cold feedback, result, stats, onboarding, light
 >
-> - dark). Fully static; deploys to Cloudflare Pages. `npm run dev` to play.
+> - dark). Fully static; deploys to Vercel. `npm run dev` to play.
 
 ## How it works
 
@@ -106,7 +106,8 @@ behind each rule.
 
 City data © [GeoNames](https://www.geonames.org/), licensed **CC BY 4.0**. The
 compact `cities.json` is committed, so the app is fully static — it deploys to
-**Cloudflare Pages** (build command `npm run build`, output `dist/`) with no backend.
+**Vercel** (framework preset **Vite**, build command `npm run build`, output
+`dist/`) with no backend.
 
 ## Tech
 

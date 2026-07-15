@@ -22,7 +22,8 @@ import { HowToPlay } from '@/ui/HowToPlay'
 import { StatsPanel } from '@/ui/StatsPanel'
 import { HelpIcon, StatsIcon } from '@/ui/icons'
 
-const SITE_URL = 'https://yonder.pages.dev'
+// The public URL appended to shared results. Update to your Vercel domain.
+const SITE_URL = 'https://yonder.vercel.app'
 
 const ERROR_TEXT: Record<GuessError, string> = {
   duplicate: 'You already guessed that city.',
