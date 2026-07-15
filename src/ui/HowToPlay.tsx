@@ -20,8 +20,8 @@ export function HowToPlay({ rules, onClose }: HowToPlayProps) {
         <span className="howto__num">1</span>
         <p>
           Type a city and guess. You’ll see its <strong>distance</strong> from the start,
-          how far that is from the target, and the <strong>direction</strong> (bearing) to
-          it.
+          how far that is from the target, and its <strong>direction</strong> — with every
+          guess drawn on a <strong>globe</strong> centred on the start city.
         </p>
       </div>
       <div className="howto__step">

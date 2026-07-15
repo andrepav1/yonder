@@ -1,10 +1,10 @@
-// Orthographic globe for the reveal screen. Leans into the app's globe motif: a
-// real Earth (Natural Earth 110m land, bundled — no tiles, no CDN) rotated so the
-// start city sits at the centre, with a great-circle arc out to each guess and a
-// marker on every revealed answer city. Distinct from the in-play compass map,
-// which is the aiming tool; this is the "here's where you actually wandered" payoff.
+// The game map: an orthographic globe leaning into the app's globe motif — a real
+// Earth (Natural Earth 110m land, bundled — no tiles, no CDN) rotated so the start
+// city sits at the centre, with a great-circle arc out to each guess. Shown live
+// during play; on the result card `showAnswers` also marks the answer cities (off
+// during play so it can't spoil) — the "here's where you actually wandered" payoff.
 //
-// Lazy-loaded from ResultCard, so d3-geo + the land data stay off the initial bundle.
+// Lazy-loaded (App + ResultCard), so d3-geo + the land data stay off the initial bundle.
 
 import { useMemo, type CSSProperties } from 'react'
 import {

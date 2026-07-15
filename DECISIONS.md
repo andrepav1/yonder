@@ -54,6 +54,8 @@ modes / multiplayer, but only the solo daily game ships first.
   bounded Levenshtein), backed by a typeahead. Resolves to the closest dataset city;
   duplicate names are disambiguated by country (then admin-1 region).
 - Bearing shown as **exact degrees + arrow**. Reveal the **top 3 closest** answers.
+  _(Superseded 2026-07-16: bearing now shown as a 16-point compass direction, and the
+  spatial view is the globe map — see that entry.)_
 
 ### Persistence & sharing
 
@@ -66,8 +68,9 @@ modes / multiplayer, but only the solo daily game ships first.
 - **React + Vite + TypeScript**, ESLint + Prettier, Vitest, GitHub Actions CI,
   Vercel.
 - v1 includes: how-to-play onboarding, auto dark mode, decorative globe/map motif.
-- **Deferred from v1:** colorblind-safe palette, installable PWA, interactive map with
-  pins. (Easy to add later; flagged so we don't forget.)
+- **Deferred from v1:** colorblind-safe palette, installable PWA. (Easy to add later;
+  flagged so we don't forget.) _(The "map with pins" once deferred here shipped
+  2026-07-16 as the globe map — see that entry.)_
 
 ### Architecture
 

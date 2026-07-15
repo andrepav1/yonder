@@ -109,7 +109,7 @@ behind each rule.
 ## Data & deployment
 
 City data © [GeoNames](https://www.geonames.org/), licensed **CC BY 4.0**. The
-reveal globe's coastlines come from [Natural Earth](https://www.naturalearthdata.com/)
+globe's coastlines come from [Natural Earth](https://www.naturalearthdata.com/)
 (public domain) via the bundled `world-atlas` 110m land data — no map tiles, no CDN.
 The compact `cities.json` is committed, so the app is fully static — it deploys to
 **Vercel** (framework preset **Vite**, build command `npm run build`, output

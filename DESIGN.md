@@ -62,5 +62,5 @@ self-contained — no tiles, no CDN, matching the offline-pure core.
 
 ## Deferred (logged, not built)
 
-Colorblind-safe ramp, installable PWA, drag-to-rotate on the reveal globe. See
+Colorblind-safe ramp, installable PWA, drag-to-rotate on the globe. See
 `DECISIONS.md`.
