@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatDistance, deltaPhrase, formatBearing } from './format'
+import { formatDistance, remainingPhrase, formatBearing } from './format'
 
 describe('formatDistance', () => {
   it('formats km with thousands separators', () => {
@@ -11,14 +11,14 @@ describe('formatDistance', () => {
   })
 })
 
-describe('deltaPhrase', () => {
-  it('describes too far / too close / spot on', () => {
-    expect(deltaPhrase(142, 'km')).toBe('142 km too far')
-    expect(deltaPhrase(-37, 'km')).toBe('37 km too close')
-    expect(deltaPhrase(0, 'km')).toBe('spot on')
+describe('remainingPhrase', () => {
+  it('describes distance to go / over / on the line', () => {
+    expect(remainingPhrase(142, 'km')).toBe('142 km to go')
+    expect(remainingPhrase(-37, 'km')).toBe('37 km over')
+    expect(remainingPhrase(0, 'km')).toBe('on the line')
   })
-  it('rounds sub-unit deltas to spot on', () => {
-    expect(deltaPhrase(0.3, 'km')).toBe('spot on')
+  it('rounds sub-unit remainders to on the line', () => {
+    expect(remainingPhrase(0.3, 'km')).toBe('on the line')
   })
 })
 

@@ -1,9 +1,11 @@
 # Yondle 🧭
 
 A daily, mobile-first **geography guessing game**. Every day, everyone in the world
-gets the **same** puzzle: one **start city** and one **target distance**. Your job is
-to name a real city that lies as close as possible to that exact distance from the
-start — measured as the great-circle (haversine) distance. You get **6 guesses**.
+gets the **same** puzzle: one **start city** and one **target distance**. Build a
+journey city by city — each guess adds the great-circle (haversine) distance from your
+**previous** city (the start, on the first hop) to a **running total**. Reach the
+target without going over. Overshoot and you bust; land your total just under it to
+win. You get **6 guesses**, and fewer hops is a better score.
 
 > **Project status:** v1 is complete — the pure, tested game core (distance/bearing,
 > dataset + fuzzy autocomplete, deterministic generator, scoring, engine, share, stats)
@@ -13,50 +15,51 @@ start — measured as the great-circle (haversine) distance. You get **6 guesses
 
 ## How it works
 
-| Rule            | Value                                                                  | Where                              |
-| --------------- | ---------------------------------------------------------------------- | ---------------------------------- |
-| Guesses per day | **6**                                                                  | `rules.guesses`                    |
-| Win band        | best guess within **±5%** of target                                    | `rules.tolerancePct`               |
-| Score           | `1000 × max(0, 1 − error/0.5)` on best guess **+ 50 per unused guess** | `rules.score`                      |
-| Target distance | **200–2000 km**, validated to have ≥3 valid answers                    | `rules.target`, `rules.generation` |
-| Start city      | population-weighted, **≥ 1,000,000** (recognizable)                    | `rules.startCity`                  |
-| Dataset         | GeoNames cities, **pop ≥ 100k** (~6.2k cities)                         | `rules.dataset`                    |
-| Daily reset     | **UTC midnight**, seeded from the date                                 | `rules.reset`                      |
+| Rule            | Value                                                          | Where                              |
+| --------------- | -------------------------------------------------------------- | ---------------------------------- |
+| Guesses per day | **6** hops                                                     | `rules.guesses`                    |
+| Scoring         | **cumulative** — sum of each leg (previous city → next)        | `src/lib/scoring.ts`               |
+| Win band        | running total in **[target·98%, target]** (one-sided; no over) | `rules.tolerancePct`               |
+| Bust            | total **over** the target, or out of 6 guesses                 | `src/lib/engine.ts`                |
+| Score           | golf: **fewer hops is better**                                 | guess distribution                 |
+| Target distance | **500–10000 km**, validated to have ≥3 single-hop wins         | `rules.target`, `rules.generation` |
+| Start city      | population-weighted, **≥ 1,000,000** (recognizable)            | `rules.startCity`                  |
+| Dataset         | GeoNames cities, **pop ≥ 100k** (~6.2k cities)                 | `rules.dataset`                    |
+| Daily reset     | **UTC midnight**, seeded from the date                         | `rules.reset`                      |
 
-**Win vs. score are two layers over the same number** — a guess's _percent error_ is
-`|guessDistance − target| ÷ target`.
-
-- **Win/lose (drives the streak):** you win if your best guess lands inside the ±5%
-  band. For a 1000 km target that's 950–1050 km. It's unit-independent — the same in
-  km or miles.
-- **Score (bragging rights):** how _deep_ inside you got — full points at a perfect
-  hit, decaying smoothly to 0 once you're 50% off, plus a bonus for finishing in fewer
-  guesses.
+- **Cumulative score:** your total is the sum of the legs. Start Rome, guess Milan →
+  total = dist(Rome→Milan); guess Turin → total += dist(Milan→Turin); and so on. You
+  can revisit no city (each is used once), and the legs only ever add up.
+- **Win/lose (drives the streak):** you win the moment the total lands in the band —
+  within **2% below** the target (for 2000 km, that's 1960–2000 km). Cross the target
+  and you **bust** immediately; so does running out of guesses. The band is a
+  percentage, so it's unit-independent (same in km or miles).
+- **Score (bragging rights):** it's golf — the streak and guess distribution reward
+  reaching the band in as **few hops** as possible.
 
 ### The globe
 
 The board is an **interactive orthographic globe** (drag to spin), centred on the
-day's start city when the page loads. Each guess drops a pin on the globe, coloured on
-the same hot→cold ramp as the list below it; pins on the far side of the Earth are
-hidden until you rotate them into view. The **target ring** (see below) stays hidden
-while you play — it's the answer, so it's only revealed once the round is over.
+day's start city when the page loads. Each guess extends a **journey line** from the
+start through your cities in order and drops a pin coloured on the same hot→cold ramp
+as the list below it, and the globe **spins to re-centre on your latest guess** (drag
+to override); pins on the far side of the Earth are hidden until you rotate them into
+view.
 
 ### Per-guess feedback
 
-Below the globe, each guess shows the guessed city's actual distance from the start,
-the delta from target ("142 km too far" / "37 km too close"), the exact **bearing in
-degrees + an arrow** (e.g. `47° ↗`), and a hot→cold colour cue by percent error. A
-km/mi toggle switches all displayed distances (the win band is a percentage, so it's
-identical either way).
+Below the globe, each guess shows the **leg** you just added (`+480 km`), the new
+**running total**, how far there is left to go ("1,134 km to go" — or "37 km over" on a
+bust), the exact **bearing in degrees + an arrow** (e.g. `47° ↗`) for that leg, and a
+hot→cold colour cue that warms as the total nears the target. A km/mi toggle switches
+all displayed distances (the win band is a percentage, so it's identical either way).
 
 ### End of round
 
-On a win or after 6 guesses, the globe reveals the dashed **target ring** — the
-geodesic circle whose radius _is_ the target distance, so every point on it is a
-perfect answer — with the **closest possible** answer cities pinned along it, and the
-result card shows your score and best delta. A
-Wordle-style shareable summary (hot/cold squares + direction arrows, no city names)
-copies to the clipboard.
+On a win, a bust, or after 6 guesses, the globe pins the closest **single-hop cities**
+— the ones that would have won it in one straight hop — and the result card shows how
+many hops you took and where your total landed. A Wordle-style shareable summary
+(hot/cold squares + leg arrows, a reach-% line, no city names) copies to the clipboard.
 
 ## Development
 
@@ -74,8 +77,8 @@ npm run preview:puzzles   # print generated puzzles for several dates
 Peek at the deterministic generator (same for everyone on that date):
 
 ```
-2026-07-15  START: Baotou       TARGET: 607 km   band 577–637   valid answers: many
-            closest: Linshui 604 km (−3), Handan 604 km, Guyuan 603 km ...
+2026-07-16  START: Saint Petersburg   TARGET: 2264 km   win band 2219–2264 km (single hop; don't overshoot)
+            single-hop wins in band: 3   closest: Balıkesir 2262 km (−2) ...
 ```
 
 ### Project structure
@@ -89,10 +92,10 @@ src/
     types.ts          # City, PuzzleSpec, RoundState, … (serializable)
     cities.ts         # dataset load + fuzzy autocomplete
     puzzle.ts         # deterministic daily generator
-    scoring.ts        # evaluate guess, proximity score, hot/cold level
-    engine.ts         # pure RoundState machine
+    scoring.ts        # evaluate a leg, cumulative total, hot/cold level
+    engine.ts         # pure RoundState machine (accumulate legs, bust on over)
     share.ts          # Wordle-style share string
-    format.ts         # distance / delta / bearing display
+    format.ts         # distance / remaining / bearing display
   modes/daily.ts      # the one GameMode descriptor (+ registry)
   store/              # persistence behind a KeyValueStore seam
     storage.ts        # memory + localStorage adapters

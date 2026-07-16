@@ -2,21 +2,31 @@
 // the sandbox's pre-installed Chromium to capture phone-sized screenshots of
 // the real UI in a few states + both themes.
 //
+// It derives today's puzzle facts from scripts/print-today.mts, so the mid-game
+// ("play") shot uses a safe partial hop and the "win" shot uses a single-hop
+// winning city — neither overshoots the cumulative target.
+//
 // Usage: npm run build && node scripts/screenshot.mjs
-// Env:   YONDLE_ANSWER = a city name that wins today (for the win shot)
-//        OUT_DIR       = where to write PNGs (default ./shots)
+// Env:   OUT_DIR = where to write PNGs (default ./shots)
 
 import { chromium } from 'playwright-core'
 import { createServer } from 'node:http'
 import { readFile } from 'node:fs/promises'
+import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { join, extname, resolve } from 'node:path'
 
 const CHROME = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome'
 const DIST = resolve('dist')
 const OUT = resolve(process.env.OUT_DIR ?? 'shots')
-const ANSWER = process.env.YONDLE_ANSWER ?? ''
 const PORT = 4199
+
+// Today's puzzle facts: a one-hop winning city + a safe partial hop.
+const facts = JSON.parse(
+  execFileSync('npx', ['vite-node', 'scripts/print-today.mts'], { encoding: 'utf8' }),
+)
+const ANSWER = facts.answer ?? ''
+const PARTIAL = facts.partial ?? ''
 
 const MIME = {
   '.html': 'text/html',
@@ -72,10 +82,13 @@ async function run() {
     await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle' })
     await page.waitForTimeout(400)
 
-    if (play || win) {
-      await guess(page, 'Reykjavik')
-      await guess(page, 'Cape Town')
-      if (win && ANSWER) await guess(page, ANSWER)
+    if (play && PARTIAL) {
+      // A single mid-journey hop — round still in progress.
+      await guess(page, PARTIAL)
+    }
+    if (win && ANSWER) {
+      // A one-hop win (distance lands in the band).
+      await guess(page, ANSWER)
     }
     await page.waitForTimeout(500)
     await page.screenshot({ path: join(OUT, `${name}.png`), fullPage: true })

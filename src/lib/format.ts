@@ -10,14 +10,22 @@ export function formatDistance(km: number, unit: Unit): string {
 }
 
 /**
- * Human phrase for a signed delta (guess distance − target).
- * + = "too far", − = "too close", ~0 = "spot on".
+ * The win band's width (how far below the target still wins) as a display
+ * string, e.g. "45 km". One source of truth for the prompt + how-to copy.
  */
-export function deltaPhrase(deltaKm: number, unit: Unit): string {
-  const rounded = Math.round(toUnit(Math.abs(deltaKm), unit))
-  if (rounded === 0) return 'spot on'
+export function bandLabel(targetKm: number, tolerancePct: number, unit: Unit): string {
+  return formatDistance(targetKm * tolerancePct, unit)
+}
+
+/**
+ * Human phrase for the remaining distance to the target (targetKm − total).
+ * + = still short ("142 km to go"), − = overshot ("37 km over"), ~0 = "on the line".
+ */
+export function remainingPhrase(remainingKm: number, unit: Unit): string {
+  const rounded = Math.round(toUnit(Math.abs(remainingKm), unit))
+  if (rounded === 0) return 'on the line'
   const magnitude = `${rounded.toLocaleString('en-US')} ${unit}`
-  return deltaKm > 0 ? `${magnitude} too far` : `${magnitude} too close`
+  return remainingKm >= 0 ? `${magnitude} to go` : `${magnitude} over`
 }
 
 /** e.g. "47° ↗" — exact degrees plus the nearest 8-way arrow. */

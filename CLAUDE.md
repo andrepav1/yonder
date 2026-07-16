@@ -1,10 +1,12 @@
 # Yondle — working notes for Claude
 
 A daily, mobile-first **geography guessing game**. Every UTC day everyone gets the
-same puzzle: one **start city** + one **target distance**. Name a real city whose
-great-circle (haversine) distance from the start is as close as possible to the
-target. 6 guesses. See `README.md` for the player-facing picture and `DECISIONS.md`
-for _why_ the rules are what they are.
+same puzzle: one **start city** + one **target distance**. Build a journey by naming
+cities: each guess adds the great-circle (haversine) distance from your **previous**
+city (the start for the first hop) to a **running total**. Reach the target — land in
+`[target·(1−tol), target]` — without overshooting. Overshoot, or run out of the 6
+guesses, and you lose. Fewer hops is a better (golf) score. See `README.md` for the
+player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 
 > **Status:** v1 is fully built — the pure core (distance/bearing, dataset +
 > autocomplete, seeded generator, scoring, engine, share, stats) **and** the React
@@ -42,20 +44,24 @@ for _why_ the rules are what they are.
   accent/case-insensitive **fuzzy** autocomplete (`search`, `resolveGuess`,
   `cityLabel` disambiguation).
 - `src/lib/puzzle.ts` — `generatePuzzle(date, {cities?, rules?})`: population-weighted
-  start city + validated target so every day has ≥ `minValidAnswers` cities in the
-  win band. Deterministic in `date`.
-- `src/lib/scoring.ts` — **pure**: `evaluateGuess` (distance/delta/bearing/win),
-  `proximityBase`, `scoreRound`, and `tempLevel` (the shared hot→cold level).
+  start city + validated target so every day has ≥ `minValidAnswers` cities within
+  `[target·(1−tol), target]` of the start — i.e. **single-hop wins** — guaranteeing
+  solvability (multi-hop paths only add more options). Deterministic in `date`.
+- `src/lib/scoring.ts` — **pure**: `evaluateLeg` (leg / running total / remaining /
+  bearing / over / win — a guess from a given previous point onto the running total),
+  `scoreRound` (golf: guess count + final total), and `tempLevel` (the shared hot→cold
+  level, graded by how much of the journey remains; 0 also = bust/overshoot).
 - `src/lib/engine.ts` — **pure** round state machine: `createRound`, `applyGuess`
-  (rejects finished / start-city / duplicate without using a turn), `guessesLeft`.
-  Every transition returns a new serializable `RoundState`.
-- `src/lib/share.ts` — **pure** Wordle-style share string (hot/cold squares + arrows,
-  score line, no city names).
-- `src/lib/format.ts` — **pure** display helpers (`formatDistance`, `deltaPhrase`,
+  (adds the next leg from the previous city; rejects finished / start-city / duplicate
+  without using a turn; ends the round on a win, an **overshoot**, or out of guesses),
+  `guessesLeft`. Every transition returns a new serializable `RoundState`.
+- `src/lib/share.ts` — **pure** Wordle-style share string (hot/cold squares per hop +
+  leg arrows, a reach-% line, no city names).
+- `src/lib/format.ts` — **pure** display helpers (`formatDistance`, `remainingPhrase`,
   `formatBearing`), unit-aware.
 - `src/data/cities.json` — **committed** compact dataset (array-of-arrays; see
   `fields`). Built by `scripts/build-cities.mjs`.
-- `src/modes/daily.ts` — the single `GameMode` descriptor (`generate`/`evaluate`/
+- `src/modes/daily.ts` — the single `GameMode` descriptor (`generate`/`apply`/
   `score`/`share`) + a `modes` registry. Adding a mode = adding a descriptor.
 - `src/store/` — persistence behind a `KeyValueStore` seam (`storage.ts`, memory +
   localStorage adapters): `statsStore.ts` (pure `updateStats` streak logic + the
@@ -64,18 +70,19 @@ for _why_ the rules are what they are.
 - `src/App.tsx` — orchestrates the day: generate puzzle, load/restore the saved
   round (daily lock), handle guesses, record the result, share.
 - `src/ui/*` — React shell: `Globe` (the interactive board — see below), `GuessInput`
-  (fuzzy typeahead), `GuessRow` (distance, delta, bearing, hot/cold), `ResultCard`
-  (score + share; the answer *reveal* now lives on the globe, not a text list),
+  (fuzzy typeahead), `GuessRow` (leg, running total, remaining, bearing, hot/cold), `ResultCard`
+  (score + share; the answer _reveal_ now lives on the globe, not a text list),
   `HowToPlay`, `StatsPanel`, `Modal` (bottom-sheet), `icons.tsx` (inline SVG — no
   emoji chrome).
 - `src/ui/Globe.tsx` — the main guessing surface: a drag-to-spin **orthographic
   globe** (d3-geo) over a bundled land outline (`world-atlas` land-110m TopoJSON,
   hydrated once with `topojson-client`). Purely presentational — all geometry comes
-  from props. Renders the start-city marker and guess pins coloured by `tempLevel`
-  during play, and — only once `finished` — the geodesic **target ring** (`geoCircle`
-  radius = `targetKm`, the locus of perfect answers) with the closest answers pinned
-  along it. The ring is the answer, so it stays hidden mid-round. Far-hemisphere points
-  are hidden via a `geoDistance` great-circle test. No runtime network; land is bundled.
+  from props. Renders the start-city marker, the **journey** (a line linking start →
+  each guess in order — the legs that sum toward the target) and guess pins coloured by
+  `tempLevel`, and — only once `finished` — the closest **single-hop wins** pinned as a
+  reveal. Spins to face the start on load and smoothly **re-centres on the latest guess**
+  (rAF-animated; drag interrupts). Far-hemisphere points are hidden via a `geoDistance`
+  great-circle test. No runtime network; land is bundled.
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it

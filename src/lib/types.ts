@@ -21,18 +21,25 @@ export interface AnswerCity {
   distanceKm: number
 }
 
-/** Outcome of evaluating one guessed city against a puzzle. Serializable. */
+/**
+ * Outcome of adding one guessed city to the running path. The score is
+ * cumulative: each guess contributes the great-circle distance from the
+ * *previous* point (the start city for the first guess) to this city, and the
+ * running total climbs toward the target. Serializable.
+ */
 export interface GuessResult {
   city: City
-  /** Great-circle distance from the start city, in km. */
-  distanceKm: number
-  /** Signed distance from target (distanceKm − targetKm): + = too far, − = too close. */
-  deltaKm: number
-  /** |deltaKm| ÷ targetKm — the fraction used for win + score + temperature. */
-  errorPct: number
-  /** Initial bearing from the start city to this guess, degrees [0,360). */
+  /** Distance from the previous point (start for the first guess) to this city, km. */
+  legKm: number
+  /** Running total of every leg through this guess, km. */
+  cumulativeKm: number
+  /** targetKm − cumulativeKm: distance still to cover (negative once overshot). */
+  remainingKm: number
+  /** Initial bearing from the previous point to this city, degrees [0,360). */
   bearingDeg: number
-  /** True when errorPct ≤ rules.tolerancePct (inside the win band). */
+  /** True when the running total has overshot the target (an instant loss). */
+  over: boolean
+  /** True when the running total lands in [target·(1−tol), target] — a win. */
   won: boolean
 }
 
@@ -45,20 +52,20 @@ export interface RoundState {
   guesses: GuessResult[]
 }
 
-/** Graded score breakdown for a finished (or in-progress) round. */
+/**
+ * Golf-style score breakdown for a finished (or in-progress) round. There are
+ * no points — the number that matters is how few guesses reached the band.
+ */
 export interface ScoreBreakdown {
   won: boolean
-  /** base (proximity) + bonus. */
-  score: number
-  /** Proximity points from the best guess. */
-  base: number
-  /** Fewer-guesses bonus (0 unless won). */
-  bonus: number
+  /** Number of guesses (hops) taken. Fewer is better on a win. */
   guessesUsed: number
-  /** Best (smallest) errorPct across guesses; Infinity if no guesses. */
-  bestErrorPct: number
-  /** Signed delta of the best guess in km (NaN if no guesses). */
-  bestDeltaKm: number
+  /** Final running total across all legs, km (0 with no guesses). */
+  totalKm: number
+  /** targetKm − totalKm: how far short (or, if negative, past) the finish. */
+  remainingKm: number
+  /** True when the round ended by overshooting the target. */
+  overshot: boolean
 }
 
 /** A fully-specified daily puzzle. Pure output of the generator — serializable. */
@@ -70,7 +77,7 @@ export interface PuzzleSpec {
   start: City
   /** Target great-circle distance from `start`, in km (rounded). */
   targetKm: number
-  /** Win band half-width as a fraction of target (mirrors rules.tolerancePct). */
+  /** One-sided win-band width below the target, as a fraction (mirrors rules.tolerancePct). */
   tolerancePct: number
   /** The `revealCount` cities closest to the target distance. */
   answers: AnswerCity[]

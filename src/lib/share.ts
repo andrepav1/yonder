@@ -5,7 +5,7 @@ import type { GameRules } from '@/config/rules'
 import { scoreRound, tempLevel, type TempLevel } from './scoring'
 import { bearingArrow } from './geo'
 
-/** Warm → cool squares matching TempLevel (4 = hottest/win ... 0 = coldest). */
+/** Warm → cool squares matching TempLevel (4 = hottest/win ... 0 = coldest/bust). */
 const TEMP_SQUARE: Record<TempLevel, string> = {
   4: '🟥',
   3: '🟧',
@@ -20,9 +20,10 @@ export interface ShareOptions {
 }
 
 /**
- * Build the share string for a finished round: a header line, one row per guess
- * (a hot/cold square + a direction arrow), and a score line. Never reveals the
- * guessed or answer city names.
+ * Build the share string for a finished round: a header line with the guess
+ * count, one row per hop (a hot/cold square + the leg's direction arrow), and a
+ * line for how far the running total reached (as a % of target). Never reveals
+ * any city names.
  */
 export function buildShareText(
   state: RoundState,
@@ -43,9 +44,10 @@ export function buildShareText(
     return `${square} ${bearingArrow(g.bearingDeg)}`
   })
 
-  const scoreLine = `${breakdown.score} pts`
+  const pct = Math.round((breakdown.totalKm / puzzle.targetKm) * 100)
+  const reachLine = breakdown.overshot ? `📏 ${pct}% (overshot)` : `📏 ${pct}% of target`
 
-  const lines = [header, ...rows, scoreLine]
+  const lines = [header, ...rows, reachLine]
   if (opts.url) lines.push(opts.url)
   return lines.join('\n')
 }

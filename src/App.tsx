@@ -12,7 +12,7 @@ import {
 } from '@/lib/engine'
 import { createStatsStore, type Stats } from '@/store/statsStore'
 import { loadUnit, saveUnit, isOnboarded, setOnboarded } from '@/store/prefs'
-import { formatDistance } from '@/lib/format'
+import { formatDistance, bandLabel } from '@/lib/format'
 import { cityLabel } from '@/lib/cities'
 import { Globe } from '@/ui/Globe'
 import { GuessInput } from '@/ui/GuessInput'
@@ -146,13 +146,14 @@ export default function App() {
         <section className="prompt">
           <div className="prompt__eyebrow">Today’s departure</div>
           <div className="prompt__start">{cityLabel(puzzle.start)}</div>
-          <div className="prompt__target-label">Find a city about</div>
+          <div className="prompt__target-label">Reach a total of</div>
           <div className="prompt__target mono">
             {formatDistance(puzzle.targetKm, unit)}
           </div>
           <div className="prompt__hint">
-            away · within ±{Math.round(rules.tolerancePct * 100)}% · {rules.guesses}{' '}
-            guesses
+            hop city to city · land within{' '}
+            {bandLabel(puzzle.targetKm, rules.tolerancePct, unit)} below the target ·
+            don’t overshoot · {rules.guesses} guesses
           </div>
           <div className="pips" aria-label={`${left} guesses left`}>
             {Array.from({ length: rules.guesses }).map((_, i) => {
@@ -165,7 +166,6 @@ export default function App() {
 
         <Globe
           start={puzzle.start}
-          targetKm={puzzle.targetKm}
           guesses={round.guesses}
           rules={rules}
           answers={puzzle.answers.map((a) => a.city)}
@@ -190,6 +190,7 @@ export default function App() {
         {finished && (
           <ResultCard
             state={round}
+            puzzle={puzzle}
             rules={rules}
             unit={unit}
             onShare={handleShare}
@@ -206,7 +207,9 @@ export default function App() {
         </footer>
       </div>
 
-      {showHowTo && <HowToPlay rules={rules} onClose={closeHowTo} />}
+      {showHowTo && (
+        <HowToPlay rules={rules} puzzle={puzzle} unit={unit} onClose={closeHowTo} />
+      )}
       {showStats && <StatsPanel stats={stats} onClose={() => setShowStats(false)} />}
     </div>
   )
