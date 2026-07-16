@@ -185,3 +185,15 @@ _previous_ city, the total only grows, and overshooting is a loss.
 - **Screenshot harness** (`print-today` + `screenshot.mjs`) drives a safe partial hop
   for the mid-game shot and a single-hop win for the win shot, validating both names
   through `resolveGuess` so bare names (e.g. "Orléans") resolve to the intended city.
+
+## 2026-07-16 — Drop the target ring
+
+**Context.** The end-of-round globe drew a dashed geodesic ring at the target distance
+("where a single straight hop lands"). In the cumulative-path game the target is a
+_path length_, not a radius, so the ring no longer represents the thing you're aiming
+at and read as a leftover from the single-shot game.
+
+- **Removed the ring** (`geoCircle` / `kmToDegrees` / the `targetKm` Globe prop and the
+  `.globe__ring` style all go with it). The globe now shows only the journey line, the
+  guess pins, and — on finish — the closest **single-hop win** pins, which stand on
+  their own without the circle. Result-card copy updated to match.

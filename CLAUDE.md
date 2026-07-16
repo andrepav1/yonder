@@ -79,10 +79,9 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   hydrated once with `topojson-client`). Purely presentational — all geometry comes
   from props. Renders the start-city marker, the **journey** (a line linking start →
   each guess in order — the legs that sum toward the target) and guess pins coloured by
-  `tempLevel`, and — only once `finished` — the geodesic **target ring** (`geoCircle`
-  radius = `targetKm`), i.e. where a single straight hop would land, with the closest
-  single-hop wins pinned along it. Far-hemisphere points are hidden via a `geoDistance`
-  great-circle test. No runtime network; land is bundled.
+  `tempLevel`, and — only once `finished` — the closest **single-hop wins** pinned as a
+  reveal. Far-hemisphere points are hidden via a `geoDistance` great-circle test. No
+  runtime network; land is bundled.
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it

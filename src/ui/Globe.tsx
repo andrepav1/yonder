@@ -4,21 +4,19 @@
 //   • the journey so far as a line linking start → each guess in order (the
 //     legs whose lengths sum toward the target), pins coloured on the shared
 //     hot→cold ramp, and
-//   • once finished, a geodesic "target ring": the small-circle of radius =
-//     targetKm around the start, i.e. where a single straight hop would land.
+//   • once finished, the closest single-hop cities pinned as a reveal.
 //
 // Purely presentational: all geometry comes from props. The projection + d3-geo
 // path strings are recomputed from the current rotation; nothing here mutates
 // game state. Points on the far hemisphere are hidden via a great-circle test.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { geoOrthographic, geoPath, geoGraticule10, geoCircle, geoDistance } from 'd3-geo'
+import { geoOrthographic, geoPath, geoGraticule10, geoDistance } from 'd3-geo'
 import { feature } from 'topojson-client'
 import type { FeatureCollection } from 'geojson'
 import landTopo from 'world-atlas/land-110m.json'
 import type { City, GuessResult } from '@/lib/types'
 import type { GameRules } from '@/config/rules'
-import { EARTH_RADIUS_KM } from '@/lib/geo'
 import { tempLevel } from '@/lib/scoring'
 import { cityLabel } from '@/lib/cities'
 
@@ -34,14 +32,10 @@ const SIZE = 320 // internal SVG units; CSS scales it to the column width
 const MARGIN = 3
 const RADIUS = SIZE / 2 - MARGIN
 
-/** Great-circle radius (in degrees) that corresponds to a distance in km. */
-const kmToDegrees = (km: number): number => (km / EARTH_RADIUS_KM) * (180 / Math.PI)
-
 type LngLat = [number, number]
 
 interface GlobeProps {
   start: City
-  targetKm: number
   guesses: GuessResult[]
   rules: GameRules
   /** Closest possible answers, revealed on the globe once the round is over. */
@@ -49,14 +43,7 @@ interface GlobeProps {
   finished?: boolean
 }
 
-export function Globe({
-  start,
-  targetKm,
-  guesses,
-  rules,
-  answers,
-  finished,
-}: GlobeProps) {
+export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) {
   // Rotation is [λ, φ]: spin the globe so the start city faces the viewer first.
   const [rotation, setRotation] = useState<LngLat>([-start.lng, -start.lat])
   const svgRef = useRef<SVGSVGElement>(null)
@@ -99,15 +86,6 @@ export function Globe({
     ]
     return path({ type: 'LineString', coordinates }) ?? ''
   }, [path, start.lng, start.lat, guesses])
-  // The target distance drawn as a single-hop radius — a reference revealed
-  // only once the round is over (it's the "you could have gone straight here").
-  const targetRingPath = useMemo(() => {
-    if (!finished) return ''
-    const circle = geoCircle()
-      .center([start.lng, start.lat])
-      .radius(kmToDegrees(targetKm))
-    return path(circle()) ?? ''
-  }, [path, start.lng, start.lat, targetKm, finished])
 
   const startXY = place(start.lng, start.lat)
 
@@ -150,7 +128,6 @@ export function Globe({
         <circle className="globe__sphere" cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} />
         <path className="globe__graticule" d={graticulePath} />
         <path className="globe__land" d={landPath} />
-        <path className="globe__ring" d={targetRingPath} />
         <path className="globe__journey" d={journeyPath} />
         <circle className="globe__edge" cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} />
 

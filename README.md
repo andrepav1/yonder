@@ -43,8 +43,7 @@ The board is an **interactive orthographic globe** (drag to spin), centred on th
 day's start city when the page loads. Each guess extends a **journey line** from the
 start through your cities in order and drops a pin coloured on the same hot→cold ramp
 as the list below it; pins on the far side of the Earth are hidden until you rotate
-them into view. The **target ring** (see below) stays hidden while you play — it's a
-reference, only revealed once the round is over.
+them into view.
 
 ### Per-guess feedback
 
@@ -56,12 +55,10 @@ all displayed distances (the win band is a percentage, so it's identical either 
 
 ### End of round
 
-On a win, a bust, or after 6 guesses, the globe reveals the dashed **target ring** —
-the geodesic circle whose radius _is_ the target distance, i.e. where a single straight
-hop would have landed — with the closest single-hop cities pinned along it, and the
-result card shows how many hops you took and where your total landed. A Wordle-style
-shareable summary (hot/cold squares + leg arrows, a reach-% line, no city names) copies
-to the clipboard.
+On a win, a bust, or after 6 guesses, the globe pins the closest **single-hop cities**
+— the ones that would have won it in one straight hop — and the result card shows how
+many hops you took and where your total landed. A Wordle-style shareable summary
+(hot/cold squares + leg arrows, a reach-% line, no city names) copies to the clipboard.
 
 ## Development
 

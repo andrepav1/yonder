@@ -44,8 +44,8 @@ export function ResultCard({
       </div>
 
       <div className="result__answer-note">
-        The ring on the globe marks the target distance as a single straight hop — the
-        closest cities to it are pinned along it.
+        The pins on the globe are the closest cities to the target distance — the ones
+        that would have won it in a single straight hop.
       </div>
 
       <button className="btn" onClick={onShare}>

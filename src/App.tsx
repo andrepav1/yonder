@@ -165,7 +165,6 @@ export default function App() {
 
         <Globe
           start={puzzle.start}
-          targetKm={puzzle.targetKm}
           guesses={round.guesses}
           rules={rules}
           answers={puzzle.answers.map((a) => a.city)}
