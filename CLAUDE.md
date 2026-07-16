@@ -80,8 +80,9 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   from props. Renders the start-city marker, the **journey** (a line linking start →
   each guess in order — the legs that sum toward the target) and guess pins coloured by
   `tempLevel`, and — only once `finished` — the closest **single-hop wins** pinned as a
-  reveal. Far-hemisphere points are hidden via a `geoDistance` great-circle test. No
-  runtime network; land is bundled.
+  reveal. Spins to face the start on load and smoothly **re-centres on the latest guess**
+  (rAF-animated; drag interrupts). Far-hemisphere points are hidden via a `geoDistance`
+  great-circle test. No runtime network; land is bundled.
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it

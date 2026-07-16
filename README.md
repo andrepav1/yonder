@@ -42,8 +42,9 @@ win. You get **6 guesses**, and fewer hops is a better score.
 The board is an **interactive orthographic globe** (drag to spin), centred on the
 day's start city when the page loads. Each guess extends a **journey line** from the
 start through your cities in order and drops a pin coloured on the same hot→cold ramp
-as the list below it; pins on the far side of the Earth are hidden until you rotate
-them into view.
+as the list below it, and the globe **spins to re-centre on your latest guess** (drag
+to override); pins on the far side of the Earth are hidden until you rotate them into
+view.
 
 ### Per-guess feedback
 

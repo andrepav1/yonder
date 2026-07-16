@@ -6,6 +6,9 @@
 //     hot→cold ramp, and
 //   • once finished, the closest single-hop cities pinned as a reveal.
 //
+// It spins to face the start city on load, and smoothly re-centres on the
+// latest guess each time one lands (drag interrupts the spin).
+//
 // Purely presentational: all geometry comes from props. The projection + d3-geo
 // path strings are recomputed from the current rotation; nothing here mutates
 // game state. Points on the far hemisphere are hidden via a great-circle test.
@@ -48,11 +51,58 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
   const [rotation, setRotation] = useState<LngLat>([-start.lng, -start.lat])
   const svgRef = useRef<SVGSVGElement>(null)
   const drag = useRef<{ x: number; y: number } | null>(null)
+  const rotationRef = useRef<LngLat>(rotation)
+  const animRef = useRef<number | null>(null)
+
+  // Mirror the current rotation into a ref so animations/drag can read it
+  // without re-subscribing.
+  useEffect(() => {
+    rotationRef.current = rotation
+  }, [rotation])
+
+  const stopAnim = () => {
+    if (animRef.current !== null) {
+      cancelAnimationFrame(animRef.current)
+      animRef.current = null
+    }
+  }
+
+  // Smoothly spin the globe so [lng, lat] comes to the centre, taking the
+  // shortest way round in longitude. Cancels any spin already in flight.
+  const animateTo = (lng: number, lat: number) => {
+    stopAnim()
+    const from = rotationRef.current
+    const to: LngLat = [-lng, -lat]
+    const dλ = ((((to[0] - from[0] + 180) % 360) + 360) % 360) - 180
+    const dφ = to[1] - from[1]
+    const startTime = performance.now()
+    const DURATION = 600
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - startTime) / DURATION)
+      // easeInOutQuad
+      const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2
+      setRotation([from[0] + dλ * e, from[1] + dφ * e])
+      animRef.current = p < 1 ? requestAnimationFrame(tick) : null
+    }
+    animRef.current = requestAnimationFrame(tick)
+  }
 
   // Re-centre on the start city whenever the day (and thus start) changes.
   useEffect(() => {
+    stopAnim()
     setRotation([-start.lng, -start.lat])
   }, [start.lng, start.lat])
+
+  // Spin to the latest guess whenever a new one lands.
+  const last = guesses[guesses.length - 1]
+  const lastLng = last?.city.lng
+  const lastLat = last?.city.lat
+  useEffect(() => {
+    if (lastLng !== undefined && lastLat !== undefined) animateTo(lastLng, lastLat)
+  }, [lastLng, lastLat])
+
+  // Stop any in-flight spin on unmount.
+  useEffect(() => stopAnim, [])
 
   const projection = useMemo(
     () =>
@@ -91,6 +141,7 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
 
   // ---- Pointer drag → rotation ----------------------------------------
   const onPointerDown = (e: React.PointerEvent) => {
+    stopAnim() // hand control to the drag mid-spin
     drag.current = { x: e.clientX, y: e.clientY }
     e.currentTarget.setPointerCapture(e.pointerId)
   }
