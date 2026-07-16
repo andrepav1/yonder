@@ -75,6 +75,12 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
     const to: LngLat = [-lng, -lat]
     const dλ = ((((to[0] - from[0] + 180) % 360) + 360) % 360) - 180
     const dφ = to[1] - from[1]
+    // Respect reduced-motion: re-centre instantly instead of spinning.
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (reduce) {
+      setRotation([from[0] + dλ, from[1] + dφ])
+      return
+    }
     const startTime = performance.now()
     const DURATION = 600
     const tick = (now: number) => {
