@@ -3,7 +3,7 @@
 
 import type { City, PuzzleSpec, RoundState } from './types'
 import type { GameRules } from '@/config/rules'
-import { evaluateGuess } from './scoring'
+import { evaluateLeg } from './scoring'
 
 /** Reasons a guess can be rejected without consuming a turn. */
 export type GuessError = 'finished' | 'start-city' | 'duplicate'
@@ -29,9 +29,11 @@ export function isFinished(state: RoundState): boolean {
 }
 
 /**
- * Apply a guessed city. Rejects (without using a turn) a guess made after the
- * round is over, the start city itself, or a city already guessed. Otherwise
- * appends the evaluated result and transitions to won/lost as appropriate.
+ * Apply a guessed city, extending the path. Rejects (without using a turn) a
+ * guess made after the round is over, the start city itself, or a city already
+ * on the path. Otherwise the leg from the previous point to this city is added
+ * to the running total, and the round transitions to won (inside the band),
+ * lost (overshot the target, or out of guesses), or keeps playing.
  */
 export function applyGuess(
   state: RoundState,
@@ -45,9 +47,16 @@ export function applyGuess(
     return { state, error: 'duplicate' }
   }
 
-  const result = evaluateGuess(puzzle, city, rules)
+  const last = state.guesses[state.guesses.length - 1]
+  const from = last ? last.city : puzzle.start
+  const priorCumulativeKm = last ? last.cumulativeKm : 0
+  const result = evaluateLeg(puzzle, from, priorCumulativeKm, city, rules)
   const guesses = [...state.guesses, result]
-  const status = result.won ? 'won' : guesses.length >= rules.guesses ? 'lost' : 'playing'
+  const status = result.won
+    ? 'won'
+    : result.over || guesses.length >= rules.guesses
+      ? 'lost'
+      : 'playing'
 
   return { state: { ...state, guesses, status } }
 }

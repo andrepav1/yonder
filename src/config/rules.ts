@@ -7,18 +7,14 @@
 // Keep README.md's "How it works" table in sync when you change these.
 
 export interface GameRules {
-  /** Number of guesses a player gets per round. */
+  /** Number of guesses (hops) a player gets per round. */
   guesses: number
-  /** Win band as a fraction of the target distance (0.05 = ±5%). Unit-independent. */
+  /**
+   * Win band width as a fraction of the target, applied **below** the target
+   * only (0.02 = the running total must land in [target·0.98, target]). The
+   * band is one-sided: overshooting the target loses. Unit-independent.
+   */
   tolerancePct: number
-  score: {
-    /** Points for a perfect (0 error) best guess, before the guess bonus. */
-    max: number
-    /** Percent error (fraction) at which the graded score reaches 0. */
-    zeroAtErrorPct: number
-    /** Bonus points added per unused guess when the round is won. */
-    bonusPerUnusedGuess: number
-  }
   target: {
     /** Inclusive lower bound for the daily target distance, in km. */
     minKm: number
@@ -39,9 +35,13 @@ export interface GameRules {
     minPopulation: number
   }
   generation: {
-    /** Minimum number of dataset cities that must fall inside the win band. */
+    /**
+     * Minimum number of dataset cities that must sit within [target·(1−tol),
+     * target] of the start — i.e. cities that win in a single hop. Guarantees
+     * every daily puzzle is solvable (multi-hop paths only add more options).
+     */
     minValidAnswers: number
-    /** How many closest cities to reveal at the end of a round. */
+    /** How many closest single-hop wins to reveal at the end of a round. */
     revealCount: number
     /** Max seeded re-draws before generation gives up (safety valve). */
     maxAttempts: number
@@ -60,15 +60,10 @@ export type Unit = 'km' | 'mi'
 
 export const defaultRules: GameRules = {
   guesses: 6,
-  tolerancePct: 0.05,
-  score: {
-    max: 1000,
-    zeroAtErrorPct: 0.5,
-    bonusPerUnusedGuess: 50,
-  },
+  tolerancePct: 0.02,
   target: {
-    minKm: 200,
-    maxKm: 2000,
+    minKm: 500,
+    maxKm: 3000,
   },
   startCity: {
     // 1M floor keeps the daily start city recognizable (median ~2.8M, no
@@ -83,7 +78,7 @@ export const defaultRules: GameRules = {
   generation: {
     minValidAnswers: 3,
     revealCount: 3,
-    maxAttempts: 500,
+    maxAttempts: 1000,
   },
   units: {
     default: 'km',

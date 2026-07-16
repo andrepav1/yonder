@@ -316,6 +316,14 @@ button {
   stroke: var(--accent);
   stroke-width: 1.4;
 }
+.globe__journey {
+  fill: none;
+  stroke: var(--fg);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
 .globe__pin {
   fill: var(--temp);
   stroke: var(--surface);
@@ -469,6 +477,10 @@ button {
   border-left-color: var(--win);
   background: var(--win-weak);
 }
+.grow--over {
+  border-color: var(--danger);
+  border-left-color: var(--danger);
+}
 .grow__temp {
   width: 0.85rem;
   height: 0.85rem;
@@ -494,6 +506,17 @@ button {
 .grow__delta--win {
   color: var(--win);
   font-weight: 600;
+}
+.grow__delta--over {
+  color: var(--danger);
+  font-weight: 600;
+}
+.grow__leg {
+  color: var(--fg-muted);
+  font-weight: 500;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
 }
 .grow__meta {
   text-align: right;

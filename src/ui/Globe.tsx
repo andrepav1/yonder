@@ -1,22 +1,18 @@
 // The interactive Earth — the main guessing surface. An orthographic globe
 // (drag to spin) that renders, over a bundled low-res land outline:
-//   • the day's start city (the centre everything is measured from),
-//   • a geodesic "target ring": the small-circle of radius = targetKm around the
-//     start, i.e. the locus of every perfectly-distanced answer, and
-//   • each guess as a pin coloured on the shared hot→cold proximity ramp.
+//   • the day's start city (where the journey begins),
+//   • the journey so far as a line linking start → each guess in order (the
+//     legs whose lengths sum toward the target), pins coloured on the shared
+//     hot→cold ramp, and
+//   • once finished, a geodesic "target ring": the small-circle of radius =
+//     targetKm around the start, i.e. where a single straight hop would land.
 //
 // Purely presentational: all geometry comes from props. The projection + d3-geo
 // path strings are recomputed from the current rotation; nothing here mutates
 // game state. Points on the far hemisphere are hidden via a great-circle test.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import {
-  geoOrthographic,
-  geoPath,
-  geoGraticule10,
-  geoCircle,
-  geoDistance,
-} from 'd3-geo'
+import { geoOrthographic, geoPath, geoGraticule10, geoCircle, geoDistance } from 'd3-geo'
 import { feature } from 'topojson-client'
 import type { FeatureCollection } from 'geojson'
 import landTopo from 'world-atlas/land-110m.json'
@@ -53,7 +49,14 @@ interface GlobeProps {
   finished?: boolean
 }
 
-export function Globe({ start, targetKm, guesses, rules, answers, finished }: GlobeProps) {
+export function Globe({
+  start,
+  targetKm,
+  guesses,
+  rules,
+  answers,
+  finished,
+}: GlobeProps) {
   // Rotation is [λ, φ]: spin the globe so the start city faces the viewer first.
   const [rotation, setRotation] = useState<LngLat>([-start.lng, -start.lat])
   const svgRef = useRef<SVGSVGElement>(null)
@@ -87,10 +90,22 @@ export function Globe({ start, targetKm, guesses, rules, answers, finished }: Gl
 
   const landPath = useMemo(() => path(land) ?? '', [path])
   const graticulePath = useMemo(() => path(geoGraticule10()) ?? '', [path])
-  // The target ring is the answer — only reveal it once the round is over.
+  // The running journey: start → each guessed city, in order.
+  const journeyPath = useMemo(() => {
+    if (guesses.length === 0) return ''
+    const coordinates: LngLat[] = [
+      [start.lng, start.lat],
+      ...guesses.map((g): LngLat => [g.city.lng, g.city.lat]),
+    ]
+    return path({ type: 'LineString', coordinates }) ?? ''
+  }, [path, start.lng, start.lat, guesses])
+  // The target distance drawn as a single-hop radius — a reference revealed
+  // only once the round is over (it's the "you could have gone straight here").
   const targetRingPath = useMemo(() => {
     if (!finished) return ''
-    const circle = geoCircle().center([start.lng, start.lat]).radius(kmToDegrees(targetKm))
+    const circle = geoCircle()
+      .center([start.lng, start.lat])
+      .radius(kmToDegrees(targetKm))
     return path(circle()) ?? ''
   }, [path, start.lng, start.lat, targetKm, finished])
 
@@ -125,35 +140,32 @@ export function Globe({ start, targetKm, guesses, rules, answers, finished }: Gl
         className="globe__svg"
         viewBox={`0 0 ${SIZE} ${SIZE}`}
         role="img"
-        aria-label={`Globe centred on ${cityLabel(start)}, with a ring at the target distance. Drag to spin.`}
+        aria-label={`Globe centred on ${cityLabel(start)}, showing your journey of guesses. Drag to spin.`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerLeave={endDrag}
       >
         {/* Ocean sphere */}
-        <circle
-          className="globe__sphere"
-          cx={SIZE / 2}
-          cy={SIZE / 2}
-          r={RADIUS}
-        />
+        <circle className="globe__sphere" cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} />
         <path className="globe__graticule" d={graticulePath} />
         <path className="globe__land" d={landPath} />
         <path className="globe__ring" d={targetRingPath} />
-        <circle
-          className="globe__edge"
-          cx={SIZE / 2}
-          cy={SIZE / 2}
-          r={RADIUS}
-        />
+        <path className="globe__journey" d={journeyPath} />
+        <circle className="globe__edge" cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} />
 
         {/* Revealed closest answers (after the round ends) */}
         {finished &&
           answers?.map((c) => {
             const p = place(c.lng, c.lat)
             return p ? (
-              <circle key={`ans-${c.id}`} className="globe__answer" cx={p[0]} cy={p[1]} r={3.5} />
+              <circle
+                key={`ans-${c.id}`}
+                className="globe__answer"
+                cx={p[0]}
+                cy={p[1]}
+                r={3.5}
+              />
             ) : null
           })}
 
@@ -178,7 +190,12 @@ export function Globe({ start, targetKm, guesses, rules, answers, finished }: Gl
         {startXY && (
           <g className="globe__start">
             <circle className="globe__start-halo" cx={startXY[0]} cy={startXY[1]} r={7} />
-            <circle className="globe__start-dot" cx={startXY[0]} cy={startXY[1]} r={3.5} />
+            <circle
+              className="globe__start-dot"
+              cx={startXY[0]}
+              cy={startXY[1]}
+              r={3.5}
+            />
             <text className="globe__start-label" x={startXY[0]} y={startXY[1] - 11}>
               {cityLabel(start)}
             </text>

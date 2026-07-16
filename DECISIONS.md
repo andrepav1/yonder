@@ -131,3 +131,57 @@ around the start city whose radius is the target distance** instead of a text li
 - **New deps** (all UI-only, none in the pure `lib/` core): `d3-geo`,
   `topojson-client`, `world-atlas` (+ `@types/*`). This resolves the "interactive map
   with pins" item that was deferred from v1.
+
+## 2026-07-16 — Cumulative-path game (rules rework)
+
+**Context.** The v1 game was single-shot: each guess was scored by its own distance
+_from the start_, and you won if your best guess landed within ±5% of the target. The
+requested new game is a **cumulative journey**: keep guessing cities and sum the legs
+between consecutive guesses (Rome→Milan, then Milan→Turin, …) until the running total
+reaches the target. This changes the core, not just tuning — legs are measured from the
+_previous_ city, the total only grows, and overshooting is a loss.
+
+### Rules decided (requirements interview)
+
+- **Score is cumulative.** Each guess adds `haversine(previousCity, newCity)` (the start
+  city for the first hop) to a running total. `GuessResult` now carries `legKm`,
+  `cumulativeKm`, `remainingKm`, `over`, `won` (was: distance-from-start / delta /
+  errorPct).
+- **Win band is one-sided: `[target·(1−tol), target]`, `tol = 0.02`.** You win the
+  instant the total lands within 2% _below_ the target; crossing the target **busts**
+  the round immediately (even with guesses left). Narrower and asymmetric vs the old
+  ±5%, because "sneak up without going over" is the whole tension.
+- **Fixed cap of 6 guesses; each city once.** Running out is a loss. Duplicates
+  (including the start) are rejected without using a turn — chosen over allowing
+  revisits, which would let players bounce between two nearby cities to creep up in
+  tiny increments and trivialize landing in the 2% band.
+- **Golf scoring.** No graded points anymore — the streak + guess distribution reward
+  reaching the band in the **fewest hops**. `ScoreBreakdown` drops `base`/`bonus`/
+  proximity fields for `guessesUsed` / `totalKm` / `remainingKm` / `overshot`. The
+  existing per-guesses-used distribution already models this, so stats/streaks are
+  unchanged. (`rules.score` proximity config removed.)
+
+### Solvability, kept cheap
+
+- The generator's guarantee is unchanged in shape but reinterpreted: it still requires
+  ≥ `minValidAnswers` cities within `[target·(1−tol), target]` of the start — now read
+  as **single-hop wins** (a city you could reach in one guess without overshooting).
+  That keeps generation a cheap, deterministic reseed loop (no path search) while
+  guaranteeing every day is winnable; multi-hop paths only add more ways in.
+- Band widened target range to **500–3000 km** and dropped `tol` to 0.02: the annulus
+  `[0.98x, x]` scales with `x`, so a higher floor keeps ≥3 in-band cities easy to find
+  within `maxAttempts` despite the narrower band. Year-long determinism + solvability
+  tests stay green.
+
+### UI / feedback
+
+- **Globe draws the journey** (a line: start → each guess in order) during play; the
+  target ring is now a _reference_ ("where one straight hop lands"), still revealed only
+  at the end. Guess rows show the leg (`+480 km`), running total, and "to go" / "over".
+- **`format.deltaPhrase` → `remainingPhrase`** ("142 km to go" / "37 km over"), and
+  `scoring.evaluateGuess` → `evaluateLeg` (takes the previous point + prior total). The
+  `GameMode.evaluate(puzzle, city)` seam became `apply(state, puzzle, city)` since a leg
+  needs the running state. Share is now hop squares + leg arrows + a reach-% line.
+- **Screenshot harness** (`print-today` + `screenshot.mjs`) drives a safe partial hop
+  for the mid-game shot and a single-hop win for the win shot, validating both names
+  through `resolveGuess` so bare names (e.g. "Orléans") resolve to the intended city.

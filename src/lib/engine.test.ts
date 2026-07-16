@@ -40,17 +40,27 @@ describe('engine', () => {
     expect(isFinished(s)).toBe(false)
   })
 
-  it('records a guess and decrements the allowance', () => {
+  it('records a short first hop and decrements the allowance', () => {
     const { state, error } = applyGuess(
       createRound('2026-07-15'),
       puzzle,
-      east(20, 2),
+      east(4, 2), // ~445 km — short of the band, keeps playing
       defaultRules,
     )
     expect(error).toBeUndefined()
     expect(state.guesses).toHaveLength(1)
+    expect(state.guesses[0]!.cumulativeKm).toBeGreaterThan(400)
     expect(guessesLeft(state, defaultRules)).toBe(defaultRules.guesses - 1)
     expect(state.status).toBe('playing')
+  })
+
+  it('accumulates the leg from the previous city, not the start', () => {
+    let s = applyGuess(createRound('2026-07-15'), puzzle, east(4, 2), defaultRules).state
+    s = applyGuess(s, puzzle, east(7, 3), defaultRules).state
+    const [g1, g2] = s.guesses
+    // Second leg is (4°→7°), so the total is more than the raw start→7° distance.
+    expect(g2!.cumulativeKm).toBeGreaterThan(g1!.cumulativeKm)
+    expect(g2!.cumulativeKm).toBeCloseTo(g1!.cumulativeKm + g2!.legKm, 6)
   })
 
   it('rejects the start city without using a turn', () => {
@@ -63,29 +73,42 @@ describe('engine', () => {
     const first = applyGuess(
       createRound('2026-07-15'),
       puzzle,
-      east(20, 2),
+      east(4, 2),
       defaultRules,
     ).state
-    const dup = applyGuess(first, puzzle, east(20, 2), defaultRules)
+    const dup = applyGuess(first, puzzle, east(4, 2), defaultRules)
     expect(dup.error).toBe('duplicate')
     expect(dup.state.guesses).toHaveLength(1)
   })
 
-  it('transitions to won on a guess inside the band, unused guesses remain', () => {
+  it('transitions to won when the total lands in the band, unused guesses remain', () => {
     const { state } = applyGuess(
       createRound('2026-07-15'),
       puzzle,
-      east(8.983, 3),
+      east(8.983, 3), // ~999 km in one hop
       defaultRules,
     )
     expect(state.status).toBe('won')
     expect(guessesLeft(state, defaultRules)).toBeGreaterThan(0)
   })
 
-  it('transitions to lost after exhausting all guesses without a win', () => {
+  it('loses immediately on an overshoot, even with guesses left', () => {
+    const { state } = applyGuess(
+      createRound('2026-07-15'),
+      puzzle,
+      east(20, 2), // ~2225 km — past the target
+      defaultRules,
+    )
+    expect(state.status).toBe('lost')
+    expect(state.guesses[0]!.over).toBe(true)
+    expect(guessesLeft(state, defaultRules)).toBeGreaterThan(0)
+  })
+
+  it('transitions to lost after exhausting all guesses without reaching the band', () => {
     let s = createRound('2026-07-15')
-    for (let i = 0; i < defaultRules.guesses; i++) {
-      s = applyGuess(s, puzzle, east(20 + i, 10 + i), defaultRules).state
+    // Six ~111 km hops → total ~667 km, never overshooting and never winning.
+    for (let i = 1; i <= defaultRules.guesses; i++) {
+      s = applyGuess(s, puzzle, east(i, 10 + i), defaultRules).state
     }
     expect(s.status).toBe('lost')
     expect(guessesLeft(s, defaultRules)).toBe(0)
@@ -98,7 +121,7 @@ describe('engine', () => {
       east(8.983, 3),
       defaultRules,
     ).state
-    const after = applyGuess(won, puzzle, east(20, 4), defaultRules)
+    const after = applyGuess(won, puzzle, east(4, 4), defaultRules)
     expect(after.error).toBe('finished')
     expect(after.state.guesses).toHaveLength(1)
   })

@@ -40,7 +40,7 @@ describe('generatePuzzle — determinism', () => {
 describe('generatePuzzle — invariants over a full year', () => {
   const dates = datesOf(2026)
 
-  it('always yields a solvable puzzle (>= minValidAnswers within the band)', () => {
+  it('always yields a solvable puzzle (>= minValidAnswers single-hop wins)', () => {
     for (const date of dates) {
       const p = generatePuzzle(date)
       expect(p.validAnswerCount).toBeGreaterThanOrEqual(
@@ -69,11 +69,11 @@ describe('generatePuzzle — invariants over a full year', () => {
     }
   })
 
-  it('reveals answers actually inside the win band, ordered by closeness', () => {
+  it('reveals single-hop wins actually inside the band, ordered by closeness', () => {
     for (const date of dates.slice(0, 40)) {
       const p = generatePuzzle(date)
       const low = p.targetKm * (1 - p.tolerancePct)
-      const high = p.targetKm * (1 + p.tolerancePct)
+      const high = p.targetKm // one-sided: a single-hop win is never over target
       let prevDelta = -1
       for (const a of p.answers) {
         const dist = haversineKm(p.start, a.city)

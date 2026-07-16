@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { evaluateGuess, proximityBase, scoreRound, tempLevel } from './scoring'
+import { evaluateLeg, scoreRound, tempLevel } from './scoring'
+import { haversineKm } from './geo'
 import { defaultRules } from '@/config/rules'
 import type { City, GuessResult, PuzzleSpec } from './types'
 
@@ -13,7 +14,7 @@ const start: City = {
   population: 1_000_000,
 }
 
-// A city due east of (0,0); at the equator, distance ≈ 111.32 km per degree.
+// A city due east of (0,0); at the equator, distance ≈ 111.19 km per degree.
 function eastCity(deg: number, id = 100): City {
   return {
     id,
@@ -38,99 +39,101 @@ function puzzleWithTarget(targetKm: number): PuzzleSpec {
   }
 }
 
-describe('evaluateGuess', () => {
-  it('computes distance, signed delta, error and bearing', () => {
+describe('evaluateLeg', () => {
+  it('computes the leg, running total, remaining and bearing', () => {
     const puzzle = puzzleWithTarget(1000)
-    const g = evaluateGuess(puzzle, eastCity(9), defaultRules) // ~1001 km east
-    expect(g.distanceKm).toBeGreaterThan(990)
-    expect(g.distanceKm).toBeLessThan(1015)
-    expect(g.deltaKm).toBeCloseTo(g.distanceKm - 1000, 6)
-    expect(g.errorPct).toBeCloseTo(Math.abs(g.deltaKm) / 1000, 6)
+    const g = evaluateLeg(puzzle, start, 0, eastCity(4), defaultRules) // ~445 km east
+    expect(g.legKm).toBeCloseTo(haversineKm(start, eastCity(4)), 6)
+    expect(g.cumulativeKm).toBeCloseTo(g.legKm, 6)
+    expect(g.remainingKm).toBeCloseTo(1000 - g.cumulativeKm, 6)
     expect(g.bearingDeg).toBeCloseTo(90, 0) // due east
+    expect(g.over).toBe(false)
+    expect(g.won).toBe(false)
   })
 
-  it('wins when inside the ±tolerance band', () => {
+  it('adds the leg onto the prior cumulative total', () => {
     const puzzle = puzzleWithTarget(1000)
-    // exactly on target: place a city ~1000 km east (~8.983°)
-    const g = evaluateGuess(puzzle, eastCity(8.983), defaultRules)
-    expect(g.errorPct).toBeLessThanOrEqual(defaultRules.tolerancePct)
+    const g = evaluateLeg(puzzle, start, 500, eastCity(4), defaultRules)
+    expect(g.cumulativeKm).toBeCloseTo(500 + g.legKm, 6)
+    expect(g.remainingKm).toBeCloseTo(1000 - g.cumulativeKm, 6)
+  })
+
+  it('wins when the running total lands in the one-sided band below target', () => {
+    const puzzle = puzzleWithTarget(1000)
+    // ~999 km east — inside [980, 1000], not over.
+    const g = evaluateLeg(puzzle, start, 0, eastCity(8.983), defaultRules)
+    expect(g.cumulativeKm).toBeGreaterThanOrEqual(980)
+    expect(g.cumulativeKm).toBeLessThanOrEqual(1000)
+    expect(g.over).toBe(false)
     expect(g.won).toBe(true)
   })
 
-  it('loses when outside the band', () => {
+  it('overshoots (loses) when the running total passes the target', () => {
     const puzzle = puzzleWithTarget(1000)
-    const g = evaluateGuess(puzzle, eastCity(20), defaultRules) // ~2226 km
+    const g = evaluateLeg(puzzle, start, 0, eastCity(20), defaultRules) // ~2225 km
+    expect(g.over).toBe(true)
     expect(g.won).toBe(false)
+    expect(g.remainingKm).toBeLessThan(0)
+  })
+
+  it('does not win when still short of the band', () => {
+    const puzzle = puzzleWithTarget(1000)
+    const g = evaluateLeg(puzzle, start, 0, eastCity(4), defaultRules) // ~445 km, remaining ~555
+    expect(g.won).toBe(false)
+    expect(g.over).toBe(false)
   })
 })
 
-describe('proximityBase', () => {
-  it('is max at zero error and zero at/after the cap', () => {
-    expect(proximityBase(0, defaultRules)).toBe(defaultRules.score.max)
-    expect(proximityBase(defaultRules.score.zeroAtErrorPct, defaultRules)).toBe(0)
-    expect(proximityBase(1, defaultRules)).toBe(0)
-  })
-
-  it('is monotonic (closer scores at least as high)', () => {
-    expect(proximityBase(0.1, defaultRules)).toBeGreaterThan(
-      proximityBase(0.3, defaultRules),
-    )
-  })
-
-  it('halves at half the cap', () => {
-    const half = defaultRules.score.zeroAtErrorPct / 2
-    expect(proximityBase(half, defaultRules)).toBe(Math.round(defaultRules.score.max / 2))
-  })
-})
-
-function mkGuess(errorPct: number, won: boolean): GuessResult {
+// A finished-leg result for target 1000 (targetKm = cumulative + remaining).
+function leg(cumulativeKm: number, won = false, over = false): GuessResult {
   return {
     city: eastCity(1),
-    distanceKm: 1000 * (1 + errorPct),
-    deltaKm: 1000 * errorPct,
-    errorPct,
+    legKm: cumulativeKm,
+    cumulativeKm,
+    remainingKm: 1000 - cumulativeKm,
     bearingDeg: 90,
+    over,
     won,
   }
 }
 
 describe('scoreRound', () => {
-  it('uses the best guess for base and adds the fewer-guesses bonus on a win', () => {
-    // won on the 2nd of 6 guesses, best error 0 -> base = max, bonus = 4 * 50
-    const guesses = [mkGuess(0.2, false), mkGuess(0, true)]
+  it('reports the guess count and final total from the last guess', () => {
+    const guesses = [leg(600), leg(990, true)]
     const s = scoreRound(guesses, true, defaultRules)
-    expect(s.base).toBe(defaultRules.score.max)
-    expect(s.bonus).toBe(
-      defaultRules.score.bonusPerUnusedGuess * (defaultRules.guesses - 2),
-    )
-    expect(s.score).toBe(s.base + s.bonus)
+    expect(s.won).toBe(true)
     expect(s.guessesUsed).toBe(2)
-    expect(s.bestErrorPct).toBe(0)
+    expect(s.totalKm).toBe(990)
+    expect(s.remainingKm).toBe(10)
+    expect(s.overshot).toBe(false)
   })
 
-  it('awards no bonus on a loss but still scores proximity', () => {
-    const guesses = [mkGuess(0.1, false), mkGuess(0.3, false)]
+  it('flags an overshoot from the last guess', () => {
+    const guesses = [leg(600), leg(1100, false, true)]
     const s = scoreRound(guesses, false, defaultRules)
-    expect(s.bonus).toBe(0)
-    expect(s.base).toBe(proximityBase(0.1, defaultRules))
-    expect(s.score).toBe(s.base)
+    expect(s.overshot).toBe(true)
+    expect(s.remainingKm).toBeLessThan(0)
   })
 
-  it('scores zero for no guesses', () => {
+  it('is empty for no guesses', () => {
     const s = scoreRound([], false, defaultRules)
-    expect(s.score).toBe(0)
-    expect(s.bestErrorPct).toBe(Infinity)
+    expect(s.guessesUsed).toBe(0)
+    expect(s.totalKm).toBe(0)
+    expect(s.overshot).toBe(false)
   })
 })
 
 describe('tempLevel', () => {
   it('returns the hottest level for a win', () => {
-    expect(tempLevel(mkGuess(0.01, true), defaultRules)).toBe(4)
+    expect(tempLevel(leg(990, true), defaultRules)).toBe(4)
   })
-  it('grades cooler as error grows', () => {
-    expect(tempLevel(mkGuess(0.08, false), defaultRules)).toBe(3)
-    expect(tempLevel(mkGuess(0.2, false), defaultRules)).toBe(2)
-    expect(tempLevel(mkGuess(0.4, false), defaultRules)).toBe(1)
-    expect(tempLevel(mkGuess(0.9, false), defaultRules)).toBe(0)
+  it('returns the coldest level for a bust (overshoot)', () => {
+    expect(tempLevel(leg(1100, false, true), defaultRules)).toBe(0)
+  })
+  it('heats up as the running total nears the target', () => {
+    expect(tempLevel(leg(940), defaultRules)).toBe(3) // ~6% to go
+    expect(tempLevel(leg(850), defaultRules)).toBe(2) // ~15% to go
+    expect(tempLevel(leg(700), defaultRules)).toBe(1) // ~30% to go
+    expect(tempLevel(leg(300), defaultRules)).toBe(0) // ~70% to go
   })
 })

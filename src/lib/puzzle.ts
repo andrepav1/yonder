@@ -37,9 +37,10 @@ export interface GenerateOptions {
  * Generate the puzzle for a UTC date string. Deterministic in `date`.
  *
  * Draws a population-weighted start city and a target distance in
- * [minKm, maxKm], then keeps re-drawing (advancing the seeded rng) until the
- * win band contains at least `minValidAnswers` cities — guaranteeing every
- * daily puzzle is solvable.
+ * [minKm, maxKm], then keeps re-drawing (advancing the seeded rng) until at
+ * least `minValidAnswers` cities sit within [target·(1−tol), target] of the
+ * start — cities that win in a single hop — guaranteeing every daily puzzle is
+ * solvable. (Multi-hop paths only add more ways to reach the band.)
  */
 export function generatePuzzle(date: string, opts: GenerateOptions = {}): PuzzleSpec {
   const rules = opts.rules ?? defaultRules
@@ -65,8 +66,10 @@ export function generatePuzzle(date: string, opts: GenerateOptions = {}): Puzzle
   for (let attempt = 0; attempt < rules.generation.maxAttempts; attempt++) {
     const start = weightedPick(pool, cumulative, total, rng())
     const targetKm = Math.round(minKm + rng() * (maxKm - minKm))
+    // One-sided win band: a single-hop answer must be at/under the target
+    // (reaching it exactly wins; going past it would overshoot and lose).
     const low = targetKm * (1 - tol)
-    const high = targetKm * (1 + tol)
+    const high = targetKm
 
     const answers: AnswerCity[] = []
     let validCount = 0

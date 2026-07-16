@@ -146,13 +146,13 @@ export default function App() {
         <section className="prompt">
           <div className="prompt__eyebrow">Today’s departure</div>
           <div className="prompt__start">{cityLabel(puzzle.start)}</div>
-          <div className="prompt__target-label">Find a city about</div>
+          <div className="prompt__target-label">Reach a total of</div>
           <div className="prompt__target mono">
             {formatDistance(puzzle.targetKm, unit)}
           </div>
           <div className="prompt__hint">
-            away · within ±{Math.round(rules.tolerancePct * 100)}% · {rules.guesses}{' '}
-            guesses
+            hop city to city · land within {Math.round(rules.tolerancePct * 100)}% under ·
+            don’t overshoot · {rules.guesses} guesses
           </div>
           <div className="pips" aria-label={`${left} guesses left`}>
             {Array.from({ length: rules.guesses }).map((_, i) => {
@@ -190,6 +190,7 @@ export default function App() {
         {finished && (
           <ResultCard
             state={round}
+            puzzle={puzzle}
             rules={rules}
             unit={unit}
             onShare={handleShare}
