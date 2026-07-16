@@ -63,7 +63,7 @@ export const defaultRules: GameRules = {
   tolerancePct: 0.02,
   target: {
     minKm: 500,
-    maxKm: 3000,
+    maxKm: 10000,
   },
   startCity: {
     // 1M floor keeps the daily start city recognizable (median ~2.8M, no

@@ -151,8 +151,9 @@ export default function App() {
             {formatDistance(puzzle.targetKm, unit)}
           </div>
           <div className="prompt__hint">
-            hop city to city · land within {Math.round(rules.tolerancePct * 100)}% under ·
-            don’t overshoot · {rules.guesses} guesses
+            hop city to city · land within{' '}
+            {formatDistance(puzzle.targetKm * rules.tolerancePct, unit)} below the target
+            · don’t overshoot · {rules.guesses} guesses
           </div>
           <div className="pips" aria-label={`${left} guesses left`}>
             {Array.from({ length: rules.guesses }).map((_, i) => {
@@ -206,7 +207,9 @@ export default function App() {
         </footer>
       </div>
 
-      {showHowTo && <HowToPlay rules={rules} onClose={closeHowTo} />}
+      {showHowTo && (
+        <HowToPlay rules={rules} puzzle={puzzle} unit={unit} onClose={closeHowTo} />
+      )}
       {showStats && <StatsPanel stats={stats} onClose={() => setShowStats(false)} />}
     </div>
   )

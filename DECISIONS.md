@@ -197,3 +197,16 @@ at and read as a leftover from the single-shot game.
   `.globe__ring` style all go with it). The globe now shows only the journey line, the
   guess pins, and — on finish — the closest **single-hop win** pins, which stand on
   their own without the circle. Result-card copy updated to match.
+
+## 2026-07-16 — Wider targets, absolute win band in the UI
+
+- **Target range 500 → 10000 km** (was 500–3000). Longer targets make multi-hop
+  journeys the natural way to play rather than a single long hop. Solvability is
+  unaffected: at large radii the `[target·(1−tol), target]` annulus sweeps a big
+  circle across the globe, so ≥3 single-hop wins are still easy to find (year-long
+  determinism + solvability tests stay green).
+- **The UI never states the tolerance as a percent.** The win band is a fraction of the
+  target internally (`tolerancePct`), but the prompt and how-to now show the actual
+  band width for the day — `formatDistance(targetKm · tolerancePct, unit)` (e.g. "within
+  45 km below the target") — so it reads in the player's chosen km/mi. (The share
+  string's "% of target" is a different number — reach, not tolerance — and stays.)

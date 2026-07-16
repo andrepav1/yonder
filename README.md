@@ -22,7 +22,7 @@ win. You get **6 guesses**, and fewer hops is a better score.
 | Win band        | running total in **[target·98%, target]** (one-sided; no over) | `rules.tolerancePct`               |
 | Bust            | total **over** the target, or out of 6 guesses                 | `src/lib/engine.ts`                |
 | Score           | golf: **fewer hops is better**                                 | guess distribution                 |
-| Target distance | **500–3000 km**, validated to have ≥3 single-hop wins          | `rules.target`, `rules.generation` |
+| Target distance | **500–10000 km**, validated to have ≥3 single-hop wins         | `rules.target`, `rules.generation` |
 | Start city      | population-weighted, **≥ 1,000,000** (recognizable)            | `rules.startCity`                  |
 | Dataset         | GeoNames cities, **pop ≥ 100k** (~6.2k cities)                 | `rules.dataset`                    |
 | Daily reset     | **UTC midnight**, seeded from the date                         | `rules.reset`                      |

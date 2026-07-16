@@ -1,13 +1,17 @@
-import type { GameRules } from '@/config/rules'
+import type { PuzzleSpec } from '@/lib/types'
+import type { GameRules, Unit } from '@/config/rules'
+import { formatDistance } from '@/lib/format'
 import { Modal } from './Modal'
 
 interface HowToPlayProps {
   rules: GameRules
+  puzzle: PuzzleSpec
+  unit: Unit
   onClose: () => void
 }
 
-export function HowToPlay({ rules, onClose }: HowToPlayProps) {
-  const pct = Math.round(rules.tolerancePct * 100)
+export function HowToPlay({ rules, puzzle, unit, onClose }: HowToPlayProps) {
+  const band = formatDistance(puzzle.targetKm * rules.tolerancePct, unit)
   return (
     <Modal title="How to play" onClose={onClose}>
       <p style={{ marginTop: 0 }}>
@@ -35,7 +39,7 @@ export function HowToPlay({ rules, onClose }: HowToPlayProps) {
       <div className="howto__step">
         <span className="howto__num">3</span>
         <p>
-          Land your total within <strong>{pct}% below</strong> the target to win. Go{' '}
+          Land your total within <strong>{band}</strong> below the target to win. Go{' '}
           <strong>over</strong> and you bust — so does running out of{' '}
           <strong>{rules.guesses} guesses</strong>. Fewer hops is a better score.
         </p>
