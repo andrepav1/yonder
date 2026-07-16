@@ -1,6 +1,6 @@
 import type { PuzzleSpec } from '@/lib/types'
 import type { GameRules, Unit } from '@/config/rules'
-import { formatDistance } from '@/lib/format'
+import { bandLabel } from '@/lib/format'
 import { Modal } from './Modal'
 
 interface HowToPlayProps {
@@ -11,7 +11,7 @@ interface HowToPlayProps {
 }
 
 export function HowToPlay({ rules, puzzle, unit, onClose }: HowToPlayProps) {
-  const band = formatDistance(puzzle.targetKm * rules.tolerancePct, unit)
+  const band = bandLabel(puzzle.targetKm, rules.tolerancePct, unit)
   return (
     <Modal title="How to play" onClose={onClose}>
       <p style={{ marginTop: 0 }}>

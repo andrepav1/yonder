@@ -207,6 +207,15 @@ at and read as a leftover from the single-shot game.
   determinism + solvability tests stay green).
 - **The UI never states the tolerance as a percent.** The win band is a fraction of the
   target internally (`tolerancePct`), but the prompt and how-to now show the actual
-  band width for the day — `formatDistance(targetKm · tolerancePct, unit)` (e.g. "within
-  45 km below the target") — so it reads in the player's chosen km/mi. (The share
-  string's "% of target" is a different number — reach, not tolerance — and stays.)
+  band width for the day via `format.bandLabel(targetKm, tolerancePct, unit)` (e.g.
+  "within 45 km below the target") — so it reads in the player's chosen km/mi, from one
+  source of truth. (The share string's "% of target" is a different number — reach, not
+  tolerance — and stays.)
+
+## 2026-07-16 — Cleanup pass (post-rework)
+
+- **Hot/cold thresholds moved back into `rules`.** The rework had hard-coded
+  `tempLevel`'s remaining-fraction cutoffs as bare literals (`0.08/0.2/0.45`) and left
+  its `rules` param unused — a regression against "pure modules take `rules` and
+  hard-code nothing" (the pre-rework `tempLevel` derived its cutoffs from `rules`). They
+  now live in `rules.feedback.hotColdBands`. Behaviour unchanged; the seam is restored.

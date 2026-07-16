@@ -10,6 +10,14 @@ export function formatDistance(km: number, unit: Unit): string {
 }
 
 /**
+ * The win band's width (how far below the target still wins) as a display
+ * string, e.g. "45 km". One source of truth for the prompt + how-to copy.
+ */
+export function bandLabel(targetKm: number, tolerancePct: number, unit: Unit): string {
+  return formatDistance(targetKm * tolerancePct, unit)
+}
+
+/**
  * Human phrase for the remaining distance to the target (targetKm − total).
  * + = still short ("142 km to go"), − = overshot ("37 km over"), ~0 = "on the line".
  */

@@ -57,13 +57,14 @@ export function scoreRound(
  */
 export type TempLevel = 0 | 1 | 2 | 3 | 4
 
-export function tempLevel(result: GuessResult, _rules: GameRules): TempLevel {
+export function tempLevel(result: GuessResult, rules: GameRules): TempLevel {
   if (result.won) return 4
   if (result.over) return 0 // busted — overshot the target
   const targetKm = result.cumulativeKm + result.remainingKm
   const remainingFrac = targetKm > 0 ? result.remainingKm / targetKm : 1
-  if (remainingFrac <= 0.08) return 3 // knocking on the door
-  if (remainingFrac <= 0.2) return 2
-  if (remainingFrac <= 0.45) return 1
+  const [hot, warm, cool] = rules.feedback.hotColdBands
+  if (remainingFrac <= hot) return 3 // knocking on the door
+  if (remainingFrac <= warm) return 2
+  if (remainingFrac <= cool) return 1
   return 0 // barely started — cold
 }

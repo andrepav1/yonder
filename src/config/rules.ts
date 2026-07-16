@@ -15,6 +15,14 @@ export interface GameRules {
    * band is one-sided: overshooting the target loses. Unit-independent.
    */
   tolerancePct: number
+  feedback: {
+    /**
+     * Remaining-fraction cutoffs (fraction of the target still to cover) for the
+     * hot→cold ramp, hottest first: ≤ [0] → level 3, ≤ [1] → 2, ≤ [2] → 1, else
+     * 0. (A win is level 4 and an overshoot 0, regardless of these.)
+     */
+    hotColdBands: [number, number, number]
+  }
   target: {
     /** Inclusive lower bound for the daily target distance, in km. */
     minKm: number
@@ -61,6 +69,10 @@ export type Unit = 'km' | 'mi'
 export const defaultRules: GameRules = {
   guesses: 6,
   tolerancePct: 0.02,
+  feedback: {
+    // ≤8% left → hot, ≤20% → warm, ≤45% → cool, else cold.
+    hotColdBands: [0.08, 0.2, 0.45],
+  },
   target: {
     minKm: 500,
     maxKm: 10000,

@@ -77,7 +77,7 @@ export interface PuzzleSpec {
   start: City
   /** Target great-circle distance from `start`, in km (rounded). */
   targetKm: number
-  /** Win band half-width as a fraction of target (mirrors rules.tolerancePct). */
+  /** One-sided win-band width below the target, as a fraction (mirrors rules.tolerancePct). */
   tolerancePct: number
   /** The `revealCount` cities closest to the target distance. */
   answers: AnswerCity[]

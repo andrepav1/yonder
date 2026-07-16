@@ -12,7 +12,7 @@ import {
 } from '@/lib/engine'
 import { createStatsStore, type Stats } from '@/store/statsStore'
 import { loadUnit, saveUnit, isOnboarded, setOnboarded } from '@/store/prefs'
-import { formatDistance } from '@/lib/format'
+import { formatDistance, bandLabel } from '@/lib/format'
 import { cityLabel } from '@/lib/cities'
 import { Globe } from '@/ui/Globe'
 import { GuessInput } from '@/ui/GuessInput'
@@ -152,8 +152,8 @@ export default function App() {
           </div>
           <div className="prompt__hint">
             hop city to city · land within{' '}
-            {formatDistance(puzzle.targetKm * rules.tolerancePct, unit)} below the target
-            · don’t overshoot · {rules.guesses} guesses
+            {bandLabel(puzzle.targetKm, rules.tolerancePct, unit)} below the target ·
+            don’t overshoot · {rules.guesses} guesses
           </div>
           <div className="pips" aria-label={`${left} guesses left`}>
             {Array.from({ length: rules.guesses }).map((_, i) => {
