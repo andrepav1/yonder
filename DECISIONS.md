@@ -4,6 +4,20 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
+## 2026-07-17 — Globe drag no longer freezes mid-spin (touch)
+
+- **Symptom.** On touch, dragging to spin the globe would sometimes "move a little
+  bit and then stop" while the finger kept moving.
+- **Cause.** The SVG bound `endDrag` to `onPointerLeave`. The globe is a circle inside
+  a square element, so while spinning it's easy to drag the finger past the SVG's box;
+  if pointer capture didn't hold, `pointerleave` fired and ended the drag early. There
+  was also no `onPointerCancel` handler, so a browser-initiated `pointercancel` left
+  `drag.current` stuck and corrupted the next gesture.
+- **Fix.** Drop the `pointerleave` teardown (pointer capture already keeps the moves
+  routed to the SVG for the dragging pointer, wherever the finger goes) and end the
+  drag only on `pointerup`/`pointercancel`. Track the pointer id so stray extra fingers
+  and mismatched up/cancel events can't interfere. Behaviour on mouse is unchanged.
+
 ## 2026-07-15 — Initial design (requirements interview)
 
 **Context.** Greenfield daily geography guessing game, mobile-first, static (no
