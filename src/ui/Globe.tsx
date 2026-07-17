@@ -50,7 +50,7 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
   // Rotation is [λ, φ]: spin the globe so the start city faces the viewer first.
   const [rotation, setRotation] = useState<LngLat>([-start.lng, -start.lat])
   const svgRef = useRef<SVGSVGElement>(null)
-  const drag = useRef<{ x: number; y: number } | null>(null)
+  const drag = useRef<{ x: number; y: number; id: number } | null>(null)
   const rotationRef = useRef<LngLat>(rotation)
   const animRef = useRef<number | null>(null)
 
@@ -146,23 +146,34 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
   const startXY = place(start.lng, start.lat)
 
   // ---- Pointer drag → rotation ----------------------------------------
+  // Pointer capture keeps every move/up for the *dragging* pointer routed to
+  // the SVG even when the finger strays outside the (square) element while
+  // spinning the (round) globe — so the spin follows the finger unbroken and
+  // only ends on pointerup/pointercancel. We deliberately don't end the drag
+  // on pointerleave (with capture the finger is never really "gone"), which is
+  // what used to freeze the globe mid-spin on touch.
   const onPointerDown = (e: React.PointerEvent) => {
+    if (drag.current) return // ignore extra fingers once a drag owns the globe
     stopAnim() // hand control to the drag mid-spin
-    drag.current = { x: e.clientX, y: e.clientY }
+    drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId }
     e.currentTarget.setPointerCapture(e.pointerId)
   }
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!drag.current) return
+    if (!drag.current || e.pointerId !== drag.current.id) return
     const rect = svgRef.current?.getBoundingClientRect()
     // Convert on-screen pixels → degrees. ~75/scale is the usual d3-globe
     // sensitivity; SIZE/rect.width corrects for the CSS-scaled display size.
     const k = (75 / RADIUS) * (rect ? SIZE / rect.width : 1)
     const dx = e.clientX - drag.current.x
     const dy = e.clientY - drag.current.y
-    drag.current = { x: e.clientX, y: e.clientY }
+    drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId }
     setRotation(([λ, φ]) => [λ + dx * k, Math.max(-90, Math.min(90, φ - dy * k))])
   }
+  // Ends on pointerup and pointercancel — the latter (fired when the browser
+  // takes over the touch) must clear the drag too, or the next gesture starts
+  // from stale coordinates.
   const endDrag = (e: React.PointerEvent) => {
+    if (!drag.current || e.pointerId !== drag.current.id) return
     drag.current = null
     if (e.currentTarget.hasPointerCapture(e.pointerId))
       e.currentTarget.releasePointerCapture(e.pointerId)
@@ -179,7 +190,7 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
-        onPointerLeave={endDrag}
+        onPointerCancel={endDrag}
       >
         {/* Ocean sphere */}
         <circle className="globe__sphere" cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} />
