@@ -1,6 +1,7 @@
 import type { PuzzleSpec } from '@/lib/types'
 import type { GameRules, Unit } from '@/config/rules'
 import { bandLabel } from '@/lib/format'
+import { useI18n } from '@/i18n/context'
 import { Modal } from './Modal'
 
 interface HowToPlayProps {
@@ -11,42 +12,27 @@ interface HowToPlayProps {
 }
 
 export function HowToPlay({ rules, puzzle, unit, onClose }: HowToPlayProps) {
-  const band = bandLabel(puzzle.targetKm, rules.tolerancePct, unit)
+  const { t } = useI18n()
+  const band = bandLabel(puzzle.targetKm, rules.tolerancePct, unit, t)
   return (
-    <Modal title="How to play" onClose={onClose}>
-      <p style={{ marginTop: 0 }}>
-        Every day, one <strong>start city</strong> and one{' '}
-        <strong>target distance</strong>. Build a journey city by city and add up the hops
-        — reach the target without going over.
-      </p>
+    <Modal title={t.howTo.title} onClose={onClose}>
+      <p style={{ marginTop: 0 }}>{t.howTo.intro}</p>
 
       <div className="howto__step">
         <span className="howto__num">1</span>
-        <p>
-          Guess a city. Your score is the <strong>distance from the start</strong> to it
-          (as the crow flies). Guess again and the hop from your{' '}
-          <strong>last city</strong> to the new one is <strong>added on</strong>.
-        </p>
+        <p>{t.howTo.step1}</p>
       </div>
       <div className="howto__step">
         <span className="howto__num">2</span>
-        <p>
-          Keep hopping to climb toward the target. The <strong>hot / cold</strong> cue
-          warms up as your running total nears it — watch the <strong>“to go”</strong>
-          number shrink.
-        </p>
+        <p>{t.howTo.step2}</p>
       </div>
       <div className="howto__step">
         <span className="howto__num">3</span>
-        <p>
-          Land your total within <strong>{band}</strong> below the target to win. Go{' '}
-          <strong>over</strong> and you bust — so does running out of{' '}
-          <strong>{rules.guesses} guesses</strong>. Fewer hops is a better score.
-        </p>
+        <p>{t.howTo.step3(band, rules.guesses)}</p>
       </div>
 
       <button className="btn" onClick={onClose}>
-        Let’s wander
+        {t.howTo.cta}
       </button>
     </Modal>
   )

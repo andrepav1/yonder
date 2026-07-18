@@ -4,6 +4,36 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
+## 2026-07-18 — Internationalization (English, French, Italian)
+
+- **Context.** The UI shipped with English copy hard-coded inline across `App.tsx`,
+  the `ui/*` components, and two pure helpers (`format.ts`, `share.ts`). We wanted
+  French + Italian without a heavyweight i18n dependency and without compromising the
+  "pure, I/O-free core" invariant.
+- **Decision.** A tiny in-house i18n layer under `src/i18n`:
+  - Catalogs (`en`/`fr`/`it`) are **plain, React-free, serializable** objects — strings
+    plus small interpolation functions (`hint(band, guesses)`, `solved(used, total)`,
+    …). English is the reference catalog and the default everywhere.
+  - `index.ts` is the registry (`catalogs`, `LOCALES`, `getMessages`, `detectLocale`,
+    `isLocale`); `context.tsx` adds the only React-aware piece, an `I18nProvider` +
+    `useI18n()` hook exposing `{ locale, t, setLocale }`.
+  - Pure `lib/*` helpers take a `Messages` catalog as an **optional last argument**
+    (default English), mirroring how the game core already takes `GameRules`. This
+    keeps `lib` dependency-light (it imports catalogs, never the React context) and
+    means every existing English-only test stays green untouched.
+- **Why not a library (`i18next`, `react-intl`).** Overkill for ~40 keys on a static
+  daily game; they add bundle weight and a runtime we don't need. The catalog-as-data
+  approach matches the project's existing "behaviour is data" philosophy and stays
+  trivially unit-testable (a shape test asserts every locale defines the same keys).
+- **Locale selection.** First visit detects from `navigator.languages` (primary subtag
+  match), falling back to English; the header switcher persists an explicit choice in
+  `localStorage` (`yondle:locale:v1`) via `prefs.ts`. `document.documentElement.lang`
+  tracks the active locale for a11y + correct typography.
+- **Numbers, dates, share.** `toLocaleString`/`toLocaleDateString` use each catalog's
+  BCP-47 tag, so grouping and month names localize (`1,234 km` → `1 234 km`). The share
+  string localizes its reach line but keeps the `Yondle` brand and ISO puzzle date
+  identical for everyone, so results stay comparable across languages.
+
 ## 2026-07-17 — Globe drag no longer freezes mid-spin (touch)
 
 - **Symptom.** On touch, dragging to spin the globe would sometimes "move a little

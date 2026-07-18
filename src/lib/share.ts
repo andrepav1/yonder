@@ -2,6 +2,7 @@
 
 import type { PuzzleSpec, RoundState } from './types'
 import type { GameRules } from '@/config/rules'
+import { type Messages, en } from '@/i18n'
 import { scoreRound, tempLevel, type TempLevel } from './scoring'
 import { bearingArrow } from './geo'
 
@@ -17,6 +18,8 @@ const TEMP_SQUARE: Record<TempLevel, string> = {
 export interface ShareOptions {
   /** Base URL to append (e.g. the deployed site). Omitted if empty. */
   url?: string
+  /** Locale catalog for the reach line (default: English). */
+  t?: Messages
 }
 
 /**
@@ -31,13 +34,14 @@ export function buildShareText(
   rules: GameRules,
   opts: ShareOptions = {},
 ): string {
+  const t = opts.t ?? en
   const breakdown = scoreRound(state.guesses, state.status === 'won', rules)
   const attemptLabel =
     state.status === 'won'
       ? `${breakdown.guessesUsed}/${rules.guesses}`
       : `X/${rules.guesses}`
 
-  const header = `Yondle ${puzzle.date} · ${attemptLabel}`
+  const header = `${t.appName} ${puzzle.date} · ${attemptLabel}`
 
   const rows = state.guesses.map((g) => {
     const square = TEMP_SQUARE[tempLevel(g, rules)]
@@ -45,7 +49,7 @@ export function buildShareText(
   })
 
   const pct = Math.round((breakdown.totalKm / puzzle.targetKm) * 100)
-  const reachLine = breakdown.overshot ? `📏 ${pct}% (overshot)` : `📏 ${pct}% of target`
+  const reachLine = breakdown.overshot ? t.share.overshot(pct) : t.share.ofTarget(pct)
 
   const lines = [header, ...rows, reachLine]
   if (opts.url) lines.push(opts.url)

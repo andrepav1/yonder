@@ -22,6 +22,7 @@ import type { City, GuessResult } from '@/lib/types'
 import type { GameRules } from '@/config/rules'
 import { tempLevel } from '@/lib/scoring'
 import { cityLabel } from '@/lib/cities'
+import { useI18n } from '@/i18n/context'
 
 // world-atlas ships TopoJSON; hydrate the land outline once, at module load.
 const land = feature(
@@ -47,6 +48,7 @@ interface GlobeProps {
 }
 
 export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) {
+  const { t } = useI18n()
   // Rotation is [λ, φ]: spin the globe so the start city faces the viewer first.
   const [rotation, setRotation] = useState<LngLat>([-start.lng, -start.lat])
   const svgRef = useRef<SVGSVGElement>(null)
@@ -186,7 +188,7 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
         className="globe__svg"
         viewBox={`0 0 ${SIZE} ${SIZE}`}
         role="img"
-        aria-label={`Globe centred on ${cityLabel(start)}, showing your journey of guesses. Drag to spin.`}
+        aria-label={t.globe.label(cityLabel(start))}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}

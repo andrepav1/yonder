@@ -4,6 +4,7 @@ import type { GameRules, Unit } from '@/config/rules'
 import { tempLevel } from '@/lib/scoring'
 import { cityLabel } from '@/lib/cities'
 import { formatDistance, remainingPhrase, formatBearing } from '@/lib/format'
+import { useI18n } from '@/i18n/context'
 
 interface GuessRowProps {
   result: GuessResult
@@ -12,13 +13,14 @@ interface GuessRowProps {
 }
 
 export function GuessRow({ result, rules, unit }: GuessRowProps) {
+  const { t } = useI18n()
   const level = tempLevel(result, rules)
   const tempVar = `var(--temp-${level})`
   const status = result.won
-    ? 'Inside the band!'
+    ? t.guessRow.insideBand
     : result.over
-      ? 'Overshot!'
-      : remainingPhrase(result.remainingKm, unit)
+      ? t.guessRow.overshot
+      : remainingPhrase(result.remainingKm, unit, t)
   const statusMod = result.won
     ? ' grow__delta--win'
     : result.over
@@ -33,12 +35,12 @@ export function GuessRow({ result, rules, unit }: GuessRowProps) {
       <div className="grow__body">
         <div className="grow__city">
           {cityLabel(result.city)}
-          <span className="grow__leg"> +{formatDistance(result.legKm, unit)}</span>
+          <span className="grow__leg"> +{formatDistance(result.legKm, unit, t)}</span>
         </div>
         <div className={`grow__delta${statusMod}`}>{status}</div>
       </div>
       <div className="grow__meta">
-        <div className="grow__dist">{formatDistance(result.cumulativeKm, unit)}</div>
+        <div className="grow__dist">{formatDistance(result.cumulativeKm, unit, t)}</div>
         <div className="grow__bearing">{formatBearing(result.bearingDeg)}</div>
       </div>
     </div>

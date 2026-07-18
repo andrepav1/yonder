@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildShareText } from './share'
+import { catalogs } from '@/i18n'
 import { defaultRules } from '@/config/rules'
 import type { City, GuessResult, PuzzleSpec, RoundState } from './types'
 
@@ -85,6 +86,19 @@ describe('buildShareText', () => {
     const text = buildShareText(state, puzzle, defaultRules)
     expect(text).not.toContain('Somewhere')
     expect(text).not.toContain('Start')
+  })
+
+  it('localizes the reach line while keeping the brand + date stable', () => {
+    const state: RoundState = {
+      date: '2026-07-15',
+      status: 'won',
+      guesses: [guess(300, false), guess(995, true)],
+    }
+    const text = buildShareText(state, puzzle, defaultRules, { t: catalogs.it })
+    const lines = text.split('\n')
+    expect(lines[0]).toBe('Yondle 2026-07-15 · 2/6')
+    expect(lines.at(-1)).toContain('dell’obiettivo')
+    expect(lines.at(-1)).not.toContain('of target')
   })
 
   it('appends a url when provided', () => {
