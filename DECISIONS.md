@@ -4,19 +4,24 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
-## 2026-07-19 — Added Spanish + Chinese (validating the i18n seam)
+## 2026-07-19 — Grew to 9 languages (validating the i18n seam)
 
-- **Context.** Two more languages requested right after the i18n layer landed.
-- **What it took.** Exactly what the design promised: two new catalogs
-  (`es.ts`, `zh.ts`), two `LOCALES` entries, and widening the `Locale` union — no
-  changes to any component, pure helper, or the provider. The key-shape parity test
-  picked up both locales automatically and enforced completeness.
-- **Notes.** `isLocale` now derives its valid set from `LOCALES` rather than a
-  hand-maintained literal, so future languages can't drift out of sync. Chinese
-  (`zh-CN`) renders via the system CJK font fallback — the bundled Inter/Calistoga
-  faces are Latin-only, and pulling a CJK webfont (megabytes) isn't worth it for a
-  static game; the OS font looks clean at the sizes used. Endonym labels in the
-  switcher (`中文`, `Español`) keep it self-describing.
+- **Context.** After the i18n layer landed, we added Spanish + Chinese, then a second
+  batch of Portuguese, German, Japanese, and Korean.
+- **What it took.** Exactly what the design promised: one new catalog per language, one
+  `LOCALES` entry, and widening the `Locale` union — no changes to any component, pure
+  helper, or the provider. The key-shape parity test picks up each new locale
+  automatically and enforces completeness against the English reference.
+- **Notes.** `isLocale` derives its valid set from `LOCALES` rather than a
+  hand-maintained literal, so new languages can't drift out of sync. The CJK locales
+  (`zh`, `ja`, `ko`) render via the system font fallback — the bundled Inter/Calistoga
+  faces are Latin-only, and pulling CJK webfonts (megabytes each) isn't worth it for a
+  static game; the OS fonts look clean at the sizes used. Switcher labels are endonyms
+  (`Español`, `日本語`, `한국어`, `中文`) so the picker is self-describing.
+- **Batch selection.** Prioritized by audience reach against zero new infrastructure:
+  all nine are LTR and need only a catalog. Right-to-left languages (Arabic, Hebrew,
+  Persian/Urdu) are deliberately deferred — they need a `dir="rtl"` + logical-CSS pass
+  first, a separate milestone rather than a translation drop-in.
 
 ## 2026-07-18 — Internationalization (English, French, Italian)
 

@@ -10,7 +10,7 @@ win. You get **6 guesses**, and fewer hops is a better score.
 > **Project status:** v1 is complete — the pure, tested game core (distance/bearing,
 > dataset + fuzzy autocomplete, deterministic generator, scoring, engine, share, stats)
 > **and** the React UI (an interactive 3D **globe** as the board, guess loop, hot/cold
-> feedback, result, stats, onboarding, light + dark, **five languages**).
+> feedback, result, stats, onboarding, light + dark, **nine languages**).
 > Fully static; deploys to Vercel. `npm run dev` to play.
 
 ## How it works
@@ -63,8 +63,8 @@ many hops you took and where your total landed. A Wordle-style shareable summary
 
 ### Languages
 
-The whole interface speaks **English, French, Italian, Spanish, and Chinese**
-🇬🇧 🇫🇷 🇮🇹 🇪🇸 🇨🇳. On first visit
+The whole interface speaks **English, French, Italian, Spanish, Portuguese, German,
+Japanese, Korean, and Chinese** 🇬🇧 🇫🇷 🇮🇹 🇪🇸 🇧🇷 🇩🇪 🇯🇵 🇰🇷 🇨🇳. On first visit
 the language is chosen from your browser, and the globe icon in the header switches it
 any time (the choice is remembered). Numbers and the date follow the locale's
 conventions (e.g. `1,234 km` vs `1 234 km`), and the shared summary is localized too
@@ -107,9 +107,9 @@ src/
     engine.ts         # pure RoundState machine (accumulate legs, bust on over)
     share.ts          # Wordle-style share string (locale-aware)
     format.ts         # distance / remaining / bearing display (locale-aware)
-  i18n/               # EN/FR/IT/ES/ZH catalogs + registry + React provider/hook
+  i18n/               # 9-language catalogs + registry + React provider/hook
     types.ts          # Messages shape + Locale
-    en fr it es zh.ts # React-free, serializable message catalogs
+    en.ts fr.ts …     # one React-free, serializable catalog per language
     index.ts          # catalogs, LOCALES, getMessages, detectLocale
     context.tsx       # I18nProvider + useI18n()
   modes/daily.ts      # the one GameMode descriptor (+ registry)

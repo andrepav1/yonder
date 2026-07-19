@@ -1,0 +1,106 @@
+// Portuguese (Brazilian) catalog.
+
+import type { Messages } from './types'
+
+export const pt: Messages = {
+  numberLocale: 'pt-BR',
+
+  appName: 'Yondle',
+  tagline: 'jogo de geografia diário',
+
+  header: {
+    distanceUnit: 'Unidade de distância',
+    howToPlay: 'Como jogar',
+    statistics: 'Estatísticas',
+    language: 'Idioma',
+  },
+
+  prompt: {
+    eyebrow: 'Partida de hoje',
+    targetLabel: 'Alcance um total de',
+    hint: (band, guesses) =>
+      `pule de cidade em cidade · pare a menos de ${band} abaixo do alvo · não passe · ${guesses} tentativas`,
+    guessesLeft: (n) => `${n} tentativas restantes`,
+  },
+
+  globe: {
+    label: (startCity) =>
+      `Globo centrado em ${startCity}, mostrando seu trajeto de cidades. Arraste para girar.`,
+  },
+
+  input: {
+    placeholder: 'Diga uma cidade…',
+    ariaLabel: 'Adivinhe uma cidade',
+    submit: 'Enviar',
+    submitAria: 'Enviar palpite',
+  },
+
+  guessRow: {
+    insideBand: 'Na faixa!',
+    overshot: 'Passou!',
+  },
+
+  errors: {
+    duplicate: 'Você já palpitou nessa cidade.',
+    startCity: 'Essa é a cidade de partida — escolha outra.',
+    finished: 'A partida de hoje acabou.',
+  },
+
+  format: {
+    toGo: (distance) => `faltam ${distance}`,
+    over: (distance) => `${distance} a mais`,
+    onTheLine: 'exatamente na linha',
+  },
+
+  result: {
+    solved: (used, total) => `Resolvido em ${used}/${total}`,
+    overshotBadge: 'Alvo ultrapassado',
+    outOfGuesses: 'Sem tentativas',
+    headlineWin: 'Você conseguiu',
+    headlineOver: 'Longe demais!',
+    headlineClose: 'Por pouco',
+    ofTarget: (target) => `de um alvo de ${target}`,
+    landedInBand: 'chegou na faixa',
+    answerNote:
+      'Os pontos no globo são as cidades mais próximas da distância alvo — as que teriam vencido em um único salto direto.',
+    share: 'Compartilhar resultado',
+    copied: 'Copiado!',
+  },
+
+  howTo: {
+    title: 'Como jogar',
+    intro:
+      'Todo dia, uma cidade de partida e uma distância alvo. Monte um trajeto cidade por cidade e some os saltos — alcance o alvo sem passar.',
+    step1:
+      'Palpite uma cidade. Sua pontuação é a distância da partida até ela (em linha reta). Palpite outra e o salto da sua última cidade para a nova é somado.',
+    step2:
+      'Continue saltando para se aproximar do alvo. A dica quente / frio esquenta conforme seu total se aproxima — veja o número «faltam» diminuir.',
+    step3: (band, guesses) =>
+      `Pare seu total a menos de ${band} abaixo do alvo para vencer. Passe e você perde — assim como esgotar as ${guesses} tentativas. Menos saltos, melhor pontuação.`,
+    cta: 'Vamos explorar',
+  },
+
+  stats: {
+    title: 'Estatísticas',
+    played: 'Jogadas',
+    winPct: '% vitórias',
+    streak: 'Sequência',
+    max: 'Recorde',
+    distribution: 'Distribuição de tentativas',
+    empty: 'Nenhum jogo ainda — jogue o desafio de hoje para começar uma sequência.',
+  },
+
+  modal: {
+    close: 'Fechar',
+  },
+
+  share: {
+    ofTarget: (pct) => `📏 ${pct}% do alvo`,
+    overshot: (pct) => `📏 ${pct}% (ultrapassou)`,
+  },
+
+  footer: {
+    cityData: 'Dados das cidades',
+    license: 'CC BY 4.0',
+  },
+}

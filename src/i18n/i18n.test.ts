@@ -47,18 +47,23 @@ describe('detectLocale', () => {
     expect(detectLocale(['en-GB'])).toBe('en')
     expect(detectLocale(['es-MX'])).toBe('es')
     expect(detectLocale(['zh-Hans-CN', 'en'])).toBe('zh')
+    expect(detectLocale(['pt-BR'])).toBe('pt')
+    expect(detectLocale(['de-AT'])).toBe('de')
+    expect(detectLocale(['ja'])).toBe('ja')
+    expect(detectLocale(['ko-KR'])).toBe('ko')
   })
   it('falls back to the default when nothing matches', () => {
-    expect(detectLocale(['de', 'ja'])).toBe('en')
+    expect(detectLocale(['nl', 'sv'])).toBe('en')
     expect(detectLocale([])).toBe('en')
-    expect(detectLocale(['pt'], 'it')).toBe('it')
+    expect(detectLocale(['ru'], 'it')).toBe('it')
   })
 })
 
 describe('isLocale / getMessages', () => {
   it('narrows valid locale codes', () => {
     expect(isLocale('fr')).toBe(true)
-    expect(isLocale('de')).toBe(false)
+    expect(isLocale('de')).toBe(true)
+    expect(isLocale('xx')).toBe(false)
     expect(isLocale(null)).toBe(false)
   })
   it('returns the matching catalog, defaulting for unknowns', () => {

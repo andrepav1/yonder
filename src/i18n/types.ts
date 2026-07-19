@@ -6,7 +6,7 @@
 // how the game core takes `GameRules`. `numberLocale` is the BCP-47 tag used for
 // `toLocaleString` number/date grouping.
 
-export type Locale = 'en' | 'fr' | 'it' | 'es' | 'zh'
+export type Locale = 'en' | 'fr' | 'it' | 'es' | 'zh' | 'pt' | 'de' | 'ja' | 'ko'
 
 /** Locale metadata for the language switcher (display name in its own tongue). */
 export interface LocaleInfo {
