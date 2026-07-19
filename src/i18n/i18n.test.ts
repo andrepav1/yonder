@@ -45,9 +45,11 @@ describe('detectLocale', () => {
     expect(detectLocale(['fr-FR', 'en'])).toBe('fr')
     expect(detectLocale(['it'])).toBe('it')
     expect(detectLocale(['en-GB'])).toBe('en')
+    expect(detectLocale(['es-MX'])).toBe('es')
+    expect(detectLocale(['zh-Hans-CN', 'en'])).toBe('zh')
   })
   it('falls back to the default when nothing matches', () => {
-    expect(detectLocale(['de', 'es'])).toBe('en')
+    expect(detectLocale(['de', 'ja'])).toBe('en')
     expect(detectLocale([])).toBe('en')
     expect(detectLocale(['pt'], 'it')).toBe('it')
   })

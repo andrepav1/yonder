@@ -4,6 +4,20 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
+## 2026-07-19 — Added Spanish + Chinese (validating the i18n seam)
+
+- **Context.** Two more languages requested right after the i18n layer landed.
+- **What it took.** Exactly what the design promised: two new catalogs
+  (`es.ts`, `zh.ts`), two `LOCALES` entries, and widening the `Locale` union — no
+  changes to any component, pure helper, or the provider. The key-shape parity test
+  picked up both locales automatically and enforced completeness.
+- **Notes.** `isLocale` now derives its valid set from `LOCALES` rather than a
+  hand-maintained literal, so future languages can't drift out of sync. Chinese
+  (`zh-CN`) renders via the system CJK font fallback — the bundled Inter/Calistoga
+  faces are Latin-only, and pulling a CJK webfont (megabytes) isn't worth it for a
+  static game; the OS font looks clean at the sizes used. Endonym labels in the
+  switcher (`中文`, `Español`) keep it self-describing.
+
 ## 2026-07-18 — Internationalization (English, French, Italian)
 
 - **Context.** The UI shipped with English copy hard-coded inline across `App.tsx`,

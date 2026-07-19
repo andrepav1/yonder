@@ -11,7 +11,7 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 > **Status:** v1 is fully built — the pure core (distance/bearing, dataset +
 > autocomplete, seeded generator, scoring, engine, share, stats) **and** the React
 > UI (an interactive **globe** board, guess loop, feedback, result, stats,
-> onboarding, **i18n in English / French / Italian**). All green under Vitest + ESLint +
+> onboarding, **i18n in English / French / Italian / Spanish / Chinese**). All green under Vitest + ESLint +
 > typecheck, and verified end-to-end in a real browser. Deploys static to Vercel. See
 > `DESIGN.md` for the visual system.
 
@@ -61,9 +61,10 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 - `src/lib/format.ts` — **pure** display helpers (`formatDistance`, `remainingPhrase`,
   `formatBearing`), unit-aware. Word-bearing helpers take a `Messages` catalog
   (default English) so number grouping + phrasing follow the active locale.
-- `src/i18n/` — **internationalization** (English, French, Italian). `types.ts` is the
-  `Messages` shape + `Locale`; `en.ts`/`fr.ts`/`it.ts` are React-free, serializable
-  catalogs (plain strings + small interpolation fns); `index.ts` is the registry
+- `src/i18n/` — **internationalization** (English, French, Italian, Spanish, Chinese).
+  `types.ts` is the `Messages` shape + `Locale`; `en.ts`/`fr.ts`/`it.ts`/`es.ts`/`zh.ts`
+  are React-free, serializable catalogs (plain strings + small interpolation fns);
+  `index.ts` is the registry
   (`catalogs`, `LOCALES`, `getMessages`, `detectLocale`, `isLocale`); `context.tsx` is
   the React `I18nProvider` + `useI18n()` hook exposing `{ locale, t, setLocale }`.
   Pure `lib/*` helpers import catalogs (never the context), so the core stays
