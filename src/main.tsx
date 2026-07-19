@@ -14,9 +14,12 @@ import '@fontsource/jetbrains-mono/600.css'
 
 import './styles/globals.css'
 import App from './App'
+import { I18nProvider } from './i18n/context'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <I18nProvider>
+      <App />
+    </I18nProvider>
   </StrictMode>,
 )

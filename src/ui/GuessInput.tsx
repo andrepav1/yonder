@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { City } from '@/lib/types'
 import { search, resolveGuess, type SearchResult } from '@/lib/cities'
+import { useI18n } from '@/i18n/context'
 
 interface GuessInputProps {
   disabled?: boolean
@@ -13,6 +14,7 @@ interface GuessInputProps {
  * best fuzzy resolution of the raw text. Keyboard: ↑/↓ to move, Enter to pick.
  */
 export function GuessInput({ disabled, onGuess }: GuessInputProps) {
+  const { t } = useI18n()
   const [value, setValue] = useState('')
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
@@ -76,8 +78,8 @@ export function GuessInput({ disabled, onGuess }: GuessInputProps) {
           autoCorrect="off"
           autoCapitalize="words"
           spellCheck={false}
-          placeholder="Name a city…"
-          aria-label="Guess a city"
+          placeholder={t.input.placeholder}
+          aria-label={t.input.ariaLabel}
           value={value}
           disabled={disabled}
           onChange={(e) => {
@@ -91,9 +93,9 @@ export function GuessInput({ disabled, onGuess }: GuessInputProps) {
           className="guess__submit"
           onClick={submit}
           disabled={!canSubmit}
-          aria-label="Submit guess"
+          aria-label={t.input.submitAria}
         >
-          Guess
+          {t.input.submit}
         </button>
       </div>
 

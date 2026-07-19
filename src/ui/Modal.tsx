@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { useI18n } from '@/i18n/context'
 import { CloseIcon } from './icons'
 
 interface ModalProps {
@@ -9,6 +10,7 @@ interface ModalProps {
 
 /** Bottom-sheet on mobile, centered card on wider screens. Esc + scrim close. */
 export function Modal({ title, onClose, children }: ModalProps) {
+  const { t } = useI18n()
   const sheetRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export function Modal({ title, onClose, children }: ModalProps) {
       >
         <div className="sheet__head">
           <h2 className="sheet__title">{title}</h2>
-          <button className="iconbtn" onClick={onClose} aria-label="Close">
+          <button className="iconbtn" onClick={onClose} aria-label={t.modal.close}>
             <CloseIcon />
           </button>
         </div>

@@ -11,8 +11,9 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 > **Status:** v1 is fully built — the pure core (distance/bearing, dataset +
 > autocomplete, seeded generator, scoring, engine, share, stats) **and** the React
 > UI (an interactive **globe** board, guess loop, feedback, result, stats,
-> onboarding). All green under Vitest + ESLint + typecheck, and verified end-to-end
-> in a real browser. Deploys static to Vercel. See `DESIGN.md` for the visual system.
+> onboarding, **i18n in 9 languages**). All green under Vitest + ESLint +
+> typecheck, and verified end-to-end in a real browser. Deploys static to Vercel. See
+> `DESIGN.md` for the visual system.
 
 ## How to work here (non-negotiable)
 
@@ -58,7 +59,16 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 - `src/lib/share.ts` — **pure** Wordle-style share string (hot/cold squares per hop +
   leg arrows, a reach-% line, no city names).
 - `src/lib/format.ts` — **pure** display helpers (`formatDistance`, `remainingPhrase`,
-  `formatBearing`), unit-aware.
+  `formatBearing`), unit-aware. Word-bearing helpers take a `Messages` catalog
+  (default English) so number grouping + phrasing follow the active locale.
+- `src/i18n/` — **internationalization** (English, French, Italian, Spanish, Portuguese,
+  German, Japanese, Korean, Chinese). `types.ts` is the `Messages` shape + `Locale`;
+  one React-free, serializable catalog per language (`en.ts`, `fr.ts`, … — plain strings
+  with small interpolation fns); `index.ts` is the registry
+  (`catalogs`, `LOCALES`, `getMessages`, `detectLocale`, `isLocale`); `context.tsx` is
+  the React `I18nProvider` + `useI18n()` hook exposing `{ locale, t, setLocale }`.
+  Pure `lib/*` helpers import catalogs (never the context), so the core stays
+  I/O-free. Adding a language = adding a catalog + a `LOCALES` entry.
 - `src/data/cities.json` — **committed** compact dataset (array-of-arrays; see
   `fields`). Built by `scripts/build-cities.mjs`.
 - `src/modes/daily.ts` — the single `GameMode` descriptor (`generate`/`apply`/
@@ -66,14 +76,15 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 - `src/store/` — persistence behind a `KeyValueStore` seam (`storage.ts`, memory +
   localStorage adapters): `statsStore.ts` (pure `updateStats` streak logic + the
   `StatsStore` wrapper: stats, streaks, guess distribution, per-day round save +
-  idempotent `recordResult`) and `prefs.ts` (unit + onboarding flag).
+  idempotent `recordResult`) and `prefs.ts` (unit + language + onboarding flag).
 - `src/App.tsx` — orchestrates the day: generate puzzle, load/restore the saved
   round (daily lock), handle guesses, record the result, share.
 - `src/ui/*` — React shell: `Globe` (the interactive board — see below), `GuessInput`
   (fuzzy typeahead), `GuessRow` (leg, running total, remaining, bearing, hot/cold), `ResultCard`
   (score + share; the answer _reveal_ now lives on the globe, not a text list),
-  `HowToPlay`, `StatsPanel`, `Modal` (bottom-sheet), `icons.tsx` (inline SVG — no
-  emoji chrome).
+  `HowToPlay`, `StatsPanel`, `Modal` (bottom-sheet), `LanguageSwitcher` (header EN/FR/IT
+  picker — a native `<select>` over a globe icon), `icons.tsx` (inline SVG — no
+  emoji chrome). Every component pulls copy from `useI18n().t` — no hard-coded strings.
 - `src/ui/Globe.tsx` — the main guessing surface: a drag-to-spin **orthographic
   globe** (d3-geo) over a bundled land outline (`world-atlas` land-110m TopoJSON,
   hydrated once with `topojson-client`). Purely presentational — all geometry comes

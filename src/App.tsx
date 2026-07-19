@@ -14,26 +14,22 @@ import { createStatsStore, type Stats } from '@/store/statsStore'
 import { loadUnit, saveUnit, isOnboarded, setOnboarded } from '@/store/prefs'
 import { formatDistance, bandLabel } from '@/lib/format'
 import { cityLabel } from '@/lib/cities'
+import { useI18n } from '@/i18n/context'
 import { Globe } from '@/ui/Globe'
 import { GuessInput } from '@/ui/GuessInput'
 import { GuessRow } from '@/ui/GuessRow'
 import { ResultCard } from '@/ui/ResultCard'
 import { HowToPlay } from '@/ui/HowToPlay'
 import { StatsPanel } from '@/ui/StatsPanel'
+import { LanguageSwitcher } from '@/ui/LanguageSwitcher'
 import { HelpIcon, StatsIcon } from '@/ui/icons'
 
 // The public URL appended to shared results. Update to your Vercel domain.
 const SITE_URL = 'https://yondle.vercel.app'
 
-const ERROR_TEXT: Record<GuessError, string> = {
-  duplicate: 'You already guessed that city.',
-  'start-city': 'That’s the start city — pick somewhere else.',
-  finished: 'Today’s round is over.',
-}
-
-function humanDate(date: string): string {
+function humanDate(date: string, locale: string): string {
   const d = new Date(`${date}T00:00:00Z`)
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString(locale, {
     timeZone: 'UTC',
     month: 'long',
     day: 'numeric',
@@ -42,6 +38,7 @@ function humanDate(date: string): string {
 }
 
 export default function App() {
+  const { t } = useI18n()
   const rules = dailyMode.rules
   const date = useMemo(() => utcDateString(), [])
   const puzzle = useMemo(() => dailyMode.generate(date), [date])
@@ -55,7 +52,7 @@ export default function App() {
   const [toast, setToast] = useState('')
   const [showHowTo, setShowHowTo] = useState(() => !isOnboarded())
   const [showStats, setShowStats] = useState(false)
-  const [shareLabel, setShareLabel] = useState('Share result')
+  const [copied, setCopied] = useState(false)
   const toastTimer = useRef<number | undefined>(undefined)
 
   const finished = isFinished(round)
@@ -68,10 +65,13 @@ export default function App() {
     toastTimer.current = window.setTimeout(() => setToast(''), 2600)
   }
 
+  const errorText = (error: GuessError): string =>
+    error === 'start-city' ? t.errors.startCity : t.errors[error]
+
   const handleGuess = (city: City) => {
     const res = applyGuess(round, puzzle, city, rules)
     if (res.error) {
-      flashToast(ERROR_TEXT[res.error])
+      flashToast(errorText(res.error))
       return
     }
     setToast('')
@@ -93,14 +93,14 @@ export default function App() {
   }
 
   const handleShare = async () => {
-    const text = dailyMode.share(round, puzzle, { url: SITE_URL })
+    const text = dailyMode.share(round, puzzle, { url: SITE_URL, t })
     try {
       if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
         await navigator.share({ text })
       } else {
         await navigator.clipboard.writeText(text)
-        setShareLabel('Copied!')
-        window.setTimeout(() => setShareLabel('Share result'), 1800)
+        setCopied(true)
+        window.setTimeout(() => setCopied(false), 1800)
       }
     } catch {
       // user cancelled share sheet or clipboard blocked — no-op
@@ -114,11 +114,12 @@ export default function App() {
       <div className="shell">
         <header className="hdr">
           <div className="hdr__brand">
-            <span className="hdr__title">Yondle</span>
-            <span className="hdr__sub">{humanDate(date)}</span>
+            <span className="hdr__title">{t.appName}</span>
+            <span className="hdr__sub">{humanDate(date, t.numberLocale)}</span>
           </div>
           <div className="hdr__actions">
-            <div className="unit" role="group" aria-label="Distance unit">
+            <LanguageSwitcher />
+            <div className="unit" role="group" aria-label={t.header.distanceUnit}>
               <button aria-pressed={unit === 'km'} onClick={() => changeUnit('km')}>
                 km
               </button>
@@ -129,14 +130,14 @@ export default function App() {
             <button
               className="iconbtn"
               onClick={() => setShowHowTo(true)}
-              aria-label="How to play"
+              aria-label={t.header.howToPlay}
             >
               <HelpIcon />
             </button>
             <button
               className="iconbtn"
               onClick={() => setShowStats(true)}
-              aria-label="Statistics"
+              aria-label={t.header.statistics}
             >
               <StatsIcon />
             </button>
@@ -144,18 +145,19 @@ export default function App() {
         </header>
 
         <section className="prompt">
-          <div className="prompt__eyebrow">Today’s departure</div>
+          <div className="prompt__eyebrow">{t.prompt.eyebrow}</div>
           <div className="prompt__start">{cityLabel(puzzle.start)}</div>
-          <div className="prompt__target-label">Reach a total of</div>
+          <div className="prompt__target-label">{t.prompt.targetLabel}</div>
           <div className="prompt__target mono">
-            {formatDistance(puzzle.targetKm, unit)}
+            {formatDistance(puzzle.targetKm, unit, t)}
           </div>
           <div className="prompt__hint">
-            hop city to city · land within{' '}
-            {bandLabel(puzzle.targetKm, rules.tolerancePct, unit)} below the target ·
-            don’t overshoot · {rules.guesses} guesses
+            {t.prompt.hint(
+              bandLabel(puzzle.targetKm, rules.tolerancePct, unit, t),
+              rules.guesses,
+            )}
           </div>
-          <div className="pips" aria-label={`${left} guesses left`}>
+          <div className="pips" aria-label={t.prompt.guessesLeft(left)}>
             {Array.from({ length: rules.guesses }).map((_, i) => {
               const g = round.guesses[i]
               const cls = g ? (g.won ? 'pip pip--win' : 'pip pip--used') : 'pip'
@@ -194,16 +196,16 @@ export default function App() {
             rules={rules}
             unit={unit}
             onShare={handleShare}
-            shareLabel={shareLabel}
+            copied={copied}
           />
         )}
 
         <footer className="foot">
-          City data ©{' '}
+          {t.footer.cityData} ©{' '}
           <a href="https://www.geonames.org/" target="_blank" rel="noreferrer">
             GeoNames
           </a>{' '}
-          · CC BY 4.0
+          · {t.footer.license}
         </footer>
       </div>
 

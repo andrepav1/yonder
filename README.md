@@ -10,8 +10,8 @@ win. You get **6 guesses**, and fewer hops is a better score.
 > **Project status:** v1 is complete — the pure, tested game core (distance/bearing,
 > dataset + fuzzy autocomplete, deterministic generator, scoring, engine, share, stats)
 > **and** the React UI (an interactive 3D **globe** as the board, guess loop, hot/cold
-> feedback, result, stats, onboarding, light + dark). Fully static; deploys to Vercel.
-> `npm run dev` to play.
+> feedback, result, stats, onboarding, light + dark, **nine languages**).
+> Fully static; deploys to Vercel. `npm run dev` to play.
 
 ## How it works
 
@@ -61,6 +61,17 @@ On a win, a bust, or after 6 guesses, the globe pins the closest **single-hop ci
 many hops you took and where your total landed. A Wordle-style shareable summary
 (hot/cold squares + leg arrows, a reach-% line, no city names) copies to the clipboard.
 
+### Languages
+
+The whole interface speaks **English, French, Italian, Spanish, Portuguese, German,
+Japanese, Korean, and Chinese** 🇬🇧 🇫🇷 🇮🇹 🇪🇸 🇧🇷 🇩🇪 🇯🇵 🇰🇷 🇨🇳. On first visit
+the language is chosen from your browser, and the globe icon in the header switches it
+any time (the choice is remembered). Numbers and the date follow the locale's
+conventions (e.g. `1,234 km` vs `1 234 km`), and the shared summary is localized too
+while keeping the puzzle date and `Yondle` name identical for everyone. Copy lives in
+one place per language — `src/i18n/{en,fr,it}.ts` — so adding a language is just adding
+a catalog and a `LOCALES` entry; the rest of the app reads strings through `useI18n()`.
+
 ## Development
 
 ```bash
@@ -94,14 +105,19 @@ src/
     puzzle.ts         # deterministic daily generator
     scoring.ts        # evaluate a leg, cumulative total, hot/cold level
     engine.ts         # pure RoundState machine (accumulate legs, bust on over)
-    share.ts          # Wordle-style share string
-    format.ts         # distance / remaining / bearing display
+    share.ts          # Wordle-style share string (locale-aware)
+    format.ts         # distance / remaining / bearing display (locale-aware)
+  i18n/               # 9-language catalogs + registry + React provider/hook
+    types.ts          # Messages shape + Locale
+    en.ts fr.ts …     # one React-free, serializable catalog per language
+    index.ts          # catalogs, LOCALES, getMessages, detectLocale
+    context.tsx       # I18nProvider + useI18n()
   modes/daily.ts      # the one GameMode descriptor (+ registry)
   store/              # persistence behind a KeyValueStore seam
     storage.ts        # memory + localStorage adapters
     statsStore.ts     # stats, streaks, distribution, daily round save
-    prefs.ts          # unit + onboarding flag
-  ui/                 # React shell (Globe, GuessInput, GuessRow, ResultCard, …)
+    prefs.ts          # unit + language + onboarding flag
+  ui/                 # React shell (Globe, GuessInput, GuessRow, ResultCard, LanguageSwitcher, …)
   styles/globals.css  # the "Terra" design system (see DESIGN.md)
   App.tsx  main.tsx   # app shell + entry
   data/cities.json    # committed compact dataset (built artifact)
