@@ -14,15 +14,15 @@ interface GuessInputProps {
  * best fuzzy resolution of the raw text. Keyboard: ↑/↓ to move, Enter to pick.
  */
 export function GuessInput({ disabled, onGuess }: GuessInputProps) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const [value, setValue] = useState('')
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const rootRef = useRef<HTMLDivElement>(null)
 
   const results: SearchResult[] = useMemo(
-    () => (value.trim().length >= 1 ? search(value, 6) : []),
-    [value],
+    () => (value.trim().length >= 1 ? search(value, 6, locale) : []),
+    [value, locale],
   )
 
   useEffect(() => {

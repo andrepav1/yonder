@@ -3,13 +3,21 @@
 // The dataset is a compact array-of-arrays (see scripts/build-cities.mjs). We
 // hydrate it once into typed City objects and build light search indexes lazily.
 
-import type { City } from './types'
+import type { City, CityNames } from './types'
+import type { Locale } from '@/i18n/types'
 import rawData from '@/data/cities.json'
+
+/**
+ * A dataset row is the compact tuple built by `scripts/build-cities.mjs`. The
+ * optional 8th element is the localized-names map, present only when the city
+ * has at least one name that differs from its canonical `name`.
+ */
+type RawCity = [number, string, string, string, number, number, number, CityNames?]
 
 interface RawData {
   fields: string[]
   count: number
-  cities: [number, string, string, string, number, number, number][]
+  cities: RawCity[]
 }
 
 const data = rawData as unknown as RawData
@@ -24,33 +32,50 @@ export function foldText(s: string): string {
 }
 
 let _cities: City[] | null = null
-let _folded: string[] | null = null
+/**
+ * Per-city folded search terms: the canonical name plus every localized name.
+ * Matching is locale-agnostic on purpose — a player may type "London",
+ * "Londres" or "ロンドン" and reach the same city whatever the UI language.
+ */
+let _terms: string[][] | null = null
 let _countByName: Map<string, number> | null = null
 let _countByNameCountry: Map<string, number> | null = null
 
 function ensureLoaded(): void {
   if (_cities) return
-  const cities: City[] = data.cities.map((r) => ({
-    id: r[0],
-    name: r[1],
-    country: r[2],
-    admin1: r[3],
-    lat: r[4],
-    lng: r[5],
-    population: r[6],
-  }))
-  const folded = cities.map((c) => foldText(c.name))
+  const cities: City[] = data.cities.map((r) => {
+    const city: City = {
+      id: r[0],
+      name: r[1],
+      country: r[2],
+      admin1: r[3],
+      lat: r[4],
+      lng: r[5],
+      population: r[6],
+    }
+    if (r[7] && Object.keys(r[7]).length > 0) city.names = r[7]
+    return city
+  })
+  const terms = cities.map((c) => {
+    const set = new Set<string>([foldText(c.name)])
+    if (c.names) {
+      for (const localized of Object.values(c.names)) {
+        if (localized) set.add(foldText(localized))
+      }
+    }
+    return [...set]
+  })
   const countByName = new Map<string, number>()
   const countByNameCountry = new Map<string, number>()
   for (let i = 0; i < cities.length; i++) {
-    const nf = folded[i]!
+    const nf = foldText(cities[i]!.name)
     const c = cities[i]!
     countByName.set(nf, (countByName.get(nf) ?? 0) + 1)
     const nc = `${nf}|${c.country}`
     countByNameCountry.set(nc, (countByNameCountry.get(nc) ?? 0) + 1)
   }
   _cities = cities
-  _folded = folded
+  _terms = terms
   _countByName = countByName
   _countByNameCountry = countByNameCountry
 }
@@ -62,20 +87,32 @@ export function allCities(): City[] {
 }
 
 /**
- * A human-readable, disambiguated label for a city. Bare name when unique;
- * `"Name, Country"` when the name repeats; `"Name, Region, Country"` when even
- * that repeats.
+ * The display name of a city in a given locale: its localized name when one
+ * exists, else the canonical `name`. English (and any untranslated locale)
+ * always yields `name`.
  */
-export function cityLabel(city: City): string {
+export function localizedName(city: City, locale?: Locale): string {
+  return (locale && city.names?.[locale]) || city.name
+}
+
+/**
+ * A human-readable, disambiguated label for a city, in the active locale. Bare
+ * (localized) name when unique; `"Name, Country"` when the name repeats;
+ * `"Name, Region, Country"` when even that repeats. Uniqueness is decided on the
+ * canonical name (a stable, locale-independent key); the country/region
+ * qualifiers stay in their dataset (English) form since those aren't translated.
+ */
+export function cityLabel(city: City, locale?: Locale): string {
   ensureLoaded()
+  const display = localizedName(city, locale)
   const nf = foldText(city.name)
-  if (_countByName!.get(nf) === 1) return city.name
+  if (_countByName!.get(nf) === 1) return display
   if (_countByNameCountry!.get(`${nf}|${city.country}`) === 1) {
-    return `${city.name}, ${city.country}`
+    return `${display}, ${city.country}`
   }
   return city.admin1
-    ? `${city.name}, ${city.admin1}, ${city.country}`
-    : `${city.name}, ${city.country}`
+    ? `${display}, ${city.admin1}, ${city.country}`
+    : `${display}, ${city.country}`
 }
 
 export interface SearchResult {
@@ -103,27 +140,41 @@ function boundedLevenshtein(a: string, b: string, max: number): number {
   return prev[b.length]!
 }
 
+/** Best (lowest) direct-match rank of a query across a city's search terms. */
+function bestDirectRank(terms: string[], q: string): number {
+  let best = Infinity
+  for (const term of terms) {
+    let rank: number
+    if (term === q) rank = 0
+    else if (term.startsWith(q)) rank = 1
+    else if (term.includes(q)) rank = 2
+    else continue
+    if (rank < best) best = rank
+    if (best === 0) break
+  }
+  return best
+}
+
 /**
  * Ranked autocomplete. Prefix matches beat substring matches beat fuzzy (typo)
- * matches; ties break by population. Returns at most `limit` results.
+ * matches; ties break by population. Matching considers a city's canonical name
+ * *and* all its localized names, so the same city is reachable by typing it in
+ * any supported language. `locale` only controls how results are *labelled*.
+ * Returns at most `limit` results.
  */
-export function search(query: string, limit = 8): SearchResult[] {
+export function search(query: string, limit = 8, locale?: Locale): SearchResult[] {
   ensureLoaded()
   const q = foldText(query)
   if (!q) return []
 
   const cities = _cities!
-  const folded = _folded!
+  const terms = _terms!
   type Scored = { i: number; rank: number; pop: number }
   const scored: Scored[] = []
 
   for (let i = 0; i < cities.length; i++) {
-    const nf = folded[i]!
-    let rank: number
-    if (nf === q) rank = 0
-    else if (nf.startsWith(q)) rank = 1
-    else if (nf.includes(q)) rank = 2
-    else continue
+    const rank = bestDirectRank(terms[i]!, q)
+    if (rank === Infinity) continue
     scored.push({ i, rank, pop: cities[i]!.population })
   }
 
@@ -131,22 +182,26 @@ export function search(query: string, limit = 8): SearchResult[] {
   if (scored.length === 0 && q.length >= 3) {
     const maxDist = q.length <= 5 ? 1 : 2
     for (let i = 0; i < cities.length; i++) {
-      const d = boundedLevenshtein(q, folded[i]!, maxDist)
-      if (d <= maxDist) scored.push({ i, rank: 3 + d, pop: cities[i]!.population })
+      let best = maxDist + 1
+      for (const term of terms[i]!) {
+        const d = boundedLevenshtein(q, term, maxDist)
+        if (d < best) best = d
+      }
+      if (best <= maxDist) scored.push({ i, rank: 3 + best, pop: cities[i]!.population })
     }
   }
 
   scored.sort((a, b) => a.rank - b.rank || b.pop - a.pop)
   return scored.slice(0, limit).map((s) => ({
     city: cities[s.i]!,
-    label: cityLabel(cities[s.i]!),
+    label: cityLabel(cities[s.i]!, locale),
   }))
 }
 
 /**
  * Resolve free-text input to a single city (best match) or null. This is the
  * "free text + fuzzy" behaviour: whatever the player typed maps to the top
- * ranked result.
+ * ranked result. Locale-agnostic — input in any supported language resolves.
  */
 export function resolveGuess(query: string): City | null {
   const results = search(query, 1)

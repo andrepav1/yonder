@@ -11,7 +11,8 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 > **Status:** v1 is fully built — the pure core (distance/bearing, dataset +
 > autocomplete, seeded generator, scoring, engine, share, stats) **and** the React
 > UI (an interactive **globe** board, guess loop, feedback, result, stats,
-> onboarding, **i18n in 9 languages**). All green under Vitest + ESLint +
+> onboarding, **i18n in 9 languages** — including **localized city names** you can
+> guess in any language). All green under Vitest + ESLint +
 > typecheck, and verified end-to-end in a real browser. Deploys static to Vercel. See
 > `DESIGN.md` for the visual system.
 
@@ -41,9 +42,15 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 - `src/lib/geo.ts` — `haversineKm`, `initialBearingDeg`, `compass16`,
   `bearingArrow`, km/mi conversion. Pure.
 - `src/lib/types.ts` — serializable domain types (`City`, `PuzzleSpec`, `AnswerCity`).
+  `City.names` is an optional `{ locale: name }` map (`CityNames`) carrying only the
+  localized names that **differ** from the canonical `name` (English is never stored).
 - `src/lib/cities.ts` — loads `src/data/cities.json`, hydrates `City[]`, and does
-  accent/case-insensitive **fuzzy** autocomplete (`search`, `resolveGuess`,
-  `cityLabel` disambiguation).
+  accent/case-insensitive **fuzzy**, **locale-aware** autocomplete. `localizedName` /
+  `cityLabel(city, locale?)` render the active language (falling back to `name`);
+  `search`/`resolveGuess` match a query against a city's canonical **and** all localized
+  names, so a city is reachable by typing it in any supported language. Uniqueness for
+  `cityLabel` disambiguation keys off the canonical name; country/region qualifiers stay
+  in their (English) dataset form.
 - `src/lib/puzzle.ts` — `generatePuzzle(date, {cities?, rules?})`: population-weighted
   start city + validated target so every day has ≥ `minValidAnswers` cities within
   `[target·(1−tol), target]` of the start — i.e. **single-hop wins** — guaranteeing
@@ -70,7 +77,8 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   Pure `lib/*` helpers import catalogs (never the context), so the core stays
   I/O-free. Adding a language = adding a catalog + a `LOCALES` entry.
 - `src/data/cities.json` — **committed** compact dataset (array-of-arrays; see
-  `fields`). Built by `scripts/build-cities.mjs`.
+  `fields`). Built by `scripts/build-cities.mjs`. Each tuple's optional 8th element is
+  the `{ locale: name }` translations map (present only for cities that have any).
 - `src/modes/daily.ts` — the single `GameMode` descriptor (`generate`/`apply`/
   `score`/`share`) + a `modes` registry. Adding a mode = adding a descriptor.
 - `src/store/` — persistence behind a `KeyValueStore` seam (`storage.ts`, memory +
@@ -119,15 +127,26 @@ Use it to verify UI/UX changes on a narrow viewport.
 
 `src/data/cities.json` is the committed, bundled artifact — the app imports it
 directly, so **no download is needed to run or deploy**. To regenerate it, drop the
-three GeoNames dumps into `./data-src/` (gitignored) and run `npm run data:build`:
+GeoNames dumps into `./data-src/` (gitignored) and run `npm run data:build`:
 
 - `cities15000.txt` — https://download.geonames.org/export/dump/cities15000.zip
 - `countryInfo.txt` — https://download.geonames.org/export/dump/countryInfo.txt
 - `admin1CodesASCII.txt` — https://download.geonames.org/export/dump/admin1CodesASCII.txt
+- `alternateNamesV2.txt` — https://download.geonames.org/export/dump/alternateNamesV2.zip
+  (**optional** — enables localized city names; absent = English-only build)
 
 The script filters to `population ≥ 100_000` (~6.2k cities), resolves country +
 admin-1 names, rounds coordinates to 4 decimals, and writes a compact tuple array.
 **Keep the `MIN_POPULATION` in the script in sync with `rules.dataset.minPopulation`.**
+
+**Localized names.** When `alternateNamesV2.txt` is present, the build attaches a
+per-city `{ locale: name }` map for the 8 non-English catalog locales. For each
+(city, locale) it picks an official/preferred name (ties broken by the shorter form),
+skipping colloquial + historic variants, and drops any name identical to the canonical
+one — so only genuine translations are stored (~4k of the ~6.2k cities). The selection
+logic lives in `selectAlternateNames` and is reused by `scripts/enrich-cities.mjs`
+(`npm run data:enrich -- <alternateNamesV2.txt>`), which attaches/refreshes translations
+onto an already-built `cities.json` **without** re-downloading the three base dumps.
 
 ## Conventions
 

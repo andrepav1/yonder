@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc -b --noEmit",
     "data:build": "node scripts/build-cities.mjs",
+    "data:enrich": "node scripts/enrich-cities.mjs",
     "screenshot": "node scripts/screenshot.mjs",
     "preview:puzzles": "vite-node scripts/preview-puzzles.mts"
   },

@@ -13,7 +13,7 @@ interface GuessRowProps {
 }
 
 export function GuessRow({ result, rules, unit }: GuessRowProps) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const level = tempLevel(result, rules)
   const tempVar = `var(--temp-${level})`
   const status = result.won
@@ -34,7 +34,7 @@ export function GuessRow({ result, rules, unit }: GuessRowProps) {
       <span className="grow__temp" aria-hidden="true" />
       <div className="grow__body">
         <div className="grow__city">
-          {cityLabel(result.city)}
+          {cityLabel(result.city, locale)}
           <span className="grow__leg"> +{formatDistance(result.legKm, unit, t)}</span>
         </div>
         <div className={`grow__delta${statusMod}`}>{status}</div>
