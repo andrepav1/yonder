@@ -48,7 +48,7 @@ interface GlobeProps {
 }
 
 export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   // Rotation is [λ, φ]: spin the globe so the start city faces the viewer first.
   const [rotation, setRotation] = useState<LngLat>([-start.lng, -start.lat])
   const svgRef = useRef<SVGSVGElement>(null)
@@ -188,7 +188,7 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
         className="globe__svg"
         viewBox={`0 0 ${SIZE} ${SIZE}`}
         role="img"
-        aria-label={t.globe.label(cityLabel(start))}
+        aria-label={t.globe.label(cityLabel(start, locale))}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -244,7 +244,7 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
               r={3.5}
             />
             <text className="globe__start-label" x={startXY[0]} y={startXY[1] - 11}>
-              {cityLabel(start)}
+              {cityLabel(start, locale)}
             </text>
           </g>
         )}

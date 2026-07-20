@@ -72,6 +72,13 @@ while keeping the puzzle date and `Yondle` name identical for everyone. Copy liv
 one place per language — `src/i18n/{en,fr,it}.ts` — so adding a language is just adding
 a catalog and a `LOCALES` entry; the rest of the app reads strings through `useI18n()`.
 
+**City names are localized too.** In a non-English UI, cities display in the chosen
+language — London becomes _Londres_ / _ロンドン_, Munich becomes _München_ / _뮌헨_ — and
+you can **type them in any language**: "London", "Londres" and "ロンドン" all find the same
+city. Names come from GeoNames' alternate-names data (≈4k of the ~6.2k cities carry at
+least one translation); where a language has no distinct name, it gracefully falls back
+to the canonical English one. English display is unchanged.
+
 ## Development
 
 ```bash
@@ -101,7 +108,7 @@ src/
     prng.ts           # mulberry32 + date-string hash
     geo.ts            # haversine, bearing, compass, unit conversion
     types.ts          # City, PuzzleSpec, RoundState, … (serializable)
-    cities.ts         # dataset load + fuzzy autocomplete
+    cities.ts         # dataset load + fuzzy, locale-aware autocomplete
     puzzle.ts         # deterministic daily generator
     scoring.ts        # evaluate a leg, cumulative total, hot/cold level
     engine.ts         # pure RoundState machine (accumulate legs, bust on over)
@@ -122,7 +129,8 @@ src/
   App.tsx  main.tsx   # app shell + entry
   data/cities.json    # committed compact dataset (built artifact)
 scripts/
-  build-cities.mjs    # GeoNames -> cities.json
+  build-cities.mjs    # GeoNames -> cities.json (incl. localized names)
+  enrich-cities.mjs   # attach/refresh translations on an existing cities.json
   preview-puzzles.mts # dev: print sample puzzles
   screenshot.mjs      # dev: phone-sized screenshots of the real UI
 ```
@@ -134,10 +142,11 @@ behind each rule.
 
 ## Data & deployment
 
-City data © [GeoNames](https://www.geonames.org/), licensed **CC BY 4.0**. The
-compact `cities.json` is committed, so the app is fully static — it deploys to
-**Vercel** (framework preset **Vite**, build command `npm run build`, output
-`dist/`) with no backend.
+City data (names, coordinates, and localized alternate names) ©
+[GeoNames](https://www.geonames.org/), licensed **CC BY 4.0**. The compact
+`cities.json` is committed, so the app is fully static — it deploys to **Vercel**
+(framework preset **Vite**, build command `npm run build`, output `dist/`) with no
+backend.
 
 ## Tech
 

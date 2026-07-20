@@ -4,6 +4,36 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
+## 2026-07-20 — Localized city names (guesses follow the UI language)
+
+- **Context.** The UI shipped in 9 languages, but city names — shown on the globe, in
+  guess rows, and typed into the input — were English-only. A French player saw
+  "London", not "Londres". We wanted the guessable content to speak the chosen language
+  too, without a translation-authoring burden or a backend.
+- **Decision.** Enrich the bundled dataset from **GeoNames `alternateNamesV2`** (the same
+  CC BY 4.0 source as the base data), storing a per-city `{ locale: name }` map on
+  `City.names`. Display (`localizedName` / `cityLabel(city, locale)`) prefers the
+  localized name; **matching** (`search`/`resolveGuess`) indexes the canonical name *and*
+  every localized name, so a city is reachable by typing it in any language ("London" /
+  "Londres" / "ロンドン" all resolve). English display and behaviour are untouched.
+- **Storage.** We store a locale's name **only when it differs** from the canonical
+  `name`, and never store `en`. That keeps the file compact (Latin-script cities that
+  read the same across languages cost nothing) — ~4k of ~6.2k cities carry a translation,
+  and `cities.json` grew ~420 KB → ~650 KB (well within the static bundle's budget; land
+  outline + fonts already dominate).
+- **Selection.** Per (city, locale): prefer an official/preferred name, break ties by the
+  shorter form, and skip colloquial ("Big Apple") + historic ("Bombay") variants. This is
+  data-driven, so a rebuild refreshes names with no code change.
+- **Fallbacks & trade-offs.** Coverage is uneven — many mid-size cities have no name in a
+  given language, so those gracefully fall back to the canonical (English) one; a
+  non-English game is *mostly*, not fully, localized, and that's expected. GeoNames'
+  `isPreferredName` occasionally marks a long official form (e.g. `ソウル特別市`,
+  `東京都`) or a traditional-Chinese variant as preferred; we accept the data as-is rather
+  than curating — it stays correct, and the short form still matches on prefix when typed.
+  Country/region disambiguation qualifiers remain in English (not translated in the
+  dataset). Determinism is unaffected: puzzle generation keys off ids + coordinates, never
+  the display string.
+
 ## 2026-07-19 — Grew to 9 languages (validating the i18n seam)
 
 - **Context.** After the i18n layer landed, we added Spanish + Chinese, then a second

@@ -3,6 +3,17 @@
 // the seam that lets puzzles be precomputed server-side and, later, synced for
 // multiplayer.
 
+import type { Locale } from '@/i18n/types'
+
+/**
+ * Localized city names by locale, carrying only the names that *differ* from the
+ * canonical `City.name`. A locale absent here falls back to `name` — so the
+ * default English name is never duplicated, and Latin-script cities that read
+ * the same in several languages (e.g. "Berlin") stay compact. Type-only import
+ * of `Locale`; no runtime coupling to i18n.
+ */
+export type CityNames = Partial<Record<Locale, string>>
+
 /** A city from the bundled dataset. `id` is the stable GeoNames id. */
 export interface City {
   id: number
@@ -13,6 +24,11 @@ export interface City {
   lat: number
   lng: number
   population: number
+  /**
+   * Localized display names, present only for locales whose name differs from
+   * `name`. Absent on cities with no translations. English always uses `name`.
+   */
+  names?: CityNames
 }
 
 /** A city paired with its great-circle distance from the puzzle's start city. */
