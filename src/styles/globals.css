@@ -223,6 +223,10 @@ button {
   padding: 1.25rem 1.25rem 1.35rem;
   box-shadow: var(--shadow-sm);
   text-align: center;
+  /* Sit above the globe so an enlarged sphere growing upward slides *behind*
+     the prompt (the panels below the globe already paint on top via DOM order). */
+  position: relative;
+  z-index: 1;
 }
 .prompt__eyebrow {
   font-family: var(--font-mono);
@@ -288,11 +292,16 @@ button {
   align-items: center;
   justify-content: center;
   padding: 0.15rem 0;
-  /* Zooming grows the globe past the board (the SVG overflows). Keep the whole
-     surface beneath its sibling panels so an enlarged globe slides *behind* the
-     (translucent) UI instead of covering it. */
-  position: relative;
-  z-index: -1;
+  /* A zoomed globe overflows its box (the SVG lets it). We keep this a plain,
+     unpositioned in-flow block (no z-index of its own) so it stays in the normal
+     document layer — a negative z-index promoted it into a compositing layer
+     behind `.shell`, where the browser stopped honouring the SVG's
+     `touch-action` and pinch/drag leaked to the page. Sibling panels rendered
+     *after* the globe paint above it automatically; the `.prompt` above is
+     lifted (see its rule) so the enlarged sphere slides behind it too.
+     `touch-action: none` here keeps any touch in the globe's area from
+     pinch-zooming or scrolling the page. */
+  touch-action: none;
 }
 .globe__svg {
   width: 100%;

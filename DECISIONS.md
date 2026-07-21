@@ -4,6 +4,22 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
+## 2026-07-21 — Fix: globe pinch-zoom leaked to the page; drag went flaky
+
+- **Context.** After the "grow the sphere past the board, behind the UI" change, the
+  whole interactive `.globe` was parked at a negative `z-index` (inside `.shell`, which
+  is its own `z-index: 1` stacking context). On touch devices this promoted the globe
+  into a **compositing layer behind `.shell`**, where the browser stopped honouring the
+  SVG's `touch-action: none`: pinching zoomed the *page*, and single-finger drags came
+  through unreliably.
+- **Fix.** Keep the globe in the **normal document layer** — `.globe` is a plain,
+  unpositioned in-flow block with no `z-index` of its own (plus `touch-action: none` on
+  the container as belt-and-suspenders). The "slide behind the UI" effect is now pure
+  paint order: panels rendered *after* the globe (guess input, guesses, result) already
+  paint on top, and the one panel *above* it — `.prompt` — is lifted with
+  `position: relative; z-index: 1` so the enlarged sphere recedes behind it too. No
+  compositing-layer promotion, so `touch-action` is respected and pinch/drag work again.
+
 ## 2026-07-21 — Zoom + a progressive, explorable city layer
 
 - **Context.** The globe showed only puzzle-relevant markers (start, journey, guesses,
@@ -13,12 +29,12 @@ changed. The "why" matters as much as the "what".
 - **Zoom by scaling the orthographic projection.** A `zoom` factor multiplies
   `projection.scale` (pinch / wheel / `+`−` buttons, clamped to `[minZoom, maxZoom]`).
   Orthographic zoom just magnifies, so a zoomed globe overflows the board. We **let it
-  overflow freely** — the SVG has `overflow: visible` and the whole `.globe` sits at a
-  negative `z-index`, so the magnified sphere grows past the board and off the screen
-  while sliding *beneath* the surrounding (translucent) UI, which stays legible on top.
-  (Earlier this was clipped to the board disc with a circular `clipPath` to keep the
-  globe round; the grow-and-recede-behind-the-UI feel read better, so the clip is gone.)
-  Drag sensitivity divides by zoom so a pixel spins less when magnified.
+  overflow freely** — the SVG has `overflow: visible`, so the magnified sphere grows past
+  the board and off the screen while sliding *beneath* the surrounding (translucent) UI,
+  which stays legible on top. (Earlier this was clipped to the board disc with a circular
+  `clipPath` to keep the globe round; the grow-and-recede-behind-the-UI feel read better,
+  so the clip is gone.) Drag sensitivity divides by zoom so a pixel spins less when
+  magnified.
 - **Progressive reveal is a pure, rules-driven function of zoom.** `exploreMinPopulation
   (zoom, rules)` (in `lib/explore.ts`, unit-tested) log-interpolates a population floor
   from `explore.zoomedOutMinPopulation` (only megacities, zoomed out) down to
