@@ -4,6 +4,19 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
+## 2026-07-21 — Fix: zoomed globe covered the header (logo + settings)
+
+- **Context.** The "grow the sphere past the board, behind the UI" effect leans purely on
+  paint order: the `.globe` is an unpositioned in-flow block, so siblings rendered *after*
+  it (guess input, guesses, result) paint on top, and the one panel *above* it —
+  `.prompt` — is lifted with `position: relative; z-index: 1` so the enlarged sphere
+  recedes behind it too. But the **header** (`.hdr`, logo + language/unit/menu controls)
+  sits above `.prompt` and had **no such lift**, so a fully-zoomed globe growing upward
+  painted over it and hid the chrome.
+- **Fix.** Give `.hdr` the same lift as `.prompt` — `position: relative; z-index: 1` —
+  so the enlarged sphere slides *behind* the header. No new stacking gymnastics; it's the
+  identical paint-order trick already used one panel down.
+
 ## 2026-07-21 — Fix: globe pinch-zoom leaked to the page; drag went flaky
 
 - **Context.** After the "grow the sphere past the board, behind the UI" change, the

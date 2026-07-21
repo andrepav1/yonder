@@ -171,6 +171,11 @@ button {
   align-items: center;
   justify-content: space-between;
   padding-top: 0.75rem;
+  /* Sit above the globe so a zoomed sphere growing upward slides *behind* the
+     header (logo + settings) instead of covering it — same lift the `.prompt`
+     below uses. */
+  position: relative;
+  z-index: 1;
 }
 .hdr__brand {
   display: flex;
