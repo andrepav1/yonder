@@ -418,3 +418,20 @@ at and read as a leftover from the single-shot game.
 - **Why not a separate mode/route.** Kept it inline on the existing globe: zero new
   navigation, and the reveal reuses the board the player already knows. The globe stays
   purely presentational — all reveal geometry arrives via one `reveal` prop.
+
+## 2026-07-21 — Pinch-zoom feel: faster, and no jump on re-pinch
+
+- **Context.** Pinch zoom felt sluggish, and pinching → releasing → pinching again
+  jerked the globe. Two causes: (1) the zoom updater read `pinchDist` *inside* the
+  `setZoom` callback, but React runs that callback after the ref was already reassigned
+  to the new separation, collapsing the frame's ratio toward 1 (weak, laggy zoom); and
+  (2) the opening finger of a fresh pinch is momentarily a one-finger drag, so it spun
+  the globe in the few milliseconds before the second finger landed.
+- **Decision.**
+  - Capture the pinch ratio *before* reassigning `pinchDist`, and raise it to
+    `PINCH_SENSITIVITY` (1.6) so a small finger-spread magnifies more — a snappier pinch,
+    still smooth. Correctness fix + speed knob in one.
+  - Gate single-finger rotation on the press having cleared `TAP_MOVE_TOLERANCE` (the
+    `moved` flag). This gives a second finger a brief window to land and switch the
+    gesture to pinch before any spin happens. A drag *resumed* from a pinch (leftover
+    finger) has no press and still spins immediately, as intended.

@@ -58,6 +58,10 @@ const CLIP_MARGIN = 4
 const CULL_PAD = 8
 // Multiplier per press of the +/− zoom buttons.
 const ZOOM_STEP = 1.5
+// Pinch sensitivity: the change in finger separation is raised to this power
+// before it scales the zoom, so a small spread magnifies more (>1 = faster,
+// snappier pinch). 1 would track the fingers exactly.
+const PINCH_SENSITIVITY = 1.6
 
 type LngLat = [number, number]
 
@@ -344,9 +348,15 @@ export function Globe({ start, guesses, rules, unit, cities, reveal, finished }:
       const [a, b] = [...pointers.current.values()]
       if (a && b) {
         const dist = Math.hypot(a.x - b.x, a.y - b.y)
-        if (pinchDist.current && pinchDist.current > 0)
-          setZoom((z) => clampZoom((z * dist) / pinchDist.current!))
+        // Capture the ratio *now* (against the previous separation) rather than
+        // reading pinchDist inside the updater — React runs the updater after
+        // we've already reassigned the ref, which would collapse the ratio to 1.
+        const prev = pinchDist.current
         pinchDist.current = dist
+        if (prev && prev > 0) {
+          const ratio = Math.pow(dist / prev, PINCH_SENSITIVITY)
+          setZoom((z) => clampZoom(z * ratio))
+        }
       }
       return
     }
@@ -371,7 +381,13 @@ export function Globe({ start, guesses, rules, unit, cities, reveal, finished }:
       press.current.moved = true
     }
     drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId }
-    setRotation(([λ, φ]) => [λ + dx * k, Math.max(-90, Math.min(90, φ - dy * k))])
+    // Hold off spinning until a fresh press clears the tap tolerance. This buys a
+    // brief window for a second finger to land and switch us to pinch — so the
+    // opening finger of a (re-)pinch never jerks the globe before the pinch takes
+    // over. A resumed drag (leftover finger from a pinch) has no press and spins
+    // immediately, as intended.
+    if (!press.current || press.current.moved)
+      setRotation(([λ, φ]) => [λ + dx * k, Math.max(-90, Math.min(90, φ - dy * k))])
   }
   // Clear the hover preview when the pointer leaves the globe entirely.
   const onPointerLeave = () => setHovered(null)
