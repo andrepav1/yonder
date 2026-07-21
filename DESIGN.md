@@ -47,7 +47,12 @@ weight (not the display serif), centred above the dot. **Explorable city dots** 
 zoom-to-reveal layer) are the quietest marks on the board — tiny `--fg-muted` dots at
 ~50% opacity, deliberately subordinate to every game marker; the engaged one lifts to
 full `--fg` with a soft muted halo and its name label. Zoom controls (`+`/`−`) sit as a
-translucent, backdrop-blurred pair in the globe's lower-right corner.
+translucent, backdrop-blurred pair in the globe's lower-right corner. Because a
+zoomed-in globe grows past its board and slides *beneath* the panels that flank it
+(the prompt above, the guess input / rows / result below), those panels use a slightly
+translucent surface (`--surface-glass` / `--win-weak-glass`) with a light backdrop blur
+(`--panel-blur`) — so the enlarged sphere bleeds softly through them instead of being
+fully hidden, while text stays legible.
 
 ## Accessibility
 

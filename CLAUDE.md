@@ -145,10 +145,14 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   in-flow block in the **normal document layer** (`touch-action: none`, no `z-index` of
   its own — a negative `z-index` once promoted it into a compositing layer where the
   browser ignored `touch-action`, so pinch zoomed the page and drag went flaky); the
-  enlarged sphere slides *beneath* the surrounding — often translucent — UI purely by
+  enlarged sphere slides *beneath* the surrounding UI purely by
   paint order (panels after it paint on top; `.prompt` above it is lifted with a
-  `z-index`). Presentational as ever — geometry from
-  props, no runtime network; land is bundled.
+  `z-index`). The flanking panels (`.prompt`, `.guess__input`, `.grow`, `.result`) use a
+  slightly **translucent** surface (`--surface-glass` / `--win-weak-glass`, built via
+  `color-mix` from the theme-aware surface vars) plus a light backdrop blur
+  (`--panel-blur`), so a zoomed globe growing behind them bleeds softly through rather
+  than being fully hidden — text stays legible over the moving sphere. Presentational as
+  ever — geometry from props, no runtime network; land is bundled.
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it

@@ -61,6 +61,15 @@
   --shadow-md: 0 6px 20px rgba(70, 45, 20, 0.09);
   --ring: 0 0 0 3px rgba(194, 65, 12, 0.32);
 
+  /* Translucent panel surfaces. The panels that flank the globe paint *over*
+     an enlarged (zoomed) sphere; making them slightly transparent — with a
+     light backdrop blur for legibility — lets the globe bleed through instead
+     of being fully hidden. Built from the theme-aware surface vars via lazy
+     custom-property substitution, so they follow light/dark automatically. */
+  --surface-glass: color-mix(in srgb, var(--surface) 82%, transparent);
+  --win-weak-glass: color-mix(in srgb, var(--win-weak) 82%, transparent);
+  --panel-blur: blur(6px);
+
   --maxw: 30rem; /* ~480px mobile-first column */
 }
 
@@ -217,14 +226,17 @@ button {
 /* ---------- Prompt card ---------- */
 
 .prompt {
-  background: var(--surface);
+  background: var(--surface-glass);
+  -webkit-backdrop-filter: var(--panel-blur);
+  backdrop-filter: var(--panel-blur);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: 1.25rem 1.25rem 1.35rem;
   box-shadow: var(--shadow-sm);
   text-align: center;
   /* Sit above the globe so an enlarged sphere growing upward slides *behind*
-     the prompt (the panels below the globe already paint on top via DOM order). */
+     the prompt (the panels below the globe already paint on top via DOM order).
+     The translucent surface lets the sphere show through rather than hiding it. */
   position: relative;
   z-index: 1;
 }
@@ -519,7 +531,9 @@ button {
   padding: 0 1rem;
   font-size: 16px;
   color: var(--fg);
-  background: var(--surface);
+  background: var(--surface-glass);
+  -webkit-backdrop-filter: var(--panel-blur);
+  backdrop-filter: var(--panel-blur);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
   transition:
@@ -621,7 +635,9 @@ button {
   align-items: center;
   gap: 0.75rem;
   padding: 0.7rem 0.85rem;
-  background: var(--surface);
+  background: var(--surface-glass);
+  -webkit-backdrop-filter: var(--panel-blur);
+  backdrop-filter: var(--panel-blur);
   border: 1px solid var(--border);
   border-left: 4px solid var(--temp);
   border-radius: var(--r-md);
@@ -631,7 +647,7 @@ button {
 .grow--win {
   border-color: var(--win);
   border-left-color: var(--win);
-  background: var(--win-weak);
+  background: var(--win-weak-glass);
 }
 .grow--over {
   border-color: var(--danger);
@@ -693,7 +709,9 @@ button {
 /* ---------- Result card ---------- */
 
 .result {
-  background: var(--surface);
+  background: var(--surface-glass);
+  -webkit-backdrop-filter: var(--panel-blur);
+  backdrop-filter: var(--panel-blur);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: 1.25rem;
