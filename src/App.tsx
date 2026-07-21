@@ -47,7 +47,7 @@ function makePracticeSeed(): string {
 }
 
 export default function App() {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const rules = dailyMode.rules
   const date = useMemo(() => utcDateString(), [])
   const store = useMemo(() => createStatsStore(rules), [rules])
@@ -211,7 +211,7 @@ export default function App() {
           <div className="prompt__eyebrow">
             {practice ? t.modes.practiceEyebrow : t.prompt.eyebrow}
           </div>
-          <div className="prompt__start">{cityLabel(puzzle.start)}</div>
+          <div className="prompt__start">{cityLabel(puzzle.start, locale)}</div>
           <div className="prompt__target-label">{t.prompt.targetLabel}</div>
           <div className="prompt__target mono">
             {formatDistance(puzzle.targetKm, unit, t)}
