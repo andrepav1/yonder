@@ -45,15 +45,21 @@ with a Calistoga label; on finish the closest single-hop cities are pinned.
 
 - **Never colour-alone.** Every hot/cold cue ships with text ("1,134 km to go",
   "Inside the band!", "Overshot!") and the win/bust rows also get a distinct border.
-- Touch targets ≥ 44px (icon buttons, inputs, unit toggle). Visible focus rings
-  (`--ring`). `prefers-reduced-motion` disables animation. Safe-area insets respected.
+- Touch targets ≥ 44px (icon buttons, inputs, unit toggle, menu trigger). Visible
+  focus rings (`--ring`). `prefers-reduced-motion` disables animation. Safe-area
+  insets respected.
 - Modal is a labelled `role="dialog"`, Esc + scrim close, scrim ~55% for legibility.
+- The header menu (☰) is a `role="menu"` popover: the mode items are
+  `menuitemradio` (the active mode `aria-checked`), the rest `menuitem`. It closes on
+  outside pointer, Esc, or a pick — mode switch (Daily / Practice), How to play,
+  Statistics, About all live here so the header stays uncluttered.
 
 ## Motion
 
 Entrances only, 150–320ms, ease-out; guess rows and cards `rise`, the sheet slides up
-from the bottom. The globe also spins ~600ms to re-centre on each new guess. Nothing
-decorative-only. All disabled under reduced-motion (the globe snaps instead of spinning).
+from the bottom, the header menu popover fades + drops in (`menu-in`, ~140ms). The
+globe also spins ~600ms to re-centre on each new guess. Nothing decorative-only. All
+disabled under reduced-motion (the globe snaps instead of spinning).
 
 ## Deferred (logged, not built)
 
