@@ -313,26 +313,32 @@ button {
   stroke: var(--globe-edge);
   stroke-width: 1;
 }
-/* End-of-round explore reveal: cities the player could have guessed. */
+/* End-of-round explore reveal: cities the player could have guessed. Crisp
+   solid markers (a surface hairline lifts them off the land), the two kinds
+   told apart by colour; hovering/tapping one raises it with a soft halo. */
 .globe__reveal {
   cursor: pointer;
-  stroke-width: 1.2;
+  stroke: var(--surface);
+  stroke-width: 1;
+  transition: r 120ms ease;
 }
 .globe__reveal--ideal {
-  fill: color-mix(in srgb, var(--accent) 20%, transparent);
-  stroke: var(--accent);
+  fill: var(--accent);
 }
 .globe__reveal--completion {
-  fill: color-mix(in srgb, var(--win) 24%, transparent);
-  stroke: var(--win);
-}
-.globe__reveal--sel {
-  fill: var(--accent);
-  stroke: var(--surface);
-  stroke-width: 1.6;
-}
-.globe__reveal--completion.globe__reveal--sel {
   fill: var(--win);
+}
+.globe__reveal--active {
+  stroke-width: 1.4;
+}
+.globe__reveal-halo {
+  pointer-events: none;
+}
+.globe__reveal-halo--ideal {
+  fill: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.globe__reveal-halo--completion {
+  fill: color-mix(in srgb, var(--win) 26%, transparent);
 }
 .globe__missed-leg {
   fill: none;
@@ -343,14 +349,15 @@ button {
   opacity: 0.9;
 }
 .globe__reveal-label {
-  font-family: var(--font-display);
-  font-size: 11px;
+  font-family: var(--font-body);
+  font-size: 10.5px;
+  font-weight: 500;
   fill: var(--fg);
-  text-anchor: middle;
   paint-order: stroke;
   stroke: var(--surface);
-  stroke-width: 3;
+  stroke-width: 2.5;
   stroke-linejoin: round;
+  pointer-events: none;
 }
 .globe__caption {
   margin-top: 0.5rem;
@@ -411,13 +418,13 @@ button {
   stroke-width: 1;
 }
 .globe__start-label {
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-size: 11px;
+  font-weight: 600;
   fill: var(--fg);
-  text-anchor: middle;
   paint-order: stroke;
   stroke: var(--surface);
-  stroke-width: 3;
+  stroke-width: 2.5;
   stroke-linejoin: round;
 }
 

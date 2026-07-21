@@ -120,10 +120,11 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   from props. Renders the start-city marker, the **journey** (a line linking start →
   each guess in order — the legs that sum toward the target) and guess pins coloured by
   `tempLevel`, and — only once `finished` — an explorable **reveal** (via the `reveal`
-  prop): the ideal single-hop wins (accent rings) plus the completions from the player's
-  stopping point (win-coloured). **Tap** a revealed pin (a press that doesn't drag) to
-  select it — showing its name label, a distance/kind caption below the globe, and, for a
-  completion, the dashed **missed leg** from where the player stopped. Spins to face the
+  prop): the ideal single-hop wins (solid accent dots) plus the completions from the
+  player's stopping point (win-coloured dots). **Hover** (mouse) previews a pin and
+  **tap** (a press that doesn't drag) pins the selection — the engaged pin gets a halo +
+  a lighter name label, a distance/kind caption below the globe, and, for a completion,
+  the dashed **missed leg** from where the player stopped. Spins to face the
   start on load and smoothly **re-centres on the latest guess** (rAF-animated; drag
   interrupts). Far-hemisphere points are hidden via a `geoDistance` great-circle test. No
   runtime network; land is bundled.

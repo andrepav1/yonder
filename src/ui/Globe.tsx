@@ -25,7 +25,7 @@ import landTopo from 'world-atlas/land-110m.json'
 import type { AnswerCity, City, GuessResult } from '@/lib/types'
 import type { GameRules, Unit } from '@/config/rules'
 import { tempLevel } from '@/lib/scoring'
-import { cityLabel } from '@/lib/cities'
+import { cityLabel, localizedName } from '@/lib/cities'
 import { formatDistance } from '@/lib/format'
 import { useI18n } from '@/i18n/context'
 
@@ -80,7 +80,11 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
   const { t, locale } = useI18n()
   // Rotation is [λ, φ]: spin the globe so the start city faces the viewer first.
   const [rotation, setRotation] = useState<LngLat>([-start.lng, -start.lat])
+  // A tap pins a selection; hovering (mouse) previews one transiently. The
+  // "active" pin — whichever the player is pointing at, else the pinned one —
+  // drives the label, caption, and missed-leg.
   const [selected, setSelected] = useState<RevealPin | null>(null)
+  const [hovered, setHovered] = useState<RevealPin | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const drag = useRef<{ x: number; y: number; id: number } | null>(null)
   // Tap detection rides alongside the drag: remember where a press started and
@@ -167,6 +171,7 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
   // A selection only makes sense against the current reveal; drop it otherwise.
   useEffect(() => {
     setSelected(null)
+    setHovered(null)
   }, [revealPins])
 
   const projection = useMemo(
@@ -202,15 +207,19 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
     return path({ type: 'LineString', coordinates }) ?? ''
   }, [path, start.lng, start.lat, guesses])
 
-  // The missing hop for a selected completion — the leg the player didn't take.
-  const selectedLegPath = useMemo(() => {
-    if (!selected || selected.kind !== 'completion') return ''
+  // Whichever pin the player is engaging with — hovered (mouse) beats the
+  // pinned tap-selection — drives the label, caption, and missed-leg.
+  const active = hovered ?? selected
+
+  // The missing hop for an engaged completion — the leg the player didn't take.
+  const activeLegPath = useMemo(() => {
+    if (!active || active.kind !== 'completion') return ''
     const coordinates: LngLat[] = [
-      [selected.from.lng, selected.from.lat],
-      [selected.city.lng, selected.city.lat],
+      [active.from.lng, active.from.lat],
+      [active.city.lng, active.city.lat],
     ]
     return path({ type: 'LineString', coordinates }) ?? ''
-  }, [path, selected])
+  }, [path, active])
 
   const startXY = place(start.lng, start.lat)
 
@@ -229,7 +238,12 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
     e.currentTarget.setPointerCapture(e.pointerId)
   }
   const onPointerMove = (e: React.PointerEvent) => {
-    if (!drag.current || e.pointerId !== drag.current.id) return
+    // Not dragging: preview the revealed pin under the pointer (mouse hover).
+    if (!drag.current) {
+      if (revealPins.length > 0) setHovered(pinAt(e.clientX, e.clientY))
+      return
+    }
+    if (e.pointerId !== drag.current.id) return
     const rect = svgRef.current?.getBoundingClientRect()
     // Convert on-screen pixels → degrees. ~75/scale is the usual d3-globe
     // sensitivity; SIZE/rect.width corrects for the CSS-scaled display size.
@@ -242,6 +256,8 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
     drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId }
     setRotation(([λ, φ]) => [λ + dx * k, Math.max(-90, Math.min(90, φ - dy * k))])
   }
+  // Clear the hover preview when the pointer leaves the globe entirely.
+  const onPointerLeave = () => setHovered(null)
   // Ends on pointerup and pointercancel — the latter (fired when the browser
   // takes over the touch) must clear the drag too, or the next gesture starts
   // from stale coordinates. A press that never wandered counts as a tap and
@@ -253,15 +269,15 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
     press.current = null
     if (e.currentTarget.hasPointerCapture(e.pointerId))
       e.currentTarget.releasePointerCapture(e.pointerId)
-    if (tap && e.type === 'pointerup') selectAt(e.clientX, e.clientY)
+    if (tap && e.type === 'pointerup') setSelected(pinAt(e.clientX, e.clientY))
   }
 
-  // Pick the closest visible revealed pin to a screen point, within the hit
-  // radius; a tap on empty ocean clears the selection.
-  const selectAt = (clientX: number, clientY: number) => {
-    if (revealPins.length === 0) return
+  // The closest visible revealed pin to a screen point, within the hit radius,
+  // or null (pointing at empty ocean). Shared by tap-select and hover-preview.
+  const pinAt = (clientX: number, clientY: number): RevealPin | null => {
+    if (revealPins.length === 0) return null
     const rect = svgRef.current?.getBoundingClientRect()
-    if (!rect) return
+    if (!rect) return null
     const sx = ((clientX - rect.left) / rect.width) * SIZE
     const sy = ((clientY - rect.top) / rect.height) * SIZE
     let best: RevealPin | null = null
@@ -275,10 +291,21 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
         best = pin
       }
     }
-    setSelected(best)
+    return best
   }
 
-  const selectedXY = selected ? place(selected.city.lng, selected.city.lat) : null
+  const activeXY = active ? place(active.city.lng, active.city.lat) : null
+
+  // Keep a label inside the globe box: anchor toward the centre near the edges,
+  // clamp x into the margins, and flip below the pin when it sits near the top.
+  const labelLayout = (x: number, y: number) => ({
+    x: Math.max(8, Math.min(SIZE - 8, x)),
+    y: y > 22 ? y - 9 : y + 17,
+    anchor: (x < SIZE * 0.3 ? 'start' : x > SIZE * 0.7 ? 'end' : 'middle') as
+      | 'start'
+      | 'middle'
+      | 'end',
+  })
 
   return (
     <div className="globe">
@@ -292,29 +319,39 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
+        onPointerLeave={onPointerLeave}
       >
         {/* Ocean sphere */}
         <circle className="globe__sphere" cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} />
         <path className="globe__graticule" d={graticulePath} />
         <path className="globe__land" d={landPath} />
         <path className="globe__journey" d={journeyPath} />
-        {/* The missing hop to a selected completion — the leg not taken */}
-        {selectedLegPath && <path className="globe__missed-leg" d={selectedLegPath} />}
+        {/* The missing hop to an engaged completion — the leg not taken */}
+        {activeLegPath && <path className="globe__missed-leg" d={activeLegPath} />}
         <circle className="globe__edge" cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} />
 
         {/* Explore reveal: cities the player could have guessed */}
         {revealPins.map((pin) => {
           const p = place(pin.city.lng, pin.city.lat)
           if (!p) return null
-          const isSel = selected?.city.id === pin.city.id
+          const isActive = active?.city.id === pin.city.id
           return (
-            <circle
-              key={`rv-${pin.city.id}`}
-              className={`globe__reveal globe__reveal--${pin.kind}${isSel ? ' globe__reveal--sel' : ''}`}
-              cx={p[0]}
-              cy={p[1]}
-              r={isSel ? 4.5 : 3.2}
-            />
+            <g key={`rv-${pin.city.id}`}>
+              {isActive && (
+                <circle
+                  className={`globe__reveal-halo globe__reveal-halo--${pin.kind}`}
+                  cx={p[0]}
+                  cy={p[1]}
+                  r={8}
+                />
+              )}
+              <circle
+                className={`globe__reveal globe__reveal--${pin.kind}${isActive ? ' globe__reveal--active' : ''}`}
+                cx={p[0]}
+                cy={p[1]}
+                r={isActive ? 4.5 : 2.8}
+              />
+            </g>
           )
         })}
 
@@ -335,12 +372,17 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
           )
         })}
 
-        {/* Label the selected reveal pin, like the start label */}
-        {selected && selectedXY && (
-          <text className="globe__reveal-label" x={selectedXY[0]} y={selectedXY[1] - 9}>
-            {cityLabel(selected.city, locale)}
-          </text>
-        )}
+        {/* Label the engaged reveal pin (just the name — the caption has the rest) */}
+        {active &&
+          activeXY &&
+          (() => {
+            const l = labelLayout(activeXY[0], activeXY[1])
+            return (
+              <text className="globe__reveal-label" x={l.x} y={l.y} textAnchor={l.anchor}>
+                {localizedName(active.city, locale)}
+              </text>
+            )
+          })()}
 
         {/* Start city marker + label */}
         {startXY && (
@@ -352,24 +394,29 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
               cy={startXY[1]}
               r={3.5}
             />
-            <text className="globe__start-label" x={startXY[0]} y={startXY[1] - 11}>
-              {cityLabel(start, locale)}
-            </text>
+            {(() => {
+              const l = labelLayout(startXY[0], startXY[1])
+              return (
+                <text className="globe__start-label" x={l.x} y={l.y} textAnchor={l.anchor}>
+                  {cityLabel(start, locale)}
+                </text>
+              )
+            })()}
           </g>
         )}
       </svg>
 
-      {/* Caption: the selected city's detail, or a hint to go exploring */}
+      {/* Caption: the engaged city's detail, or a hint to go exploring */}
       {finished && revealPins.length > 0 && (
         <div className="globe__caption" aria-live="polite">
-          {selected ? (
+          {active ? (
             <span className="globe__caption-detail">
-              <strong>{cityLabel(selected.city, locale)}</strong>
+              <strong>{cityLabel(active.city, locale)}</strong>
               <span className="globe__caption-dist mono">
-                {formatDistance(selected.distanceKm, unit, t)}
+                {formatDistance(active.distanceKm, unit, t)}
               </span>
-              <span className={`globe__tag globe__tag--${selected.kind}`}>
-                {selected.kind === 'completion'
+              <span className={`globe__tag globe__tag--${active.kind}`}>
+                {active.kind === 'completion'
                   ? t.globe.reveal.completion
                   : t.globe.reveal.ideal}
               </span>
