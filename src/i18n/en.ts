@@ -53,7 +53,6 @@ export const en: Messages = {
       `Globe centred on ${startCity}, showing your journey of guesses. Drag to spin.`,
     zoomIn: 'Zoom in',
     zoomOut: 'Zoom out',
-    exploreHint: 'Tap a city to see its name.',
     reveal: {
       hint: 'Tap a pin to see a city you could have reached.',
       ideal: 'Closest to target',

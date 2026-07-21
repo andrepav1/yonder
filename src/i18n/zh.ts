@@ -50,7 +50,6 @@ export const zh: Messages = {
     label: (startCity) => `以 ${startCity} 为中心的地球，显示你的城市路线。拖动可旋转。`,
     zoomIn: '放大',
     zoomOut: '缩小',
-    exploreHint: '点击一座城市即可查看名称。',
     reveal: {
       hint: '点击一个标记，查看你本可以到达的城市。',
       ideal: '最接近目标',

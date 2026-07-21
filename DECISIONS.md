@@ -12,11 +12,13 @@ changed. The "why" matters as much as the "what".
   ones appearing as you zoom in.
 - **Zoom by scaling the orthographic projection.** A `zoom` factor multiplies
   `projection.scale` (pinch / wheel / `+`−` buttons, clamped to `[minZoom, maxZoom]`).
-  Orthographic zoom just magnifies, so a zoomed globe overflows the board; map geometry
-  is **clipped to the board disc** with a *circular* `clipPath` — so the magnified globe
-  stays round instead of squaring off into the board corners (labels ride above the clip
-  so they can still spill a little past the edge). Drag sensitivity divides by zoom so a
-  pixel spins less when magnified.
+  Orthographic zoom just magnifies, so a zoomed globe overflows the board. We **let it
+  overflow freely** — the SVG has `overflow: visible` and the whole `.globe` sits at a
+  negative `z-index`, so the magnified sphere grows past the board and off the screen
+  while sliding *beneath* the surrounding (translucent) UI, which stays legible on top.
+  (Earlier this was clipped to the board disc with a circular `clipPath` to keep the
+  globe round; the grow-and-recede-behind-the-UI feel read better, so the clip is gone.)
+  Drag sensitivity divides by zoom so a pixel spins less when magnified.
 - **Progressive reveal is a pure, rules-driven function of zoom.** `exploreMinPopulation
   (zoom, rules)` (in `lib/explore.ts`, unit-tested) log-interpolates a population floor
   from `explore.zoomedOutMinPopulation` (only megacities, zoomed out) down to
