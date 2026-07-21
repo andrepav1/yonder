@@ -296,16 +296,10 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
 
   const activeXY = active ? place(active.city.lng, active.city.lat) : null
 
-  // Keep a label inside the globe box: anchor toward the centre near the edges,
-  // clamp x into the margins, and flip below the pin when it sits near the top.
-  const labelLayout = (x: number, y: number) => ({
-    x: Math.max(8, Math.min(SIZE - 8, x)),
-    y: y > 22 ? y - 9 : y + 17,
-    anchor: (x < SIZE * 0.3 ? 'start' : x > SIZE * 0.7 ? 'end' : 'middle') as
-      | 'start'
-      | 'middle'
-      | 'end',
-  })
+  // Keep the label in one stable spot: centred above the dot (dropping just
+  // below only when the dot sits right at the top edge). It never shifts
+  // side-to-side with the dot's position — text-anchor stays middle in CSS.
+  const labelLayout = (x: number, y: number) => ({ x, y: y > 26 ? y - 10 : y + 18 })
 
   return (
     <div className="globe">
@@ -378,7 +372,7 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
           (() => {
             const l = labelLayout(activeXY[0], activeXY[1])
             return (
-              <text className="globe__reveal-label" x={l.x} y={l.y} textAnchor={l.anchor}>
+              <text className="globe__reveal-label" x={l.x} y={l.y}>
                 {localizedName(active.city, locale)}
               </text>
             )
@@ -397,7 +391,7 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
             {(() => {
               const l = labelLayout(startXY[0], startXY[1])
               return (
-                <text className="globe__start-label" x={l.x} y={l.y} textAnchor={l.anchor}>
+                <text className="globe__start-label" x={l.x} y={l.y}>
                   {cityLabel(start, locale)}
                 </text>
               )
