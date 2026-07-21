@@ -56,7 +56,14 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 - `src/lib/puzzle.ts` — `generatePuzzle(date, {cities?, rules?})`: population-weighted
   start city + validated target so every day has ≥ `minValidAnswers` cities within
   `[target·(1−tol), target]` of the start — i.e. **single-hop wins** — guaranteeing
-  solvability (multi-hop paths only add more options). Deterministic in `date`.
+  solvability (multi-hop paths only add more options). Deterministic in `date`. Emits
+  `answers` (the `revealCount` closest to target, for share) and `exploreAnswers` (the
+  `exploreCount` closest — a superset, powering the end-of-round explore reveal).
+- `src/lib/reveal.ts` — **pure** end-of-round "learn the map" helper: `findCompletions`
+  returns the cities that would have finished the run in one more hop **from where the
+  player actually stopped** (the personal near-miss layer; empty once the target is
+  reached or overshot). Layer 1 (ideal single-hop wins) is the precomputed
+  `puzzle.exploreAnswers`; this is Layer 2, which depends on the played round.
 - `src/lib/scoring.ts` — **pure**: `evaluateLeg` (leg / running total / remaining /
   bearing / over / win — a guess from a given previous point onto the running total),
   `scoreRound` (golf: guess count + final total), and `tempLevel` (the shared hot→cold
@@ -96,7 +103,9 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   guesses, record the result, share. Holds both a persisted **daily** round and
   an ephemeral in-memory **practice** round; only daily writes to the store or
   the streak/stats, and practice never does. `makePracticeSeed()` (the sole
-  impure boundary) mints a fresh random seed per practice puzzle.
+  impure boundary) mints a fresh random seed per practice puzzle. On finish it
+  builds the globe **reveal** — `exploreAnswers` (Layer 1) plus `findCompletions`
+  from the stopping point (Layer 2) — and hands it to `Globe`.
 - `src/ui/*` — React shell: `Globe` (the interactive board — see below), `GuessInput`
   (fuzzy typeahead), `GuessRow` (leg, running total, remaining, bearing, hot/cold), `ResultCard`
   (score + share, or a **New puzzle** button in practice; the answer _reveal_ lives
@@ -110,10 +119,14 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   hydrated once with `topojson-client`). Purely presentational — all geometry comes
   from props. Renders the start-city marker, the **journey** (a line linking start →
   each guess in order — the legs that sum toward the target) and guess pins coloured by
-  `tempLevel`, and — only once `finished` — the closest **single-hop wins** pinned as a
-  reveal. Spins to face the start on load and smoothly **re-centres on the latest guess**
-  (rAF-animated; drag interrupts). Far-hemisphere points are hidden via a `geoDistance`
-  great-circle test. No runtime network; land is bundled.
+  `tempLevel`, and — only once `finished` — an explorable **reveal** (via the `reveal`
+  prop): the ideal single-hop wins (accent rings) plus the completions from the player's
+  stopping point (win-coloured). **Tap** a revealed pin (a press that doesn't drag) to
+  select it — showing its name label, a distance/kind caption below the globe, and, for a
+  completion, the dashed **missed leg** from where the player stopped. Spins to face the
+  start on load and smoothly **re-centres on the latest guess** (rAF-animated; drag
+  interrupts). Far-hemisphere points are hidden via a `geoDistance` great-circle test. No
+  runtime network; land is bundled.
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it

@@ -50,6 +50,11 @@ export const ja: Messages = {
   globe: {
     label: (startCity) =>
       `${startCity} を中心にした地球儀。あなたの都市のルートを表示。ドラッグで回転。`,
+    reveal: {
+      hint: 'ピンをタップすると、到達できた都市が見られます。',
+      ideal: '目標に最も近い',
+      completion: 'ここからゴールできた',
+    },
   },
 
   input: {
@@ -86,7 +91,7 @@ export const ja: Messages = {
     ofTarget: (target) => `目標 ${target} のうち`,
     landedInBand: '範囲内に到達',
     answerNote:
-      '地球儀上のピンは目標距離に最も近い都市です — 一度の直行で勝てたはずの都市です。',
+      '地球儀上のピンは目標距離に最も近い都市です — 一度の直行で勝てたはずの都市です。ピンをタップして、行けたはずの場所を探してみましょう。',
     share: '結果を共有',
     copied: 'コピーしました！',
   },

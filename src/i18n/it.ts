@@ -50,6 +50,11 @@ export const it: Messages = {
   globe: {
     label: (startCity) =>
       `Globo centrato su ${startCity}, che mostra il tuo percorso di città. Trascina per ruotare.`,
+    reveal: {
+      hint: 'Tocca un punto per vedere una città che avresti potuto raggiungere.',
+      ideal: 'Più vicina al bersaglio',
+      completion: 'Avrebbe concluso il tuo percorso',
+    },
   },
 
   input: {
@@ -86,7 +91,7 @@ export const it: Messages = {
     ofTarget: (target) => `su un obiettivo di ${target}`,
     landedInBand: 'arrivato nella fascia',
     answerNote:
-      'I punti sul globo sono le città più vicine alla distanza obiettivo — quelle che avrebbero vinto con un solo salto diretto.',
+      'I punti sul globo sono le città più vicine alla distanza obiettivo — quelle che avrebbero vinto con un solo salto diretto. Tocca un punto per esplorare dove avresti potuto andare.',
     share: 'Condividi il risultato',
     copied: 'Copiato!',
   },

@@ -4,10 +4,11 @@ import type { Unit } from '@/config/rules'
 import { dailyMode, practiceMode } from '@/modes/daily'
 import { utcDateString } from '@/lib/puzzle'
 import { createRound, isFinished, guessesLeft, type GuessError } from '@/lib/engine'
+import { findCompletions } from '@/lib/reveal'
 import { createStatsStore, type Stats } from '@/store/statsStore'
 import { loadUnit, saveUnit, isOnboarded, setOnboarded } from '@/store/prefs'
 import { formatDistance, bandLabel } from '@/lib/format'
-import { cityLabel } from '@/lib/cities'
+import { cityLabel, allCities } from '@/lib/cities'
 import { useI18n } from '@/i18n/context'
 import { Globe } from '@/ui/Globe'
 import { GuessInput } from '@/ui/GuessInput'
@@ -77,6 +78,35 @@ export default function App() {
   const puzzle = useMemo(() => activeMode.generate(seed), [activeMode, seed])
   const round = practice ? practiceRound : dailyRound
   const finished = isFinished(round)
+
+  // The end-of-round "learn the map" reveal: cities the player could have
+  // guessed. `ideal` = the closest single-hop wins from the start (precomputed);
+  // `completions` = cities that would have finished the run from where the player
+  // actually stopped (only meaningful on an undershot loss — empty on a win or an
+  // overshoot). Computed only once the round is over.
+  const reveal = useMemo(() => {
+    if (!finished) return undefined
+    const guessedIds = new Set(round.guesses.map((g) => g.city.id))
+    const exclude = new Set(guessedIds)
+    exclude.add(puzzle.start.id)
+    const last = round.guesses[round.guesses.length - 1]
+    const from = last ? last.city : puzzle.start
+    const cumulativeKm = last ? last.cumulativeKm : 0
+    const completions =
+      round.status === 'won'
+        ? []
+        : findCompletions(
+            puzzle,
+            from,
+            cumulativeKm,
+            allCities(),
+            rules,
+            rules.generation.exploreCount,
+            exclude,
+          )
+    const ideal = puzzle.exploreAnswers.filter((a) => !guessedIds.has(a.city.id))
+    return { ideal, completions, from }
+  }, [finished, round, puzzle, rules])
 
   useEffect(() => () => window.clearTimeout(toastTimer.current), [])
 
@@ -206,7 +236,8 @@ export default function App() {
           start={puzzle.start}
           guesses={round.guesses}
           rules={rules}
-          answers={puzzle.answers.map((a) => a.city)}
+          unit={unit}
+          reveal={reveal}
           finished={finished}
         />
 

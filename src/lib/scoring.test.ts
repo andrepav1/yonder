@@ -35,6 +35,7 @@ function puzzleWithTarget(targetKm: number): PuzzleSpec {
     targetKm,
     tolerancePct: defaultRules.tolerancePct,
     answers: [],
+    exploreAnswers: [],
     validAnswerCount: 0,
   }
 }

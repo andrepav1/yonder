@@ -1,10 +1,14 @@
-// The interactive Earth — the main guessing surface. An orthographic globe
-// (drag to spin) that renders, over a bundled low-res land outline:
+// The interactive Earth — the main guessing surface, and the end-of-round
+// "learn the map" reveal. An orthographic globe (drag to spin) that renders,
+// over a bundled low-res land outline:
 //   • the day's start city (where the journey begins),
 //   • the journey so far as a line linking start → each guess in order (the
 //     legs whose lengths sum toward the target), pins coloured on the shared
 //     hot→cold ramp, and
-//   • once finished, the closest single-hop cities pinned as a reveal.
+//   • once finished, an explorable reveal of cities the player *could* have
+//     guessed: the closest single-hop wins from the start (ideal), plus the
+//     cities that would have completed the run from where they actually stopped
+//     (personal near-misses). Tap any revealed pin to read its name + distance.
 //
 // It spins to face the start city on load, and smoothly re-centres on the
 // latest guess each time one lands (drag interrupts the spin).
@@ -18,10 +22,11 @@ import { geoOrthographic, geoPath, geoGraticule10, geoDistance } from 'd3-geo'
 import { feature } from 'topojson-client'
 import type { FeatureCollection } from 'geojson'
 import landTopo from 'world-atlas/land-110m.json'
-import type { City, GuessResult } from '@/lib/types'
-import type { GameRules } from '@/config/rules'
+import type { AnswerCity, City, GuessResult } from '@/lib/types'
+import type { GameRules, Unit } from '@/config/rules'
 import { tempLevel } from '@/lib/scoring'
 import { cityLabel } from '@/lib/cities'
+import { formatDistance } from '@/lib/format'
 import { useI18n } from '@/i18n/context'
 
 // world-atlas ships TopoJSON; hydrate the land outline once, at module load.
@@ -35,24 +40,52 @@ const land = feature(
 const SIZE = 320 // internal SVG units; CSS scales it to the column width
 const MARGIN = 3
 const RADIUS = SIZE / 2 - MARGIN
+// How close (in SVG units) a tap must land to a revealed pin to select it.
+const TAP_HIT_RADIUS = 12
+// How far a pointer may travel (client px) and still count as a tap, not a drag.
+const TAP_MOVE_TOLERANCE = 6
 
 type LngLat = [number, number]
+
+/** The end-of-round learning reveal — two kinds of "you could have guessed…". */
+export interface RevealData {
+  /** Closest single-hop wins from the start — the ideal solutions. */
+  ideal: AnswerCity[]
+  /** Cities that would have completed the run from where the player stopped. */
+  completions: AnswerCity[]
+  /** The point completions are measured from (last guess, or the start). */
+  from: City
+}
+
+type RevealKind = 'ideal' | 'completion'
+interface RevealPin {
+  city: City
+  distanceKm: number
+  kind: RevealKind
+  /** The point this pin's distance is measured from (start, or the stop point). */
+  from: City
+}
 
 interface GlobeProps {
   start: City
   guesses: GuessResult[]
   rules: GameRules
-  /** Closest possible answers, revealed on the globe once the round is over. */
-  answers?: City[]
+  unit: Unit
+  /** Learning reveal, shown once the round is over. */
+  reveal?: RevealData
   finished?: boolean
 }
 
-export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) {
+export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobeProps) {
   const { t, locale } = useI18n()
   // Rotation is [λ, φ]: spin the globe so the start city faces the viewer first.
   const [rotation, setRotation] = useState<LngLat>([-start.lng, -start.lat])
+  const [selected, setSelected] = useState<RevealPin | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const drag = useRef<{ x: number; y: number; id: number } | null>(null)
+  // Tap detection rides alongside the drag: remember where a press started and
+  // whether it wandered far enough to be a spin rather than a tap.
+  const press = useRef<{ x: number; y: number; moved: boolean } | null>(null)
   const rotationRef = useRef<LngLat>(rotation)
   const animRef = useRef<number | null>(null)
 
@@ -112,6 +145,30 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
   // Stop any in-flight spin on unmount.
   useEffect(() => stopAnim, [])
 
+  // The revealed pins, completions first so a city that is both takes the more
+  // personal "completion" identity (and each id renders once).
+  const revealPins = useMemo<RevealPin[]>(() => {
+    if (!finished || !reveal) return []
+    const pins: RevealPin[] = []
+    const seen = new Set<number>()
+    for (const a of reveal.completions) {
+      if (seen.has(a.city.id)) continue
+      seen.add(a.city.id)
+      pins.push({ city: a.city, distanceKm: a.distanceKm, kind: 'completion', from: reveal.from })
+    }
+    for (const a of reveal.ideal) {
+      if (seen.has(a.city.id)) continue
+      seen.add(a.city.id)
+      pins.push({ city: a.city, distanceKm: a.distanceKm, kind: 'ideal', from: start })
+    }
+    return pins
+  }, [finished, reveal, start])
+
+  // A selection only makes sense against the current reveal; drop it otherwise.
+  useEffect(() => {
+    setSelected(null)
+  }, [revealPins])
+
   const projection = useMemo(
     () =>
       geoOrthographic()
@@ -145,6 +202,16 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
     return path({ type: 'LineString', coordinates }) ?? ''
   }, [path, start.lng, start.lat, guesses])
 
+  // The missing hop for a selected completion — the leg the player didn't take.
+  const selectedLegPath = useMemo(() => {
+    if (!selected || selected.kind !== 'completion') return ''
+    const coordinates: LngLat[] = [
+      [selected.from.lng, selected.from.lat],
+      [selected.city.lng, selected.city.lat],
+    ]
+    return path({ type: 'LineString', coordinates }) ?? ''
+  }, [path, selected])
+
   const startXY = place(start.lng, start.lat)
 
   // ---- Pointer drag → rotation ----------------------------------------
@@ -158,6 +225,7 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
     if (drag.current) return // ignore extra fingers once a drag owns the globe
     stopAnim() // hand control to the drag mid-spin
     drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId }
+    press.current = { x: e.clientX, y: e.clientY, moved: false }
     e.currentTarget.setPointerCapture(e.pointerId)
   }
   const onPointerMove = (e: React.PointerEvent) => {
@@ -168,18 +236,49 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
     const k = (75 / RADIUS) * (rect ? SIZE / rect.width : 1)
     const dx = e.clientX - drag.current.x
     const dy = e.clientY - drag.current.y
+    if (press.current && Math.hypot(e.clientX - press.current.x, e.clientY - press.current.y) > TAP_MOVE_TOLERANCE) {
+      press.current.moved = true
+    }
     drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId }
     setRotation(([λ, φ]) => [λ + dx * k, Math.max(-90, Math.min(90, φ - dy * k))])
   }
   // Ends on pointerup and pointercancel — the latter (fired when the browser
   // takes over the touch) must clear the drag too, or the next gesture starts
-  // from stale coordinates.
+  // from stale coordinates. A press that never wandered counts as a tap and
+  // selects the nearest revealed pin (or clears the selection).
   const endDrag = (e: React.PointerEvent) => {
     if (!drag.current || e.pointerId !== drag.current.id) return
+    const tap = press.current && !press.current.moved
     drag.current = null
+    press.current = null
     if (e.currentTarget.hasPointerCapture(e.pointerId))
       e.currentTarget.releasePointerCapture(e.pointerId)
+    if (tap && e.type === 'pointerup') selectAt(e.clientX, e.clientY)
   }
+
+  // Pick the closest visible revealed pin to a screen point, within the hit
+  // radius; a tap on empty ocean clears the selection.
+  const selectAt = (clientX: number, clientY: number) => {
+    if (revealPins.length === 0) return
+    const rect = svgRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const sx = ((clientX - rect.left) / rect.width) * SIZE
+    const sy = ((clientY - rect.top) / rect.height) * SIZE
+    let best: RevealPin | null = null
+    let bestD = TAP_HIT_RADIUS
+    for (const pin of revealPins) {
+      const p = place(pin.city.lng, pin.city.lat)
+      if (!p) continue
+      const d = Math.hypot(p[0] - sx, p[1] - sy)
+      if (d <= bestD) {
+        bestD = d
+        best = pin
+      }
+    }
+    setSelected(best)
+  }
+
+  const selectedXY = selected ? place(selected.city.lng, selected.city.lat) : null
 
   return (
     <div className="globe">
@@ -199,22 +298,25 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
         <path className="globe__graticule" d={graticulePath} />
         <path className="globe__land" d={landPath} />
         <path className="globe__journey" d={journeyPath} />
+        {/* The missing hop to a selected completion — the leg not taken */}
+        {selectedLegPath && <path className="globe__missed-leg" d={selectedLegPath} />}
         <circle className="globe__edge" cx={SIZE / 2} cy={SIZE / 2} r={RADIUS} />
 
-        {/* Revealed closest answers (after the round ends) */}
-        {finished &&
-          answers?.map((c) => {
-            const p = place(c.lng, c.lat)
-            return p ? (
-              <circle
-                key={`ans-${c.id}`}
-                className="globe__answer"
-                cx={p[0]}
-                cy={p[1]}
-                r={3.5}
-              />
-            ) : null
-          })}
+        {/* Explore reveal: cities the player could have guessed */}
+        {revealPins.map((pin) => {
+          const p = place(pin.city.lng, pin.city.lat)
+          if (!p) return null
+          const isSel = selected?.city.id === pin.city.id
+          return (
+            <circle
+              key={`rv-${pin.city.id}`}
+              className={`globe__reveal globe__reveal--${pin.kind}${isSel ? ' globe__reveal--sel' : ''}`}
+              cx={p[0]}
+              cy={p[1]}
+              r={isSel ? 4.5 : 3.2}
+            />
+          )
+        })}
 
         {/* Guess pins, coloured on the hot→cold ramp */}
         {guesses.map((g, i) => {
@@ -233,6 +335,13 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
           )
         })}
 
+        {/* Label the selected reveal pin, like the start label */}
+        {selected && selectedXY && (
+          <text className="globe__reveal-label" x={selectedXY[0]} y={selectedXY[1] - 9}>
+            {cityLabel(selected.city, locale)}
+          </text>
+        )}
+
         {/* Start city marker + label */}
         {startXY && (
           <g className="globe__start">
@@ -249,6 +358,27 @@ export function Globe({ start, guesses, rules, answers, finished }: GlobeProps) 
           </g>
         )}
       </svg>
+
+      {/* Caption: the selected city's detail, or a hint to go exploring */}
+      {finished && revealPins.length > 0 && (
+        <div className="globe__caption" aria-live="polite">
+          {selected ? (
+            <span className="globe__caption-detail">
+              <strong>{cityLabel(selected.city, locale)}</strong>
+              <span className="globe__caption-dist mono">
+                {formatDistance(selected.distanceKm, unit, t)}
+              </span>
+              <span className={`globe__tag globe__tag--${selected.kind}`}>
+                {selected.kind === 'completion'
+                  ? t.globe.reveal.completion
+                  : t.globe.reveal.ideal}
+              </span>
+            </span>
+          ) : (
+            t.globe.reveal.hint
+          )}
+        </div>
+      )}
     </div>
   )
 }

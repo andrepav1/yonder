@@ -77,6 +77,15 @@ export interface Messages {
   globe: {
     /** aria-label for the interactive globe. */
     label: (startCity: string) => string
+    /** End-of-round "explore the map" reveal copy. */
+    reveal: {
+      /** Caption prompting the player to tap the revealed cities. */
+      hint: string
+      /** Tag on a city closest to the target — a single-hop win from the start. */
+      ideal: string
+      /** Tag on a city that would have finished the run from where they stopped. */
+      completion: string
+    }
   }
 
   input: {
