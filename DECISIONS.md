@@ -359,3 +359,31 @@ at and read as a leftover from the single-shot game.
   its `rules` param unused — a regression against "pure modules take `rules` and
   hard-code nothing" (the pre-rework `tempLevel` derived its cutoffs from `rules`). They
   now live in `rules.feedback.hotColdBands`. Behaviour unchanged; the seam is restored.
+
+## 2026-07-21 — End-of-round "explore the map" reveal (a learning layer)
+
+- **Context.** The end screen only dropped 3 unlabeled dots (the closest single-hop
+  wins). It taught nothing, and a known failure mode of distance-guessing games is
+  players farming cities near home rather than reasoning about the globe. We wanted the
+  finish to *teach* geography, not just score it.
+- **Decision.** On finish the globe becomes an explorable, tappable reveal with two
+  layers of "cities you could have guessed":
+  - **Layer 1 — ideal wins (precomputed, pure).** The `exploreCount` (16) closest
+    single-hop wins from the start, kept in `PuzzleSpec.exploreAnswers` — a superset of
+    the terse `answers` used by share. Determinism/solvability are untouched: it's just
+    keeping more of the already-sorted valid answers.
+  - **Layer 2 — personal completions (pure, dynamic).** `lib/reveal.ts:findCompletions`
+    finds the cities that would have finished the run in one more hop **from where the
+    player actually stopped**. This depends on the played round, so it can't live in the
+    seed-only `PuzzleSpec`; it's computed at reveal time in `App` from the final round +
+    the dataset. It's the "you were one city away" near-miss, and it's naturally empty on
+    a win or an overshoot (nothing left to complete) — so it fires exactly on the
+    fell-short losses where the lesson lands hardest.
+- **Interaction.** Tap a pin (a press that doesn't cross a small drag threshold — reusing
+  the existing pointer-capture drag) to select it: name label on the globe, a
+  name/distance/kind caption below it, and, for a completion, the dashed **missed leg**
+  from the stopping point. Reveal shows on **both win and loss** — on a win Layer 1 is
+  "other ways you could have won it."
+- **Why not a separate mode/route.** Kept it inline on the existing globe: zero new
+  navigation, and the reveal reuses the board the player already knows. The globe stays
+  purely presentational — all reveal geometry arrives via one `reveal` prop.

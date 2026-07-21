@@ -51,6 +51,11 @@ export const en: Messages = {
   globe: {
     label: (startCity) =>
       `Globe centred on ${startCity}, showing your journey of guesses. Drag to spin.`,
+    reveal: {
+      hint: 'Tap a pin to see a city you could have reached.',
+      ideal: 'Closest to target',
+      completion: 'Would have finished your run',
+    },
   },
 
   input: {
@@ -87,7 +92,7 @@ export const en: Messages = {
     ofTarget: (target) => `of ${target} target`,
     landedInBand: 'landed in the band',
     answerNote:
-      'The pins on the globe are the closest cities to the target distance — the ones that would have won it in a single straight hop.',
+      'The pins on the globe are the closest cities to the target distance — the ones that would have won it in a single straight hop. Tap any pin to explore where you could have gone.',
     share: 'Share result',
     copied: 'Copied!',
   },

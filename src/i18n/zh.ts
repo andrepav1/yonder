@@ -48,6 +48,11 @@ export const zh: Messages = {
 
   globe: {
     label: (startCity) => `以 ${startCity} 为中心的地球，显示你的城市路线。拖动可旋转。`,
+    reveal: {
+      hint: '点击一个标记，查看你本可以到达的城市。',
+      ideal: '最接近目标',
+      completion: '本可以从这里完成',
+    },
   },
 
   input: {
@@ -83,7 +88,8 @@ export const zh: Messages = {
     headlineClose: '差一点',
     ofTarget: (target) => `目标 ${target}`,
     landedInBand: '落入区间',
-    answerNote: '地球上的标记是最接近目标距离的城市——它们本可以一次直跳获胜。',
+    answerNote:
+      '地球上的标记是最接近目标距离的城市——它们本可以一次直跳获胜。点击标记，探索你本可以到达的地方。',
     share: '分享结果',
     copied: '已复制！',
   },

@@ -93,6 +93,7 @@ export function generatePuzzle(date: string, opts: GenerateOptions = {}): Puzzle
         targetKm,
         tolerancePct: tol,
         answers: answers.slice(0, rules.generation.revealCount),
+        exploreAnswers: answers.slice(0, rules.generation.exploreCount),
         validAnswerCount: validCount,
       }
     }

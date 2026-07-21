@@ -29,6 +29,7 @@ const puzzle: PuzzleSpec = {
   targetKm: 1000,
   tolerancePct: defaultRules.tolerancePct,
   answers: [],
+  exploreAnswers: [],
   validAnswerCount: 0,
 }
 

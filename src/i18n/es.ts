@@ -50,6 +50,11 @@ export const es: Messages = {
   globe: {
     label: (startCity) =>
       `Globo centrado en ${startCity}, mostrando tu recorrido de ciudades. Arrastra para girar.`,
+    reveal: {
+      hint: 'Toca un punto para ver una ciudad que podrías haber alcanzado.',
+      ideal: 'Más cerca del objetivo',
+      completion: 'Habría completado tu recorrido',
+    },
   },
 
   input: {
@@ -86,7 +91,7 @@ export const es: Messages = {
     ofTarget: (target) => `de un objetivo de ${target}`,
     landedInBand: 'llegaste a la zona',
     answerNote:
-      'Los puntos del globo son las ciudades más cercanas a la distancia objetivo — las que habrían ganado con un solo salto directo.',
+      'Los puntos del globo son las ciudades más cercanas a la distancia objetivo — las que habrían ganado con un solo salto directo. Toca un punto para explorar adónde podrías haber ido.',
     share: 'Compartir resultado',
     copied: '¡Copiado!',
   },

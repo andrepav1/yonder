@@ -55,12 +55,21 @@ bust), the exact **bearing in degrees + an arrow** (e.g. `47° ↗`) for that le
 hot→cold colour cue that warms as the total nears the target. A km/mi toggle switches
 all displayed distances (the win band is a percentage, so it's identical either way).
 
-### End of round
+### End of round — explore the map
 
-On a win, a bust, or after 6 guesses, the globe pins the closest **single-hop cities**
-— the ones that would have won it in one straight hop — and the result card shows how
-many hops you took and where your total landed. A Wordle-style shareable summary
-(hot/cold squares + leg arrows, a reach-% line, no city names) copies to the clipboard.
+On a win, a bust, or after 6 guesses the globe turns into a **learning reveal** you can
+spin and tap. It shows two kinds of cities you *could* have guessed:
+
+- **Closest to target** — the single-hop wins from the start (the ideal one-hop
+  solutions), and
+- **Would have finished your run** — cities that would have completed the journey in one
+  more hop from wherever you actually stopped (shown when you fell short — the "you were
+  one city away" near-miss). Tapping one draws the **missed leg** you didn't take.
+
+**Tap any pin** to read its name and distance (in your own language). The result card
+shows how many hops you took and where your total landed, and a Wordle-style shareable
+summary (hot/cold squares + leg arrows, a reach-% line, no city names) copies to the
+clipboard.
 
 ### Practice mode
 

@@ -51,6 +51,13 @@ export interface GameRules {
     minValidAnswers: number
     /** How many closest single-hop wins to reveal at the end of a round. */
     revealCount: number
+    /**
+     * How many closest single-hop wins to surface in the end-of-round
+     * "explore" reveal — the learning layer where a finished player scrolls
+     * the globe to see cities they could have guessed. A superset of
+     * `revealCount`, sorted the same way (closest to the target first).
+     */
+    exploreCount: number
     /** Max seeded re-draws before generation gives up (safety valve). */
     maxAttempts: number
   }
@@ -90,6 +97,10 @@ export const defaultRules: GameRules = {
   generation: {
     minValidAnswers: 3,
     revealCount: 3,
+    // Up to 16 closest single-hop wins power the end-of-round explore reveal.
+    // Capped so the globe stays readable; days with fewer valid answers reveal
+    // however many exist.
+    exploreCount: 16,
     maxAttempts: 1000,
   },
   units: {

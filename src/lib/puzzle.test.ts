@@ -69,6 +69,30 @@ describe('generatePuzzle — invariants over a full year', () => {
     }
   })
 
+  it('exposes a larger explore set that is a superset of answers, still in-band', () => {
+    for (const date of dates.slice(0, 40)) {
+      const p = generatePuzzle(date)
+      // exploreAnswers extends answers with the same ordering.
+      expect(p.exploreAnswers.length).toBeGreaterThanOrEqual(p.answers.length)
+      expect(p.exploreAnswers.length).toBeLessThanOrEqual(
+        defaultRules.generation.exploreCount,
+      )
+      for (let i = 0; i < p.answers.length; i++) {
+        expect(p.exploreAnswers[i]!.city.id).toBe(p.answers[i]!.city.id)
+      }
+      const low = p.targetKm * (1 - p.tolerancePct)
+      let prevDelta = -1
+      for (const a of p.exploreAnswers) {
+        const dist = haversineKm(p.start, a.city)
+        expect(dist).toBeGreaterThanOrEqual(low - 0.01)
+        expect(dist).toBeLessThanOrEqual(p.targetKm + 0.01)
+        const delta = Math.abs(a.distanceKm - p.targetKm)
+        expect(delta).toBeGreaterThanOrEqual(prevDelta - 1e-9)
+        prevDelta = delta
+      }
+    }
+  })
+
   it('reveals single-hop wins actually inside the band, ordered by closeness', () => {
     for (const date of dates.slice(0, 40)) {
       const p = generatePuzzle(date)

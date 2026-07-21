@@ -97,6 +97,12 @@ export interface PuzzleSpec {
   tolerancePct: number
   /** The `revealCount` cities closest to the target distance. */
   answers: AnswerCity[]
+  /**
+   * The `exploreCount` cities closest to the target distance — the end-of-round
+   * "explore" reveal set. A superset of `answers`, sorted the same way. These are
+   * the single-hop wins a finished player can browse on the globe.
+   */
+  exploreAnswers: AnswerCity[]
   /** How many dataset cities fall inside the win band. */
   validAnswerCount: number
 }

@@ -50,6 +50,11 @@ export const ko: Messages = {
   globe: {
     label: (startCity) =>
       `${startCity}을(를) 중심으로 한 지구본. 도시 경로를 표시합니다. 드래그하여 회전.`,
+    reveal: {
+      hint: '핀을 탭하면 도달할 수 있었던 도시를 볼 수 있어요.',
+      ideal: '목표에 가장 가까움',
+      completion: '여기서 완주할 수 있었음',
+    },
   },
 
   input: {
@@ -86,7 +91,7 @@ export const ko: Messages = {
     ofTarget: (target) => `목표 ${target} 중`,
     landedInBand: '구간에 도달',
     answerNote:
-      '지구본의 핀은 목표 거리에 가장 가까운 도시들입니다 — 한 번의 직선 이동으로 이길 수 있었던 도시들입니다.',
+      '지구본의 핀은 목표 거리에 가장 가까운 도시들입니다 — 한 번의 직선 이동으로 이길 수 있었던 도시들입니다. 핀을 탭해 어디로 갈 수 있었는지 살펴보세요.',
     share: '결과 공유',
     copied: '복사됨!',
   },

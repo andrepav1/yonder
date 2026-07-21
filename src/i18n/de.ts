@@ -50,6 +50,11 @@ export const de: Messages = {
   globe: {
     label: (startCity) =>
       `Globus zentriert auf ${startCity}, zeigt deine Städtereise. Zum Drehen ziehen.`,
+    reveal: {
+      hint: 'Tippe auf einen Punkt, um eine erreichbare Stadt zu sehen.',
+      ideal: 'Am nächsten zum Ziel',
+      completion: 'Hätte deine Reise beendet',
+    },
   },
 
   input: {
@@ -86,7 +91,7 @@ export const de: Messages = {
     ofTarget: (target) => `von ${target} Ziel`,
     landedInBand: 'in der Zone gelandet',
     answerNote:
-      'Die Markierungen auf dem Globus sind die Städte, die der Zieldistanz am nächsten liegen — die, die es in einem einzigen direkten Sprung gewonnen hätten.',
+      'Die Markierungen auf dem Globus sind die Städte, die der Zieldistanz am nächsten liegen — die, die es in einem einzigen direkten Sprung gewonnen hätten. Tippe auf eine Markierung, um zu erkunden, wohin du hättest gehen können.',
     share: 'Ergebnis teilen',
     copied: 'Kopiert!',
   },

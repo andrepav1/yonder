@@ -68,7 +68,15 @@ async function run() {
 
   const shot = async (
     name,
-    { dark = false, onboarded = true, play = false, win = false, menu = false, practice = false } = {},
+    {
+      dark = false,
+      onboarded = true,
+      play = false,
+      win = false,
+      menu = false,
+      practice = false,
+      tapReveal = false,
+    } = {},
   ) => {
     const ctx = await browser.newContext({
       viewport: { width: 390, height: 844 },
@@ -99,6 +107,13 @@ async function run() {
       // A one-hop win (distance lands in the band).
       await guess(page, ANSWER)
     }
+    if (tapReveal) {
+      // Tap the first revealed "could-have-guessed" pin to open its callout.
+      const pin = page.locator('.globe__reveal').first()
+      await pin.waitFor({ state: 'attached', timeout: 2000 }).catch(() => {})
+      await pin.click({ force: true }).catch(() => {})
+      await page.waitForTimeout(300)
+    }
     await page.waitForTimeout(500)
     await page.screenshot({ path: join(OUT, `${name}.png`), fullPage: true })
     await ctx.close()
@@ -111,6 +126,8 @@ async function run() {
   await shot('practice-light', { practice: true })
   await shot('play-light', { play: true })
   await shot('win-light', { win: true })
+  await shot('explore-light', { win: true, tapReveal: true })
+  await shot('explore-dark', { dark: true, win: true, tapReveal: true })
   await shot('board-dark', { dark: true })
   await shot('win-dark', { dark: true, win: true })
 
