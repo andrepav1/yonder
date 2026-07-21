@@ -68,7 +68,7 @@ async function run() {
 
   const shot = async (
     name,
-    { dark = false, onboarded = true, play = false, win = false } = {},
+    { dark = false, onboarded = true, play = false, win = false, menu = false, practice = false } = {},
   ) => {
     const ctx = await browser.newContext({
       viewport: { width: 390, height: 844 },
@@ -82,6 +82,15 @@ async function run() {
     await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle' })
     await page.waitForTimeout(400)
 
+    if (menu || practice) {
+      // Open the header menu (and optionally switch to Practice mode).
+      await page.click('.menu .iconbtn')
+      await page.waitForTimeout(200)
+      if (practice) {
+        await page.getByRole('menuitemradio', { name: 'Practice' }).click()
+        await page.waitForTimeout(400)
+      }
+    }
     if (play && PARTIAL) {
       // A single mid-journey hop — round still in progress.
       await guess(page, PARTIAL)
@@ -98,6 +107,8 @@ async function run() {
 
   await shot('howto-light', { onboarded: false })
   await shot('board-light')
+  await shot('menu-light', { menu: true })
+  await shot('practice-light', { practice: true })
   await shot('play-light', { play: true })
   await shot('win-light', { win: true })
   await shot('board-dark', { dark: true })

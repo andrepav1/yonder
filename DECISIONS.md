@@ -4,6 +4,40 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
+## 2026-07-21 — Practice mode + a header menu
+
+- **Context.** The game shipped as a single daily puzzle, but the architecture was
+  built for multiple modes (a `GameMode` descriptor + a `modes` registry with one
+  entry). Requested: a **practice / explore** mode — unlimited random puzzles you can
+  play any time — and, after a first attempt used a Daily/Practice **tab strip** that
+  was disliked, a **menu** holding the mode switch plus other options (About, …).
+- **Practice as a second mode (not a fork).** The daily and practice modes are two
+  registry entries built by one `makeMode(rules)` factory; they share the engine,
+  scoring, and share logic and differ **only in their seed**. `GameMode.generate` was
+  generalized from `generate(date)` to `generate(seed)`: the daily passes the UTC date
+  (same puzzle for everyone), practice passes a fresh random token per round. This
+  validated the mode seam the codebase was designed around with almost no new logic.
+- **Determinism stays sacred.** The generator is still a pure function of its seed —
+  no `Math.random` / `Date.now` in `lib/*`. Practice's randomness lives at the single
+  impure boundary in `App.tsx` (`makePracticeSeed()`), so the year-long determinism +
+  solvability tests are untouched and a practice seed is reproducible if ever captured.
+- **Practice is off the record.** The App keeps a persisted, date-locked **daily**
+  round and a separate ephemeral in-memory **practice** round. Only the daily writes
+  to the store and folds into the streak / win% / distribution; practice never does,
+  and offers **New puzzle** instead of share (a random puzzle isn't the common daily
+  one, so a shareable comparison would be meaningless). This protects the integrity of
+  the daily streak — the thing the stats are *about* — while giving unlimited play.
+- **Menu over tabs.** The first cut put Daily/Practice in an inline segmented control;
+  it read as clutter above the board. Replaced with a header **overflow menu** (☰
+  popover): mode switch (Daily / Practice, radio-checked), a separator, then How to
+  play / Statistics / About. This also let the two standalone header icon buttons
+  (help, stats) fold into one control, de-crowding a header that already carries the
+  language + unit toggles. The popover closes on outside pointer, Escape, or a pick.
+- **About.** A new short dialog (what the game is, the rules in brief, GeoNames +
+  static-app credits) — the natural second menu item and a home for the attribution
+  beyond the footer line. Copy added to all 9 catalogs; the key-shape parity test
+  enforces completeness automatically.
+
 ## 2026-07-20 — Localized city names (guesses follow the UI language)
 
 - **Context.** The UI shipped in 9 languages, but city names — shown on the globe, in

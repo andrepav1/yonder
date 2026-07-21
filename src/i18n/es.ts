@@ -15,6 +15,30 @@ export const es: Messages = {
     language: 'Idioma',
   },
 
+  modes: {
+    daily: 'Diario',
+    practice: 'Práctica',
+    practiceLabel: 'Modo práctica',
+    practiceEyebrow: 'Tu salida',
+    newPuzzle: 'Nuevo desafío',
+    practiceNote: 'Las partidas de práctica no afectan tu racha diaria.',
+  },
+
+  menu: {
+    label: 'Menú',
+    about: 'Acerca de',
+  },
+
+  about: {
+    tagline: 'Un juego diario de geografía.',
+    intro:
+      'Cada día (UTC), todos reciben el mismo reto: una ciudad de salida y una distancia objetivo. Crea un recorrido nombrando ciudades — cada salto suma la distancia desde tu última ciudad a un total acumulado.',
+    rules:
+      'Alcanza el objetivo sin pasarte, en los menos saltos posibles. Tienes 6 intentos. Cambia al modo Práctica para retos aleatorios ilimitados que no afectan tu racha.',
+    credits:
+      'Datos de ciudades © GeoNames (CC BY 4.0). Aplicación web estática y disponible sin conexión.',
+  },
+
   prompt: {
     eyebrow: 'Salida de hoy',
     targetLabel: 'Alcanza un total de',

@@ -3,7 +3,7 @@ import type { GameRules, Unit } from '@/config/rules'
 import { scoreRound } from '@/lib/scoring'
 import { formatDistance, remainingPhrase } from '@/lib/format'
 import { useI18n } from '@/i18n/context'
-import { ShareIcon, CheckIcon } from './icons'
+import { ShareIcon, CheckIcon, ShuffleIcon } from './icons'
 
 interface ResultCardProps {
   state: RoundState
@@ -12,6 +12,8 @@ interface ResultCardProps {
   unit: Unit
   onShare: () => void
   copied: boolean
+  /** In practice mode, offered instead of sharing — start a fresh puzzle. */
+  onNewPuzzle?: () => void
 }
 
 export function ResultCard({
@@ -21,6 +23,7 @@ export function ResultCard({
   unit,
   onShare,
   copied,
+  onNewPuzzle,
 }: ResultCardProps) {
   const { t } = useI18n()
   const won = state.status === 'won'
@@ -53,10 +56,17 @@ export function ResultCard({
 
       <div className="result__answer-note">{t.result.answerNote}</div>
 
-      <button className="btn" onClick={onShare}>
-        {copied ? <CheckIcon /> : <ShareIcon />}
-        {copied ? t.result.copied : t.result.share}
-      </button>
+      {onNewPuzzle ? (
+        <button className="btn" onClick={onNewPuzzle}>
+          <ShuffleIcon />
+          {t.modes.newPuzzle}
+        </button>
+      ) : (
+        <button className="btn" onClick={onShare}>
+          {copied ? <CheckIcon /> : <ShareIcon />}
+          {copied ? t.result.copied : t.result.share}
+        </button>
+      )}
     </section>
   )
 }

@@ -15,6 +15,30 @@ export const fr: Messages = {
     language: 'Langue',
   },
 
+  modes: {
+    daily: 'Quotidien',
+    practice: 'Entraînement',
+    practiceLabel: 'Mode entraînement',
+    practiceEyebrow: 'Votre départ',
+    newPuzzle: 'Nouvelle partie',
+    practiceNote: 'Les parties d’entraînement n’affectent pas votre série quotidienne.',
+  },
+
+  menu: {
+    label: 'Menu',
+    about: 'À propos',
+  },
+
+  about: {
+    tagline: 'Un jeu de géographie quotidien.',
+    intro:
+      'Chaque jour (UTC), tout le monde reçoit le même défi : une ville de départ et une distance cible. Construisez un trajet en nommant des villes — chaque étape ajoute la distance depuis votre dernière ville à un total cumulé.',
+    rules:
+      'Atteignez la cible sans la dépasser, en un minimum d’étapes. Vous avez 6 essais. Passez en mode Entraînement pour des défis aléatoires illimités qui n’affectent pas votre série.',
+    credits:
+      'Données des villes © GeoNames (CC BY 4.0). Application web statique, utilisable hors ligne.',
+  },
+
   prompt: {
     eyebrow: 'Départ du jour',
     targetLabel: 'Atteignez un total de',

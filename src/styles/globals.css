@@ -249,6 +249,12 @@ button {
   color: var(--fg-muted);
   margin-top: 0.5rem;
 }
+.prompt__note {
+  font-size: 0.72rem;
+  color: var(--fg-muted);
+  margin-top: 0.75rem;
+  font-style: italic;
+}
 .pips {
   display: flex;
   gap: 0.4rem;
@@ -608,6 +614,94 @@ button {
 }
 .btn--ghost:hover {
   background: var(--border);
+}
+.btn--newpuzzle {
+  width: auto;
+  align-self: center;
+  height: 44px;
+  padding: 0 1.1rem;
+  margin-top: 0.85rem;
+  font-size: 0.9rem;
+}
+
+/* ---------- Header menu (overflow popover) ---------- */
+
+.menu {
+  position: relative;
+  display: inline-flex;
+}
+.menu__pop {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 40;
+  min-width: 200px;
+  padding: 0.35rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  animation: menu-in 0.14s ease both;
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.6rem;
+  border: none;
+  background: transparent;
+  border-radius: var(--r-sm);
+  color: var(--fg);
+  font-size: 0.92rem;
+  text-align: left;
+}
+.menu__item:hover {
+  background: var(--surface-2);
+}
+.menu__item:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+.menu__item > svg {
+  flex: none;
+  color: var(--fg-muted);
+}
+.menu__label {
+  flex: 1;
+}
+.menu__check {
+  color: var(--accent);
+}
+.menu__sep {
+  height: 1px;
+  margin: 0.3rem 0.2rem;
+  background: var(--border);
+}
+
+/* ---------- About dialog ---------- */
+
+.about__tagline {
+  margin-top: 0;
+  font-weight: 600;
+  color: var(--fg);
+}
+.about__credits {
+  font-size: 0.8rem;
+  color: var(--fg-muted);
 }
 
 /* ---------- Modal ---------- */

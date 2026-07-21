@@ -15,6 +15,30 @@ export const ko: Messages = {
     language: '언어',
   },
 
+  modes: {
+    daily: '데일리',
+    practice: '연습',
+    practiceLabel: '연습 모드',
+    practiceEyebrow: '출발 도시',
+    newPuzzle: '새 문제',
+    practiceNote: '연습 문제는 데일리 연속 기록에 영향을 주지 않습니다.',
+  },
+
+  menu: {
+    label: '메뉴',
+    about: '정보',
+  },
+
+  about: {
+    tagline: '매일 즐기는 지리 추측 게임.',
+    intro:
+      '매일(UTC) 모두가 같은 문제를 받습니다. 출발 도시 하나와 목표 거리 하나. 도시를 말하며 여정을 만들고, 각 구간마다 이전 도시로부터의 거리가 누적 합계에 더해집니다.',
+    rules:
+      '목표를 넘기지 않고 가능한 한 적은 횟수로 도달하세요. 기회는 6번입니다. 연습 모드에서는 연속 기록에 영향을 주지 않는 무작위 문제를 무제한으로 즐길 수 있습니다.',
+    credits:
+      '도시 데이터 © GeoNames (CC BY 4.0). 정적이고 오프라인에서도 작동하는 웹 앱입니다.',
+  },
+
   prompt: {
     eyebrow: '오늘의 출발지',
     targetLabel: '총합 목표',

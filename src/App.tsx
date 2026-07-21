@@ -1,15 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { City, RoundState } from '@/lib/types'
 import type { Unit } from '@/config/rules'
-import { dailyMode } from '@/modes/daily'
+import { dailyMode, practiceMode } from '@/modes/daily'
 import { utcDateString } from '@/lib/puzzle'
-import {
-  applyGuess,
-  createRound,
-  isFinished,
-  guessesLeft,
-  type GuessError,
-} from '@/lib/engine'
+import { createRound, isFinished, guessesLeft, type GuessError } from '@/lib/engine'
 import { createStatsStore, type Stats } from '@/store/statsStore'
 import { loadUnit, saveUnit, isOnboarded, setOnboarded } from '@/store/prefs'
 import { formatDistance, bandLabel } from '@/lib/format'
@@ -21,11 +15,15 @@ import { GuessRow } from '@/ui/GuessRow'
 import { ResultCard } from '@/ui/ResultCard'
 import { HowToPlay } from '@/ui/HowToPlay'
 import { StatsPanel } from '@/ui/StatsPanel'
+import { About } from '@/ui/About'
 import { LanguageSwitcher } from '@/ui/LanguageSwitcher'
-import { HelpIcon, StatsIcon } from '@/ui/icons'
+import { AppMenu } from '@/ui/Menu'
+import { ShuffleIcon } from '@/ui/icons'
 
 // The public URL appended to shared results. Update to your Vercel domain.
 const SITE_URL = 'https://yondle.vercel.app'
+
+type Mode = 'daily' | 'practice'
 
 function humanDate(date: string, locale: string): string {
   const d = new Date(`${date}T00:00:00Z`)
@@ -37,24 +35,47 @@ function humanDate(date: string, locale: string): string {
   })
 }
 
+/**
+ * A fresh random seed for a practice puzzle. Randomness lives here at the UI
+ * boundary — never in `lib/*` — so the generator stays pure and deterministic
+ * in its seed. Prefixed so a practice seed can never collide with a UTC date.
+ */
+function makePracticeSeed(): string {
+  const rand = Math.random().toString(36).slice(2, 10)
+  return `practice-${Date.now().toString(36)}-${rand}`
+}
+
 export default function App() {
   const { t } = useI18n()
   const rules = dailyMode.rules
   const date = useMemo(() => utcDateString(), [])
-  const puzzle = useMemo(() => dailyMode.generate(date), [date])
   const store = useMemo(() => createStatsStore(rules), [rules])
 
-  const [round, setRound] = useState<RoundState>(
+  const [mode, setMode] = useState<Mode>('daily')
+  const [practiceSeed, setPracticeSeed] = useState<string>(makePracticeSeed)
+
+  // The daily round is date-locked and persisted; the practice round is
+  // ephemeral (in memory only) and never touches the streak or stats.
+  const [dailyRound, setDailyRound] = useState<RoundState>(
     () => store.loadRound(date) ?? createRound(date),
+  )
+  const [practiceRound, setPracticeRound] = useState<RoundState>(() =>
+    createRound(practiceSeed),
   )
   const [stats, setStats] = useState<Stats>(() => store.loadStats())
   const [unit, setUnit] = useState<Unit>(() => loadUnit(rules.units.default))
   const [toast, setToast] = useState('')
   const [showHowTo, setShowHowTo] = useState(() => !isOnboarded())
   const [showStats, setShowStats] = useState(false)
+  const [showAbout, setShowAbout] = useState(false)
   const [copied, setCopied] = useState(false)
   const toastTimer = useRef<number | undefined>(undefined)
 
+  const practice = mode === 'practice'
+  const activeMode = practice ? practiceMode : dailyMode
+  const seed = practice ? practiceSeed : date
+  const puzzle = useMemo(() => activeMode.generate(seed), [activeMode, seed])
+  const round = practice ? practiceRound : dailyRound
   const finished = isFinished(round)
 
   useEffect(() => () => window.clearTimeout(toastTimer.current), [])
@@ -69,17 +90,34 @@ export default function App() {
     error === 'start-city' ? t.errors.startCity : t.errors[error]
 
   const handleGuess = (city: City) => {
-    const res = applyGuess(round, puzzle, city, rules)
+    const res = activeMode.apply(round, puzzle, city)
     if (res.error) {
       flashToast(errorText(res.error))
       return
     }
     setToast('')
-    setRound(res.state)
+    if (practice) {
+      setPracticeRound(res.state)
+      return
+    }
+    setDailyRound(res.state)
     store.saveRound(res.state)
     if (isFinished(res.state)) {
       setStats(store.recordResult(res.state))
     }
+  }
+
+  const switchMode = (next: Mode) => {
+    if (next === mode) return
+    setToast('')
+    setMode(next)
+  }
+
+  const newPractice = () => {
+    const s = makePracticeSeed()
+    setToast('')
+    setPracticeSeed(s)
+    setPracticeRound(createRound(s))
   }
 
   const changeUnit = (u: Unit) => {
@@ -115,7 +153,9 @@ export default function App() {
         <header className="hdr">
           <div className="hdr__brand">
             <span className="hdr__title">{t.appName}</span>
-            <span className="hdr__sub">{humanDate(date, t.numberLocale)}</span>
+            <span className="hdr__sub">
+              {practice ? t.modes.practiceLabel : humanDate(date, t.numberLocale)}
+            </span>
           </div>
           <div className="hdr__actions">
             <LanguageSwitcher />
@@ -127,25 +167,20 @@ export default function App() {
                 mi
               </button>
             </div>
-            <button
-              className="iconbtn"
-              onClick={() => setShowHowTo(true)}
-              aria-label={t.header.howToPlay}
-            >
-              <HelpIcon />
-            </button>
-            <button
-              className="iconbtn"
-              onClick={() => setShowStats(true)}
-              aria-label={t.header.statistics}
-            >
-              <StatsIcon />
-            </button>
+            <AppMenu
+              mode={mode}
+              onSelectMode={switchMode}
+              onHowTo={() => setShowHowTo(true)}
+              onStats={() => setShowStats(true)}
+              onAbout={() => setShowAbout(true)}
+            />
           </div>
         </header>
 
         <section className="prompt">
-          <div className="prompt__eyebrow">{t.prompt.eyebrow}</div>
+          <div className="prompt__eyebrow">
+            {practice ? t.modes.practiceEyebrow : t.prompt.eyebrow}
+          </div>
           <div className="prompt__start">{cityLabel(puzzle.start)}</div>
           <div className="prompt__target-label">{t.prompt.targetLabel}</div>
           <div className="prompt__target mono">
@@ -164,6 +199,7 @@ export default function App() {
               return <span key={i} className={cls} />
             })}
           </div>
+          {practice && <div className="prompt__note">{t.modes.practiceNote}</div>}
         </section>
 
         <Globe
@@ -179,6 +215,13 @@ export default function App() {
           <div className="toast" role="alert">
             {toast}
           </div>
+        )}
+
+        {practice && !finished && (
+          <button className="btn btn--ghost btn--newpuzzle" onClick={newPractice}>
+            <ShuffleIcon />
+            {t.modes.newPuzzle}
+          </button>
         )}
 
         {round.guesses.length > 0 && (
@@ -197,6 +240,7 @@ export default function App() {
             unit={unit}
             onShare={handleShare}
             copied={copied}
+            onNewPuzzle={practice ? newPractice : undefined}
           />
         )}
 
@@ -213,6 +257,7 @@ export default function App() {
         <HowToPlay rules={rules} puzzle={puzzle} unit={unit} onClose={closeHowTo} />
       )}
       {showStats && <StatsPanel stats={stats} onClose={() => setShowStats(false)} />}
+      {showAbout && <About onClose={() => setShowAbout(false)} />}
     </div>
   )
 }

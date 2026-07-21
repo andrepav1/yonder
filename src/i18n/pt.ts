@@ -15,6 +15,30 @@ export const pt: Messages = {
     language: 'Idioma',
   },
 
+  modes: {
+    daily: 'Diário',
+    practice: 'Treino',
+    practiceLabel: 'Modo treino',
+    practiceEyebrow: 'A sua partida',
+    newPuzzle: 'Novo desafio',
+    practiceNote: 'As partidas de treino não afetam a sua sequência diária.',
+  },
+
+  menu: {
+    label: 'Menu',
+    about: 'Sobre',
+  },
+
+  about: {
+    tagline: 'Um jogo diário de geografia.',
+    intro:
+      'Todos os dias (UTC), todos recebem o mesmo desafio: uma cidade de partida e uma distância-alvo. Crie um trajeto nomeando cidades — cada salto soma a distância da sua última cidade a um total acumulado.',
+    rules:
+      'Alcance o alvo sem ultrapassá-lo, no menor número de saltos. Você tem 6 tentativas. Mude para o modo Treino para desafios aleatórios ilimitados que não afetam a sua sequência.',
+    credits:
+      'Dados de cidades © GeoNames (CC BY 4.0). Aplicação web estática e disponível offline.',
+  },
+
   prompt: {
     eyebrow: 'Partida de hoje',
     targetLabel: 'Alcance um total de',

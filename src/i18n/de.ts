@@ -15,6 +15,30 @@ export const de: Messages = {
     language: 'Sprache',
   },
 
+  modes: {
+    daily: 'Täglich',
+    practice: 'Übung',
+    practiceLabel: 'Übungsmodus',
+    practiceEyebrow: 'Dein Startpunkt',
+    newPuzzle: 'Neues Rätsel',
+    practiceNote: 'Übungsrunden zählen nicht für deine tägliche Serie.',
+  },
+
+  menu: {
+    label: 'Menü',
+    about: 'Über',
+  },
+
+  about: {
+    tagline: 'Ein tägliches Geografie-Ratespiel.',
+    intro:
+      'Jeden Tag (UTC) bekommen alle dasselbe Rätsel: eine Startstadt und eine Zieldistanz. Baue eine Reise, indem du Städte nennst — jeder Sprung addiert die Distanz von deiner letzten Stadt zu einer laufenden Summe.',
+    rules:
+      'Erreiche das Ziel, ohne es zu überschreiten, in möglichst wenigen Sprüngen. Du hast 6 Versuche. Wechsle in den Übungsmodus für unbegrenzte Zufallsrätsel, die deine Serie nicht beeinflussen.',
+    credits:
+      'Städtedaten © GeoNames (CC BY 4.0). Als statische, offline-taugliche Web-App gebaut.',
+  },
+
   prompt: {
     eyebrow: 'Heutiger Start',
     targetLabel: 'Erreiche eine Summe von',
