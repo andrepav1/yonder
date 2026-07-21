@@ -361,7 +361,7 @@ export function Globe({ start, guesses, rules, unit, reveal, finished }: GlobePr
               style={{ '--temp': `var(--temp-${level})` } as CSSProperties}
               cx={p[0]}
               cy={p[1]}
-              r={4.5}
+              r={3.2}
             />
           )
         })}

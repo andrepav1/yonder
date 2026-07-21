@@ -29,6 +29,10 @@
   --win-weak: #e4f1e9;
   --danger: #b23b2e;
 
+  /* End-of-round reveal — the "would-have-won" answer cities. A distinct violet
+     so they never read as the player's own (terracotta) guess dots. */
+  --reveal: #6a53c4;
+
   /* Hot → cold proximity ramp (4 = win/hottest … 0 = coldest) */
   --temp-4: #c2410c;
   --temp-3: #db7a34;
@@ -79,6 +83,8 @@
     --win: #5fb98a;
     --win-weak: #1f2f25;
     --danger: #e07a6b;
+
+    --reveal: #a996f2;
 
     --temp-4: #e76a34;
     --temp-3: #ee8b4a;
@@ -324,7 +330,7 @@ button {
   transition: r 120ms ease;
 }
 .globe__reveal--ideal {
-  fill: var(--accent);
+  fill: var(--reveal);
 }
 .globe__reveal--completion {
   fill: var(--win);
@@ -336,7 +342,7 @@ button {
   pointer-events: none;
 }
 .globe__reveal-halo--ideal {
-  fill: color-mix(in srgb, var(--accent) 22%, transparent);
+  fill: color-mix(in srgb, var(--reveal) 24%, transparent);
 }
 .globe__reveal-halo--completion {
   fill: color-mix(in srgb, var(--win) 26%, transparent);
@@ -390,7 +396,7 @@ button {
   white-space: nowrap;
 }
 .globe__tag--ideal {
-  color: var(--accent);
+  color: var(--reveal);
 }
 .globe__tag--completion {
   color: var(--win);
