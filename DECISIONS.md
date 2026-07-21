@@ -4,6 +4,19 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
+## 2026-07-21 — Always show the country in a city label
+
+- **Context.** `cityLabel` disambiguated lazily: a bare name when unique (most cities),
+  `"Name, Country"` only when the name repeated, `"Name, Region, Country"` when even that
+  repeated. So players saw "Paris" but "Springfield, Illinois, United States" — an
+  inconsistent, less legible label, and a bare name gives no help placing an unfamiliar
+  city on the globe.
+- **Decision.** Always carry the country: every label is at least `"Name, Country"`,
+  still promoting to `"Name, Region, Country"` when the name repeats within the same
+  country. This drops the `_countByName` (name-only) index; only the name+country tally
+  is now needed. Matching (`search`/`resolveGuess`) is unchanged — labels are display
+  only. Country/region qualifiers stay in their dataset (English) form, as before.
+
 ## 2026-07-21 — Practice mode + a header menu
 
 - **Context.** The game shipped as a single daily puzzle, but the architecture was

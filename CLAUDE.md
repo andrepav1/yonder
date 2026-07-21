@@ -49,9 +49,10 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   accent/case-insensitive **fuzzy**, **locale-aware** autocomplete. `localizedName` /
   `cityLabel(city, locale?)` render the active language (falling back to `name`);
   `search`/`resolveGuess` match a query against a city's canonical **and** all localized
-  names, so a city is reachable by typing it in any supported language. Uniqueness for
-  `cityLabel` disambiguation keys off the canonical name; country/region qualifiers stay
-  in their (English) dataset form.
+  names, so a city is reachable by typing it in any supported language. `cityLabel`
+  **always** appends the country (`"Name, Country"`), promoting to `"Name, Region,
+  Country"` when the name repeats within that country; the name+country pairing keys off
+  the canonical name, and country/region qualifiers stay in their (English) dataset form.
 - `src/lib/puzzle.ts` — `generatePuzzle(date, {cities?, rules?})`: population-weighted
   start city + validated target so every day has ≥ `minValidAnswers` cities within
   `[target·(1−tol), target]` of the start — i.e. **single-hop wins** — guaranteeing
