@@ -52,7 +52,6 @@ export const ko: Messages = {
       `${startCity}을(를) 중심으로 한 지구본. 도시 경로를 표시합니다. 드래그하여 회전.`,
     zoomIn: '확대',
     zoomOut: '축소',
-    exploreHint: '도시를 탭하면 이름을 볼 수 있어요.',
     reveal: {
       hint: '핀을 탭하면 도달할 수 있었던 도시를 볼 수 있어요.',
       ideal: '목표에 가장 가까움',

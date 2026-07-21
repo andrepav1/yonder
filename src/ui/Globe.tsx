@@ -19,8 +19,9 @@
 // Purely presentational: all geometry comes from props. The projection + d3-geo
 // path strings are recomputed from the current rotation + zoom; nothing here
 // mutates game state. Points on the far hemisphere are hidden via a great-circle
-// test; when zoomed in, the map is clipped to the board *disc* (so the globe
-// stays round, never squared) and off-viewport city dots are culled.
+// test; when zoomed in, the globe simply grows past the board and off the screen
+// (rendered beneath the surrounding UI, which stays legible on top), and
+// off-viewport city dots are culled.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { geoOrthographic, geoPath, geoGraticule10, geoDistance } from 'd3-geo'
@@ -50,14 +51,10 @@ const RADIUS = SIZE / 2 - MARGIN
 const TAP_HIT_RADIUS = 12
 // How far a pointer may travel (client px) and still count as a tap, not a drag.
 const TAP_MOVE_TOLERANCE = 6
-// Clip map geometry to the board *disc* (plus a small margin so the edge stroke
-// isn't shaved) — so a zoomed-in globe stays round instead of filling out to the
-// square corners of the board. Labels ride outside this clip and can still spill.
-const CLIP_MARGIN = 4
 // Drop explore-city dots that project beyond the board by more than this pad.
 const CULL_PAD = 8
 // Multiplier per press of the +/− zoom buttons.
-const ZOOM_STEP = 1.5
+const ZOOM_STEP = 1.4
 // Pinch sensitivity: the change in finger separation is raised to this power
 // before it scales the zoom, so a small spread magnifies more (>1 = faster,
 // snappier pinch). 1 would track the fingers exactly.
@@ -468,14 +465,9 @@ export function Globe({ start, guesses, rules, unit, cities, reveal, finished }:
           onPointerCancel={endDrag}
           onPointerLeave={onPointerLeave}
         >
-          <defs>
-            <clipPath id="globe-clip">
-              <circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS + CLIP_MARGIN} />
-            </clipPath>
-          </defs>
-
-          {/* Map layers clip to the board so a zoomed globe stays inside it. */}
-          <g clipPath="url(#globe-clip)">
+          {/* Map layers: the globe grows freely past the board when zoomed
+              (the SVG lets it overflow; the whole surface sits below the UI). */}
+          <g>
             {/* Ocean sphere */}
             <circle className="globe__sphere" cx={SIZE / 2} cy={SIZE / 2} r={sphereR} />
             <path className="globe__graticule" d={graticulePath} />
@@ -601,8 +593,8 @@ export function Globe({ start, guesses, rules, unit, cities, reveal, finished }:
         </div>
       </div>
 
-      {/* Caption: the engaged city's detail, or a hint to go exploring */}
-      {(active || (finished && revealPins.length > 0) || zoom > minZoom + 1e-3) && (
+      {/* Caption: the engaged city's detail, or the end-of-round reveal hint */}
+      {(active || (finished && revealPins.length > 0)) && (
         <div className="globe__caption" aria-live="polite">
           {active ? (
             active.type === 'reveal' ? (
@@ -622,10 +614,8 @@ export function Globe({ start, guesses, rules, unit, cities, reveal, finished }:
                 <strong>{cityLabel(active.city, locale)}</strong>
               </span>
             )
-          ) : finished && revealPins.length > 0 ? (
-            t.globe.reveal.hint
           ) : (
-            t.globe.exploreHint
+            t.globe.reveal.hint
           )}
         </div>
       )}

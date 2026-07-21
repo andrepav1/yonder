@@ -52,7 +52,6 @@ export const ja: Messages = {
       `${startCity} を中心にした地球儀。あなたの都市のルートを表示。ドラッグで回転。`,
     zoomIn: '拡大',
     zoomOut: '縮小',
-    exploreHint: '都市をタップすると名前が表示されます。',
     reveal: {
       hint: 'ピンをタップすると、到達できた都市が見られます。',
       ideal: '目標に最も近い',

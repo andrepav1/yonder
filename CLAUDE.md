@@ -140,11 +140,11 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   cities, filtered by `exploreMinPopulation(zoom, rules)` (biggest first, more as you
   zoom in) then culled to the near hemisphere + viewport and capped at
   `rules.explore.maxDots`; tap one to read its name (caption + label). Excludes the
-  start / guessed / reveal cities (they carry their own markers). Zoomed-in map geometry
-  is clipped to the board **disc** (a circular `clipPath`, so the globe stays round
-  rather than squaring off into the board corners); labels ride above the clip so they
-  can still spill past the edge. Presentational as ever — geometry from props, no runtime network;
-  land is bundled.
+  start / guessed / reveal cities (they carry their own markers). Zooming simply
+  **grows the globe past the board** (the SVG overflows; the whole `.globe` sits at a
+  negative `z-index` so the enlarged sphere slides *beneath* the surrounding — often
+  translucent — UI rather than covering it). Presentational as ever — geometry from
+  props, no runtime network; land is bundled.
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it

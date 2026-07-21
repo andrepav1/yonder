@@ -288,6 +288,11 @@ button {
   align-items: center;
   justify-content: center;
   padding: 0.15rem 0;
+  /* Zooming grows the globe past the board (the SVG overflows). Keep the whole
+     surface beneath its sibling panels so an enlarged globe slides *behind* the
+     (translucent) UI instead of covering it. */
+  position: relative;
+  z-index: -1;
 }
 .globe__svg {
   width: 100%;
@@ -312,7 +317,7 @@ button {
 }
 .globe__zoom {
   position: absolute;
-  right: 0.1rem;
+  right: -0.5rem;
   bottom: 0.1rem;
   display: flex;
   flex-direction: column;

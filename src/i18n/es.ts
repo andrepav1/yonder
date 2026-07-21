@@ -52,7 +52,6 @@ export const es: Messages = {
       `Globo centrado en ${startCity}, mostrando tu recorrido de ciudades. Arrastra para girar.`,
     zoomIn: 'Acercar',
     zoomOut: 'Alejar',
-    exploreHint: 'Toca una ciudad para ver su nombre.',
     reveal: {
       hint: 'Toca un punto para ver una ciudad que podrías haber alcanzado.',
       ideal: 'Más cerca del objetivo',
