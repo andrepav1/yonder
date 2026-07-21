@@ -12,9 +12,10 @@ changed. The "why" matters as much as the "what".
   ones appearing as you zoom in.
 - **Zoom by scaling the orthographic projection.** A `zoom` factor multiplies
   `projection.scale` (pinch / wheel / `+`−` buttons, clamped to `[minZoom, maxZoom]`).
-  Orthographic zoom just magnifies, so a zoomed globe overflows the square board; map
-  geometry is **clipped to the board** with a `clipPath` (labels ride above the clip so
-  they can still spill a little past the edge). Drag sensitivity divides by zoom so a
+  Orthographic zoom just magnifies, so a zoomed globe overflows the board; map geometry
+  is **clipped to the board disc** with a *circular* `clipPath` — so the magnified globe
+  stays round instead of squaring off into the board corners (labels ride above the clip
+  so they can still spill a little past the edge). Drag sensitivity divides by zoom so a
   pixel spins less when magnified.
 - **Progressive reveal is a pure, rules-driven function of zoom.** `exploreMinPopulation
   (zoom, rules)` (in `lib/explore.ts`, unit-tested) log-interpolates a population floor

@@ -19,8 +19,8 @@
 // Purely presentational: all geometry comes from props. The projection + d3-geo
 // path strings are recomputed from the current rotation + zoom; nothing here
 // mutates game state. Points on the far hemisphere are hidden via a great-circle
-// test; when zoomed in, the map is clipped to the board and off-viewport city
-// dots are culled.
+// test; when zoomed in, the map is clipped to the board *disc* (so the globe
+// stays round, never squared) and off-viewport city dots are culled.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { geoOrthographic, geoPath, geoGraticule10, geoDistance } from 'd3-geo'
@@ -50,9 +50,10 @@ const RADIUS = SIZE / 2 - MARGIN
 const TAP_HIT_RADIUS = 12
 // How far a pointer may travel (client px) and still count as a tap, not a drag.
 const TAP_MOVE_TOLERANCE = 6
-// Clip map geometry to the board (plus a margin so labels can still spill a
-// little past the edge) — so a zoomed-in globe doesn't paint outside the board.
-const CLIP_MARGIN = 26
+// Clip map geometry to the board *disc* (plus a small margin so the edge stroke
+// isn't shaved) — so a zoomed-in globe stays round instead of filling out to the
+// square corners of the board. Labels ride outside this clip and can still spill.
+const CLIP_MARGIN = 4
 // Drop explore-city dots that project beyond the board by more than this pad.
 const CULL_PAD = 8
 // Multiplier per press of the +/− zoom buttons.
@@ -453,12 +454,7 @@ export function Globe({ start, guesses, rules, unit, cities, reveal, finished }:
         >
           <defs>
             <clipPath id="globe-clip">
-              <rect
-                x={-CLIP_MARGIN}
-                y={-CLIP_MARGIN}
-                width={SIZE + 2 * CLIP_MARGIN}
-                height={SIZE + 2 * CLIP_MARGIN}
-              />
+              <circle cx={SIZE / 2} cy={SIZE / 2} r={RADIUS + CLIP_MARGIN} />
             </clipPath>
           </defs>
 
