@@ -73,9 +73,9 @@ describe('search', () => {
 })
 
 describe('cityLabel disambiguation', () => {
-  it('bare name when unique', () => {
+  it('always appends the country, even for a unique name', () => {
     const paris = allCities().find((c) => c.name === 'Paris' && c.country === 'France')!
-    expect(cityLabel(paris)).toBe('Paris')
+    expect(cityLabel(paris)).toBe('Paris, France')
   })
 
   it('appends country for a repeated name', () => {

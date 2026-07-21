@@ -38,7 +38,6 @@ let _cities: City[] | null = null
  * "Londres" or "ロンドン" and reach the same city whatever the UI language.
  */
 let _terms: string[][] | null = null
-let _countByName: Map<string, number> | null = null
 let _countByNameCountry: Map<string, number> | null = null
 
 function ensureLoaded(): void {
@@ -65,18 +64,14 @@ function ensureLoaded(): void {
     }
     return [...set]
   })
-  const countByName = new Map<string, number>()
   const countByNameCountry = new Map<string, number>()
   for (let i = 0; i < cities.length; i++) {
-    const nf = foldText(cities[i]!.name)
     const c = cities[i]!
-    countByName.set(nf, (countByName.get(nf) ?? 0) + 1)
-    const nc = `${nf}|${c.country}`
+    const nc = `${foldText(c.name)}|${c.country}`
     countByNameCountry.set(nc, (countByNameCountry.get(nc) ?? 0) + 1)
   }
   _cities = cities
   _terms = terms
-  _countByName = countByName
   _countByNameCountry = countByNameCountry
 }
 
@@ -96,17 +91,17 @@ export function localizedName(city: City, locale?: Locale): string {
 }
 
 /**
- * A human-readable, disambiguated label for a city, in the active locale. Bare
- * (localized) name when unique; `"Name, Country"` when the name repeats;
- * `"Name, Region, Country"` when even that repeats. Uniqueness is decided on the
- * canonical name (a stable, locale-independent key); the country/region
- * qualifiers stay in their dataset (English) form since those aren't translated.
+ * A human-readable, disambiguated label for a city, in the active locale. Always
+ * carries the country: `"Name, Country"`, promoted to `"Name, Region, Country"`
+ * when the name repeats within that same country. The country/region qualifiers
+ * stay in their dataset (English) form since those aren't translated; the
+ * name/country pairing is keyed on the canonical name (a stable, locale-
+ * independent key).
  */
 export function cityLabel(city: City, locale?: Locale): string {
   ensureLoaded()
   const display = localizedName(city, locale)
   const nf = foldText(city.name)
-  if (_countByName!.get(nf) === 1) return display
   if (_countByNameCountry!.get(`${nf}|${city.country}`) === 1) {
     return `${display}, ${city.country}`
   }
