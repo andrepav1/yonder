@@ -28,6 +28,7 @@ components.
 | `--fg` / `--fg-muted` | `#2a2320` / `#7c6f63` | `#f0e7da` / `#a99b8b` | text                      |
 | `--accent`            | `#c2410c`             | `#e67635`             | brand, CTA, target figure |
 | `--win`               | `#2f7d57`             | `#5fb98a`             | win row + headline        |
+| `--reveal`            | `#6a53c4`             | `#a996f2`             | end-of-round answer cities |
 
 **Hot → cold ramp** (`--temp-4` … `--temp-0`): ember → amber → gold → dusty teal →
 deep blue. `4` = win, in the band (hottest); `0` = far from the target or busted
@@ -36,10 +37,13 @@ remains — so the guess-row swatch, the **globe guess pins**, and the share squ
 always agree.
 
 **Globe** (`--globe-ocean/-land/-graticule/-edge`): a muted, low-contrast Earth so the
-journey line and the ramp-coloured pins carry the eye — pale slate ocean + warm sand
 land in light, deep ink ocean + warm umber land in dark. The **journey** linking the
-start through each guess is a soft `--fg` line; the start city is an accent halo + dot
-with a Calistoga label; on finish the closest single-hop cities are pinned.
+start through each guess is a soft `--fg` line; the start city is an accent halo + dot;
+guess pins are small ramp-coloured dots. On finish the globe reveals the cities the
+player could have guessed, colour-coded so they never read as guesses: `--reveal`
+(violet) for the ideal single-hop wins ("would have won"), `--win` (green) for the
+completions from where the player stopped. Globe labels use `--font-body` at a light
+weight (not the display serif), centred above the dot.
 
 ## Accessibility
 
