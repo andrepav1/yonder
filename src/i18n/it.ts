@@ -15,6 +15,30 @@ export const it: Messages = {
     language: 'Lingua',
   },
 
+  modes: {
+    daily: 'Giornaliero',
+    practice: 'Allenamento',
+    practiceLabel: 'Modalità allenamento',
+    practiceEyebrow: 'La tua partenza',
+    newPuzzle: 'Nuova sfida',
+    practiceNote: 'Le partite di allenamento non influenzano la tua serie giornaliera.',
+  },
+
+  menu: {
+    label: 'Menu',
+    about: 'Informazioni',
+  },
+
+  about: {
+    tagline: 'Un gioco di geografia quotidiano.',
+    intro:
+      'Ogni giorno (UTC) tutti ricevono lo stesso puzzle: una città di partenza e una distanza obiettivo. Costruisci un percorso nominando città — ogni tappa aggiunge la distanza dall’ultima città a un totale progressivo.',
+    rules:
+      'Raggiungi l’obiettivo senza superarlo, nel minor numero di tappe. Hai 6 tentativi. Passa alla modalità Allenamento per puzzle casuali illimitati che non influiscono sulla tua serie.',
+    credits:
+      'Dati delle città © GeoNames (CC BY 4.0). App web statica, utilizzabile offline.',
+  },
+
   prompt: {
     eyebrow: 'Partenza di oggi',
     targetLabel: 'Raggiungi un totale di',

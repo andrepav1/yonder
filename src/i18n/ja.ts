@@ -15,6 +15,30 @@ export const ja: Messages = {
     language: '言語',
   },
 
+  modes: {
+    daily: 'デイリー',
+    practice: '練習',
+    practiceLabel: '練習モード',
+    practiceEyebrow: '出発地',
+    newPuzzle: '新しい問題',
+    practiceNote: '練習の問題はデイリーの連続記録に影響しません。',
+  },
+
+  menu: {
+    label: 'メニュー',
+    about: 'このゲームについて',
+  },
+
+  about: {
+    tagline: '毎日の地理あてゲーム。',
+    intro:
+      '毎日（UTC）、全員が同じ問題に挑戦します。出発都市と目標距離が一つずつ。都市を挙げて旅を作り、各区間で前の都市からの距離を合計に足していきます。',
+    rules:
+      '目標を超えないように、できるだけ少ない区間で到達しましょう。挑戦は6回。練習モードでは、連続記録に影響しないランダムな問題を無制限に遊べます。',
+    credits:
+      '都市データ © GeoNames（CC BY 4.0）。静的でオフラインでも動作するWebアプリです。',
+  },
+
   prompt: {
     eyebrow: '今日の出発地',
     targetLabel: '合計で到達',

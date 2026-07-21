@@ -16,6 +16,30 @@ export const en: Messages = {
     language: 'Language',
   },
 
+  modes: {
+    daily: 'Daily',
+    practice: 'Practice',
+    practiceLabel: 'Practice mode',
+    practiceEyebrow: 'Your departure',
+    newPuzzle: 'New puzzle',
+    practiceNote: 'Practice puzzles don’t affect your daily streak.',
+  },
+
+  menu: {
+    label: 'Menu',
+    about: 'About',
+  },
+
+  about: {
+    tagline: 'A daily geography guessing game.',
+    intro:
+      'Every UTC day, everyone gets the same puzzle: one start city and one target distance. Build a journey by naming cities — each hop adds the distance from your last city to a running total.',
+    rules:
+      'Reach the target without overshooting, in as few hops as possible. You get 6 guesses. Switch to Practice for unlimited random puzzles that don’t affect your streak.',
+    credits:
+      'City data © GeoNames (CC BY 4.0). Built as a static, offline-friendly web app.',
+  },
+
   prompt: {
     eyebrow: 'Today’s departure',
     targetLabel: 'Reach a total of',

@@ -15,6 +15,29 @@ export const zh: Messages = {
     language: '语言',
   },
 
+  modes: {
+    daily: '每日',
+    practice: '练习',
+    practiceLabel: '练习模式',
+    practiceEyebrow: '你的出发地',
+    newPuzzle: '换一题',
+    practiceNote: '练习题不计入你的每日连胜。',
+  },
+
+  menu: {
+    label: '菜单',
+    about: '关于',
+  },
+
+  about: {
+    tagline: '每日地理猜谜游戏。',
+    intro:
+      '每天（UTC）所有人都会拿到同一道题：一个出发城市和一个目标距离。通过说出城市来构建旅程——每一跳都会把上一个城市到新城市的距离加入累计总和。',
+    rules:
+      '在不超过目标的前提下，用尽量少的跳数到达目标。你有 6 次机会。切换到练习模式可无限畅玩不计入连胜的随机题目。',
+    credits: '城市数据 © GeoNames（CC BY 4.0）。这是一个静态、可离线使用的网页应用。',
+  },
+
   prompt: {
     eyebrow: '今日出发地',
     targetLabel: '累计到达',

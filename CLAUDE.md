@@ -11,7 +11,8 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 > **Status:** v1 is fully built — the pure core (distance/bearing, dataset +
 > autocomplete, seeded generator, scoring, engine, share, stats) **and** the React
 > UI (an interactive **globe** board, guess loop, feedback, result, stats,
-> onboarding, **i18n in 9 languages** — including **localized city names** you can
+> onboarding, a **daily** + a **practice** (unlimited free-play) mode behind a
+> header menu, **i18n in 9 languages** — including **localized city names** you can
 > guess in any language). All green under Vitest + ESLint +
 > typecheck, and verified end-to-end in a real browser. Deploys static to Vercel. See
 > `DESIGN.md` for the visual system.
@@ -79,18 +80,28 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 - `src/data/cities.json` — **committed** compact dataset (array-of-arrays; see
   `fields`). Built by `scripts/build-cities.mjs`. Each tuple's optional 8th element is
   the `{ locale: name }` translations map (present only for cities that have any).
-- `src/modes/daily.ts` — the single `GameMode` descriptor (`generate`/`apply`/
-  `score`/`share`) + a `modes` registry. Adding a mode = adding a descriptor.
+- `src/modes/daily.ts` — the `GameMode` descriptors (`generate(seed)`/`apply`/
+  `score`/`share`) built by a shared `makeMode` factory + a `modes` registry.
+  Ships **two** modes: `dailyMode` (seed = UTC date, streak-tracked) and
+  `practiceMode` (seed = a random token, unlimited free play). `generate` is
+  deterministic in its seed; the practice randomness lives at the App boundary,
+  never in `lib/*`. Adding a mode = adding a descriptor.
 - `src/store/` — persistence behind a `KeyValueStore` seam (`storage.ts`, memory +
   localStorage adapters): `statsStore.ts` (pure `updateStats` streak logic + the
   `StatsStore` wrapper: stats, streaks, guess distribution, per-day round save +
   idempotent `recordResult`) and `prefs.ts` (unit + language + onboarding flag).
-- `src/App.tsx` — orchestrates the day: generate puzzle, load/restore the saved
-  round (daily lock), handle guesses, record the result, share.
+- `src/App.tsx` — orchestrates play: pick the active mode (daily vs practice),
+  generate the puzzle, load/restore the saved daily round (daily lock), handle
+  guesses, record the result, share. Holds both a persisted **daily** round and
+  an ephemeral in-memory **practice** round; only daily writes to the store or
+  the streak/stats, and practice never does. `makePracticeSeed()` (the sole
+  impure boundary) mints a fresh random seed per practice puzzle.
 - `src/ui/*` — React shell: `Globe` (the interactive board — see below), `GuessInput`
   (fuzzy typeahead), `GuessRow` (leg, running total, remaining, bearing, hot/cold), `ResultCard`
-  (score + share; the answer _reveal_ now lives on the globe, not a text list),
-  `HowToPlay`, `StatsPanel`, `Modal` (bottom-sheet), `LanguageSwitcher` (header EN/FR/IT
+  (score + share, or a **New puzzle** button in practice; the answer _reveal_ lives
+  on the globe, not a text list), `HowToPlay`, `StatsPanel`, `About` (what the game
+  is + credits), `Modal` (bottom-sheet), `Menu` (header overflow popover: mode
+  switch + How to play / Statistics / About), `LanguageSwitcher` (header language
   picker — a native `<select>` over a globe icon), `icons.tsx` (inline SVG — no
   emoji chrome). Every component pulls copy from `useI18n().t` — no hard-coded strings.
 - `src/ui/Globe.tsx` — the main guessing surface: a drag-to-spin **orthographic

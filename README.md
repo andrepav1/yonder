@@ -10,7 +10,8 @@ win. You get **6 guesses**, and fewer hops is a better score.
 > **Project status:** v1 is complete — the pure, tested game core (distance/bearing,
 > dataset + fuzzy autocomplete, deterministic generator, scoring, engine, share, stats)
 > **and** the React UI (an interactive 3D **globe** as the board, guess loop, hot/cold
-> feedback, result, stats, onboarding, light + dark, **nine languages**).
+> feedback, result, stats, onboarding, light + dark, **nine languages**), with a
+> **daily** puzzle and an unlimited **practice** mode behind a header menu.
 > Fully static; deploys to Vercel. `npm run dev` to play.
 
 ## How it works
@@ -60,6 +61,23 @@ On a win, a bust, or after 6 guesses, the globe pins the closest **single-hop ci
 — the ones that would have won it in one straight hop — and the result card shows how
 many hops you took and where your total landed. A Wordle-style shareable summary
 (hot/cold squares + leg arrows, a reach-% line, no city names) copies to the clipboard.
+
+### Practice mode
+
+Tap the **menu** in the header (☰) to switch between **Daily** and **Practice**.
+Practice serves an **endless stream of random puzzles** — same rules as the daily
+(start city, target distance, 6 hops, don't overshoot), but a brand-new one every
+time, so you can learn the mechanics or just keep playing after the daily is done.
+Hit **New puzzle** any time to reshuffle. Practice rounds are **off the record** —
+they never touch your daily streak, win %, or guess distribution, and there's no
+share (the puzzle is yours alone, not the common daily one). The same menu also
+holds **How to play**, **Statistics**, and **About**.
+
+Under the hood this is the game's mode seam doing its job: the daily and practice
+modes are two entries in a `modes` registry over the same pure engine, differing
+only in their seed — the UTC date for the daily (same for everyone), a fresh random
+token for each practice puzzle. The generator stays pure and deterministic in that
+seed; the randomness lives at the app boundary.
 
 ### Languages
 
@@ -119,12 +137,12 @@ src/
     en.ts fr.ts …     # one React-free, serializable catalog per language
     index.ts          # catalogs, LOCALES, getMessages, detectLocale
     context.tsx       # I18nProvider + useI18n()
-  modes/daily.ts      # the one GameMode descriptor (+ registry)
+  modes/daily.ts      # GameMode descriptors (daily + practice) over a modes registry
   store/              # persistence behind a KeyValueStore seam
     storage.ts        # memory + localStorage adapters
     statsStore.ts     # stats, streaks, distribution, daily round save
     prefs.ts          # unit + language + onboarding flag
-  ui/                 # React shell (Globe, GuessInput, GuessRow, ResultCard, LanguageSwitcher, …)
+  ui/                 # React shell (Globe, GuessInput, GuessRow, ResultCard, Menu, About, LanguageSwitcher, …)
   styles/globals.css  # the "Terra" design system (see DESIGN.md)
   App.tsx  main.tsx   # app shell + entry
   data/cities.json    # committed compact dataset (built artifact)

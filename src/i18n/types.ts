@@ -33,6 +33,39 @@ export interface Messages {
     language: string
   }
 
+  modes: {
+    /** Menu label / name for the shared daily puzzle. */
+    daily: string
+    /** Menu label / name for free-play/practice. */
+    practice: string
+    /** Header subtitle shown while in practice mode. */
+    practiceLabel: string
+    /** Prompt eyebrow shown while in practice mode (the daily one is date-specific). */
+    practiceEyebrow: string
+    /** Button that generates a fresh practice puzzle. */
+    newPuzzle: string
+    /** Reassurance that practice rounds are off the record. */
+    practiceNote: string
+  }
+
+  menu: {
+    /** aria-label for the header menu trigger. */
+    label: string
+    /** "About" — menu item + About dialog title. */
+    about: string
+  }
+
+  about: {
+    /** One-line description under the title. */
+    tagline: string
+    /** What the game is. */
+    intro: string
+    /** How a round works, briefly. */
+    rules: string
+    /** Data + build credits line. */
+    credits: string
+  }
+
   prompt: {
     eyebrow: string
     targetLabel: string
