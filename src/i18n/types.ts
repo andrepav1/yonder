@@ -77,6 +77,12 @@ export interface Messages {
   globe: {
     /** aria-label for the interactive globe. */
     label: (startCity: string) => string
+    /** aria-label for the zoom-in control. */
+    zoomIn: string
+    /** aria-label for the zoom-out control. */
+    zoomOut: string
+    /** Caption shown once zoomed in, inviting the player to tap a city. */
+    exploreHint: string
     /** End-of-round "explore the map" reveal copy. */
     reveal: {
       /** Caption prompting the player to tap the revealed cities. */

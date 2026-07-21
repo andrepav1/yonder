@@ -237,6 +237,7 @@ export default function App() {
           guesses={round.guesses}
           rules={rules}
           unit={unit}
+          cities={allCities()}
           reveal={reveal}
           finished={finished}
         />

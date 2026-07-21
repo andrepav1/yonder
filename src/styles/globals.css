@@ -302,6 +302,59 @@ button {
 .globe__svg:active {
   cursor: grabbing;
 }
+/* Holds the globe + its overlaid zoom controls. */
+.globe__stage {
+  position: relative;
+  width: 100%;
+  max-width: 20rem;
+  display: flex;
+  justify-content: center;
+}
+.globe__zoom {
+  position: absolute;
+  right: 0.1rem;
+  bottom: 0.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.globe__zoom-btn {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  font-size: 1.15rem;
+  line-height: 1;
+  border-radius: 0.55rem;
+  border: 1px solid var(--globe-edge);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  color: var(--fg);
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+.globe__zoom-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+/* Explorable cities: quiet dots, subordinate to the game markers, that grow +
+   gain a halo when engaged. Population sets which show; zoom sets how many. */
+.globe__city {
+  fill: var(--fg-muted);
+  opacity: 0.5;
+  cursor: pointer;
+  transition: r 120ms ease;
+}
+.globe__city--active {
+  fill: var(--fg);
+  opacity: 1;
+  stroke: var(--surface);
+  stroke-width: 1;
+}
+.globe__city-halo {
+  fill: color-mix(in srgb, var(--fg-muted) 26%, transparent);
+  pointer-events: none;
+}
 .globe__sphere {
   fill: var(--globe-ocean);
 }

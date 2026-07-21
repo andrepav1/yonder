@@ -47,6 +47,12 @@ as the list below it, and the globe **spins to re-centre on your latest guess** 
 to override); pins on the far side of the Earth are hidden until you rotate them into
 view.
 
+You can also **zoom** the globe — pinch, scroll, or the `+`/`−` buttons — to explore.
+Real cities appear as quiet dots: the **biggest cities show first**, and the further
+you zoom in, the more (progressively smaller) cities appear around you. **Tap any city**
+to read its name in your own language. It's a free-roam layer for learning the map;
+it never affects the puzzle.
+
 ### Per-guess feedback
 
 Below the globe, each guess shows the **leg** you just added (`+480 km`), the new

@@ -64,6 +64,12 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   player actually stopped** (the personal near-miss layer; empty once the target is
   reached or overshot). Layer 1 (ideal single-hop wins) is the precomputed
   `puzzle.exploreAnswers`; this is Layer 2, which depends on the played round.
+- `src/lib/explore.ts` — **pure** progressive-reveal helper: `exploreMinPopulation(zoom,
+  rules)` gives the population floor at a given map zoom, log-interpolating from
+  `rules.explore.zoomedOutMinPopulation` (only the biggest cities, zoomed out) down to
+  `rules.dataset.minPopulation` (zoomed in). The Globe uses it to decide *which* real
+  cities to draw as its explorable dot layer; the projection-dependent culling stays in
+  the component.
 - `src/lib/scoring.ts` — **pure**: `evaluateLeg` (leg / running total / remaining /
   bearing / over / win — a guess from a given previous point onto the running total),
   `scoreRound` (golf: guess count + final total), and `tempLevel` (the shared hot→cold
@@ -105,7 +111,8 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   the streak/stats, and practice never does. `makePracticeSeed()` (the sole
   impure boundary) mints a fresh random seed per practice puzzle. On finish it
   builds the globe **reveal** — `exploreAnswers` (Layer 1) plus `findCompletions`
-  from the stopping point (Layer 2) — and hands it to `Globe`.
+  from the stopping point (Layer 2) — and hands it to `Globe`, along with `allCities()`
+  as the globe's explorable (zoom-to-reveal) city universe.
 - `src/ui/*` — React shell: `Globe` (the interactive board — see below), `GuessInput`
   (fuzzy typeahead), `GuessRow` (leg, running total, remaining, bearing, hot/cold), `ResultCard`
   (score + share, or a **New puzzle** button in practice; the answer _reveal_ lives
@@ -127,8 +134,16 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   a lighter name label, a distance/kind caption below the globe, and, for a completion,
   the dashed **missed leg** from where the player stopped. Spins to face the
   start on load and smoothly **re-centres on the latest guess** (rAF-animated; drag
-  interrupts). Far-hemisphere points are hidden via a `geoDistance` great-circle test. No
-  runtime network; land is bundled.
+  interrupts). Far-hemisphere points are hidden via a `geoDistance` great-circle test.
+  **Zoom** (pinch / wheel / `+`−` buttons) magnifies the globe via `projection.scale`
+  and draws an **explorable city layer** from the `cities` prop: quiet dots for real
+  cities, filtered by `exploreMinPopulation(zoom, rules)` (biggest first, more as you
+  zoom in) then culled to the near hemisphere + viewport and capped at
+  `rules.explore.maxDots`; tap one to read its name (caption + label). Excludes the
+  start / guessed / reveal cities (they carry their own markers). Zoomed-in map geometry
+  is clipped to the board (a `clipPath`); labels ride above the clip so they can still
+  spill past the edge. Presentational as ever — geometry from props, no runtime network;
+  land is bundled.
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it

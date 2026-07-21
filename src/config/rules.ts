@@ -65,6 +65,21 @@ export interface GameRules {
     /** Default display unit. Players can toggle at runtime. */
     default: Unit
   }
+  explore: {
+    /** Minimum zoom factor (1 = the full globe fits the board). */
+    minZoom: number
+    /** Maximum zoom factor (the board magnifies the globe up to this). */
+    maxZoom: number
+    /**
+     * Population floor for the *fully zoomed-out* globe — only cities at/above
+     * this show at `minZoom`. As zoom climbs toward `maxZoom` the floor eases
+     * down (log-interpolated) to `dataset.minPopulation`, so smaller cities
+     * appear progressively. Biggest cities are always shown first.
+     */
+    zoomedOutMinPopulation: number
+    /** Hard cap on how many explorable city dots render at once (biggest kept). */
+    maxDots: number
+  }
   reset: {
     /** Timezone whose date string seeds the daily puzzle. */
     timezone: 'UTC'
@@ -105,6 +120,15 @@ export const defaultRules: GameRules = {
   },
   units: {
     default: 'km',
+  },
+  explore: {
+    minZoom: 1,
+    maxZoom: 6,
+    // ~5M keeps the default (zoomed-out) board to a handful of megacities;
+    // zooming in eases the floor down to the 100k dataset minimum.
+    zoomedOutMinPopulation: 5_000_000,
+    // Cap keeps the SVG light; on-screen culling means this is rarely hit.
+    maxDots: 320,
   },
   reset: {
     timezone: 'UTC',
