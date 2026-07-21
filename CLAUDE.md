@@ -141,9 +141,13 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   zoom in) then culled to the near hemisphere + viewport and capped at
   `rules.explore.maxDots`; tap one to read its name (caption + label). Excludes the
   start / guessed / reveal cities (they carry their own markers). Zooming simply
-  **grows the globe past the board** (the SVG overflows; the whole `.globe` sits at a
-  negative `z-index` so the enlarged sphere slides *beneath* the surrounding — often
-  translucent — UI rather than covering it). Presentational as ever — geometry from
+  **grows the globe past the board** (the SVG overflows). The `.globe` stays a plain
+  in-flow block in the **normal document layer** (`touch-action: none`, no `z-index` of
+  its own — a negative `z-index` once promoted it into a compositing layer where the
+  browser ignored `touch-action`, so pinch zoomed the page and drag went flaky); the
+  enlarged sphere slides *beneath* the surrounding — often translucent — UI purely by
+  paint order (panels after it paint on top; `.prompt` above it is lifted with a
+  `z-index`). Presentational as ever — geometry from
   props, no runtime network; land is bundled.
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
