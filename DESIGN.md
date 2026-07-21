@@ -24,11 +24,18 @@ components.
 | Token                 | Light                 | Dark                  | Use                       |
 | --------------------- | --------------------- | --------------------- | ------------------------- |
 | `--bg`                | `#fbf6ee`             | `#17130f`             | page                      |
-| `--surface`           | `#fffdf8`             | `#221c16`             | cards                     |
+| `--surface`           | `#fffdf8`             | `#221c16`             | cards, form, buttons      |
+| `--panel`             | `--surface` @ 88%     | `--surface` @ 88%     | info-card fills (globe show-through) |
 | `--fg` / `--fg-muted` | `#2a2320` / `#7c6f63` | `#f0e7da` / `#a99b8b` | text                      |
 | `--accent`            | `#c2410c`             | `#e67635`             | brand, CTA, target figure |
 | `--win`               | `#2f7d57`             | `#5fb98a`             | win row + headline        |
 | `--reveal`            | `#6a53c4`             | `#a996f2`             | end-of-round answer cities |
+
+**Translucent info panels** (`--panel`, `--panel-win`): the prompt card, guess rows,
+and result card fill with `--surface` at 88% opacity so a zoomed globe — which grows
+past its box and slides *beneath* these cards by paint order — shows faintly through
+them. The guess input and every button keep the fully opaque `--surface`/`--accent`
+so controls stay crisp.
 
 **Hot → cold ramp** (`--temp-4` … `--temp-0`): ember → amber → gold → dusty teal →
 deep blue. `4` = win, in the band (hottest); `0` = far from the target or busted

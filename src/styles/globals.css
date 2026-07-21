@@ -62,6 +62,13 @@
   --ring: 0 0 0 3px rgba(194, 65, 12, 0.32);
 
   --maxw: 30rem; /* ~480px mobile-first column */
+
+  /* Slightly translucent panel fills. The zoomed globe grows past its box and
+     slides *beneath* the surrounding cards (paint order); a touch of
+     transparency lets it show through them while text stays readable. Only the
+     info panels use these — the guess form + buttons stay fully opaque. */
+  --panel: color-mix(in srgb, var(--surface) 88%, transparent);
+  --panel-win: color-mix(in srgb, var(--win-weak) 88%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -217,7 +224,7 @@ button {
 /* ---------- Prompt card ---------- */
 
 .prompt {
-  background: var(--surface);
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: 1.25rem 1.25rem 1.35rem;
@@ -621,7 +628,7 @@ button {
   align-items: center;
   gap: 0.75rem;
   padding: 0.7rem 0.85rem;
-  background: var(--surface);
+  background: var(--panel);
   border: 1px solid var(--border);
   border-left: 4px solid var(--temp);
   border-radius: var(--r-md);
@@ -631,7 +638,7 @@ button {
 .grow--win {
   border-color: var(--win);
   border-left-color: var(--win);
-  background: var(--win-weak);
+  background: var(--panel-win);
 }
 .grow--over {
   border-color: var(--danger);
@@ -693,7 +700,7 @@ button {
 /* ---------- Result card ---------- */
 
 .result {
-  background: var(--surface);
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: 1.25rem;
