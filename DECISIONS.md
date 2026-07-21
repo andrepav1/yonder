@@ -4,6 +4,36 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
+## 2026-07-21 — Zoom + a progressive, explorable city layer
+
+- **Context.** The globe showed only puzzle-relevant markers (start, journey, guesses,
+  end-of-round reveal). Players wanted to **explore the map** — zoom in and click the
+  cities scattered around the globe — with the biggest cities showing first and smaller
+  ones appearing as you zoom in.
+- **Zoom by scaling the orthographic projection.** A `zoom` factor multiplies
+  `projection.scale` (pinch / wheel / `+`−` buttons, clamped to `[minZoom, maxZoom]`).
+  Orthographic zoom just magnifies, so a zoomed globe overflows the square board; map
+  geometry is **clipped to the board** with a `clipPath` (labels ride above the clip so
+  they can still spill a little past the edge). Drag sensitivity divides by zoom so a
+  pixel spins less when magnified.
+- **Progressive reveal is a pure, rules-driven function of zoom.** `exploreMinPopulation
+  (zoom, rules)` (in `lib/explore.ts`, unit-tested) log-interpolates a population floor
+  from `explore.zoomedOutMinPopulation` (only megacities, zoomed out) down to
+  `dataset.minPopulation` (zoomed in). "Biggest first" is free — the dataset is already
+  population-sorted, so the floor **is** the reveal order. The Globe filters the full
+  `allCities()` universe by that floor, then does the projection-dependent work
+  (hemisphere + viewport culling, an `explore.maxDots` cap keeping the biggest) itself —
+  keeping the pure/impure seam the codebase is built around.
+- **Explore is read-only and off to the side of the puzzle.** Tapping a city shows its
+  **name only** (no distance) — no game state changes, and no distance-from-start is
+  leaked that could shortcut the guessing. The dots exclude the start / guessed / reveal
+  cities (they have their own, louder markers) and are styled as the quietest marks on
+  the board. Considered but rejected: **click-to-guess** (a bigger change to the guess
+  flow and the engine's duplicate/overshoot handling) — deferred as possible follow-up.
+- **Why keep the dots always visible, even during play.** A zoomed-out board still
+  shows a handful of megacity dots, advertising the feature; they're muted enough not to
+  compete with the guess markers, and the zoom hint only appears once the player zooms.
+
 ## 2026-07-21 — Always show the country in a city label
 
 - **Context.** `cityLabel` disambiguated lazily: a bare name when unique (most cities),

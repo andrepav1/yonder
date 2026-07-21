@@ -43,7 +43,11 @@ guess pins are small ramp-coloured dots. On finish the globe reveals the cities 
 player could have guessed, colour-coded so they never read as guesses: `--reveal`
 (violet) for the ideal single-hop wins ("would have won"), `--win` (green) for the
 completions from where the player stopped. Globe labels use `--font-body` at a light
-weight (not the display serif), centred above the dot.
+weight (not the display serif), centred above the dot. **Explorable city dots** (the
+zoom-to-reveal layer) are the quietest marks on the board — tiny `--fg-muted` dots at
+~50% opacity, deliberately subordinate to every game marker; the engaged one lifts to
+full `--fg` with a soft muted halo and its name label. Zoom controls (`+`/`−`) sit as a
+translucent, backdrop-blurred pair in the globe's lower-right corner.
 
 ## Accessibility
 

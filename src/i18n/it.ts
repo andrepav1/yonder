@@ -50,6 +50,9 @@ export const it: Messages = {
   globe: {
     label: (startCity) =>
       `Globo centrato su ${startCity}, che mostra il tuo percorso di città. Trascina per ruotare.`,
+    zoomIn: 'Ingrandisci',
+    zoomOut: 'Riduci',
+    exploreHint: 'Tocca una città per vederne il nome.',
     reveal: {
       hint: 'Tocca un punto per vedere una città che avresti potuto raggiungere.',
       ideal: 'Più vicina al bersaglio',

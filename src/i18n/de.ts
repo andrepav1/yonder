@@ -50,6 +50,9 @@ export const de: Messages = {
   globe: {
     label: (startCity) =>
       `Globus zentriert auf ${startCity}, zeigt deine Städtereise. Zum Drehen ziehen.`,
+    zoomIn: 'Vergrößern',
+    zoomOut: 'Verkleinern',
+    exploreHint: 'Tippe auf eine Stadt, um ihren Namen zu sehen.',
     reveal: {
       hint: 'Tippe auf einen Punkt, um eine erreichbare Stadt zu sehen.',
       ideal: 'Am nächsten zum Ziel',
