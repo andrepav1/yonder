@@ -46,6 +46,7 @@
   --globe-graticule: #bacdd3;
   --globe-edge: #a7b9c1;
   --globe-coast: #9aa891;
+  --globe-ice: #eef3f6; /* Greenland/Antarctica ice sheets (over the bands) */
   /* Hypsometric ramp — 5 ocean-depth blues (shelf→deep) then 6 land tans/browns
      (lowland→peak). Order + count mirror THRESHOLDS in scripts/build-elevation.mjs;
      each band paints the "value ≥ threshold" region, deepest first. */
@@ -117,6 +118,7 @@
     --globe-graticule: #25343b;
     --globe-edge: #35464d;
     --globe-coast: #46586044;
+    --globe-ice: #93a7b0; /* muted cool grey so ice reads without glaring */
     --hypso-0: #142833;
     --hypso-1: #1b3540;
     --hypso-2: #21414d;
@@ -465,6 +467,14 @@ button {
 .globe__hypso--9 {
   fill: var(--hypso-9);
   stroke: var(--hypso-9);
+}
+/* Ice sheets (Greenland + Antarctica) over the bands, so they read as ice caps
+   rather than brown highlands. A hairline stroke of the same colour closes the
+   sub-pixel seams quantization can leave. */
+.globe__ice {
+  fill: var(--globe-ice);
+  stroke: var(--globe-ice);
+  stroke-width: 0.35;
 }
 /* Crisp coastline over the bands (the land outline, stroke only). */
 .globe__coast {

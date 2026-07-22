@@ -4,6 +4,30 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
+## 2026-07-22 — Ice-sheet overlay (Greenland + Antarctica read as ice)
+
+- **Context.** With the new hypsometric relief, Greenland and Antarctica came out
+  brown — as tall as the Andes. That's *true of their surface* (the ETOPO 2022
+  surface grid puts the ice-sheet tops at 2,500–3,200 m), but the height is **ice**,
+  not rock, and a plain elevation ramp can't tell the two apart. It read as
+  mountainous highland, which is misleading.
+- **Options.** (a) Switch to ETOPO's **bedrock** grid — but then the ice vanishes and
+  the interiors show as low basins, arguably *more* misleading (no white cap where
+  everyone expects one). (b) Bundle a **separate** ice/glacier vector (Natural Earth) —
+  works, but a second dataset at a different resolution, provenance, and alignment. (c)
+  Derive the ice from the **same ETOPO source**.
+- **Decision.** Went with **(c).** ETOPO ships both a *surface* and a *bedrock* grid;
+  their difference is ice thickness. Handily, ETOPO models thick ice **only** under
+  Greenland + Antarctica (Iceland, the Alps, the Himalaya all show ~0 at this
+  resolution), so contouring (surface − bedrock) at a small threshold
+  (`ICE_THICKNESS_MIN`, 250 m — the boundary is sharp, so anything 50–500 m works)
+  yields exactly the two ice caps, perfectly aligned with the surface bands, no second
+  dataset. Painted over the relief as a theme-aware `--globe-ice` (near-white in light,
+  muted cool grey in dark so it doesn't glare), under the coastline so coasts stay crisp.
+- **Trade-off.** Small mountain glaciers (Iceland, Patagonia, high Himalaya) aren't
+  painted as ice — ETOPO's bedrock doesn't resolve them, and they're negligible at
+  320 px anyway. The visual problem was the two continental ice sheets; those are fixed.
+
 ## 2026-07-22 — Hypsometric relief globe (brown/blue elevation map)
 
 - **Context.** The globe drew land as one flat brown fill and the ocean as one flat

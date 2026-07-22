@@ -61,6 +61,16 @@ const elevationBands: Feature[] = (() => {
   )
 })()
 
+// The ice-sheet overlay (Greenland + Antarctica), painted over the bands so the
+// two great ice caps read as ice, not the brown highlands their surface height
+// would otherwise colour them.
+const iceSheets: FeatureCollection = feature(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  elevationTopo as any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (elevationTopo as any).objects.ice,
+) as unknown as FeatureCollection
+
 const SIZE = 320 // internal SVG units; CSS scales it to the column width
 const MARGIN = 3
 const RADIUS = SIZE / 2 - MARGIN
@@ -316,6 +326,8 @@ export function Globe({
   // The hypsometric bands, projected at the current rotation/zoom. One path per
   // elevation band; d3-geo clips each to the near hemisphere for us.
   const bandPaths = useMemo(() => elevationBands.map((f) => path(f) ?? ''), [path])
+  // The ice sheets, projected the same way (a single combined path).
+  const icePath = useMemo(() => path(iceSheets) ?? '', [path])
   // The running journey: start → each guessed city, in order.
   const journeyPath = useMemo(() => {
     if (guesses.length === 0) return ''
@@ -520,6 +532,8 @@ export function Globe({
             {bandPaths.map((d, i) =>
               d ? <path key={`hy-${i}`} className={`globe__hypso globe__hypso--${i}`} d={d} /> : null,
             )}
+            {/* Ice caps over the relief, so Greenland/Antarctica read as ice */}
+            {icePath && <path className="globe__ice" d={icePath} />}
             <path className="globe__graticule" d={graticulePath} />
             {/* Crisp coastline over the bands */}
             <path className="globe__coast" d={landPath} />

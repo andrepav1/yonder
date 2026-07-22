@@ -48,7 +48,9 @@ always agree.
 low-contrast Earth rendered as a **hypsometric elevation map** — five ocean-depth
 blues (shelf → deep) grading into six land tans/browns (lowland → snow-capped peak),
 painted deepest-first so they stack into relief; the deepest ocean is the sphere's
-`--globe-ocean` base, and a `--globe-coast` hairline keeps coastlines crisp. Kept
+`--globe-ocean` base, the Greenland/Antarctica ice sheets sit on top as `--globe-ice`
+(so they read as ice caps, not brown highlands), and a `--globe-coast` hairline keeps
+coastlines crisp. Kept
 low-contrast in both themes — pale blues + warm tans in light, deep ink ocean + muted
 umber land in dark — so the accent ring + pins still carry the eye. The **journey**
 linking the
