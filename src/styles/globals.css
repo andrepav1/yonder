@@ -173,9 +173,11 @@ button {
   padding-top: 0.75rem;
   /* Sit above the globe so a zoomed sphere growing upward slides *behind* the
      header (logo + settings) instead of covering it — same lift the `.prompt`
-     below uses. */
+     below uses. A notch higher than `.prompt` (which is also lifted, and comes
+     later in the DOM) so the overflow menu's popover — which drops down over the
+     prompt — paints above it rather than behind it. */
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 .hdr__brand {
   display: flex;
@@ -376,6 +378,10 @@ button {
   opacity: 1;
   stroke: var(--surface);
   stroke-width: 1;
+}
+/* Hint-1 dots: visible but anonymous — no name reveal until hint 2. */
+.globe__city--static {
+  cursor: default;
 }
 .globe__city-halo {
   fill: color-mix(in srgb, var(--fg-muted) 26%, transparent);
@@ -842,6 +848,23 @@ button {
 .menu__item:hover {
   background: var(--surface-2);
 }
+/* An unlocked hint stays listed (with its check) but is no longer actionable. */
+.menu__item:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+.menu__item:disabled:hover {
+  background: transparent;
+}
+/* Small muted heading grouping the hint items. */
+.menu__section {
+  padding: 0.5rem 0.6rem 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
 .menu__item:focus-visible {
   outline: none;
   box-shadow: var(--ring);
@@ -951,6 +974,12 @@ button {
 }
 .howto__step p {
   margin: 0;
+}
+/* A quiet footnote after the steps — the dataset's population floor. */
+.howto__note {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+  color: var(--fg-muted);
 }
 
 /* ---------- Stats ---------- */

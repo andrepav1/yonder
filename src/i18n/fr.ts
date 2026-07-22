@@ -57,6 +57,11 @@ export const fr: Messages = {
       ideal: 'Au plus près de la cible',
       completion: 'Aurait terminé votre parcours',
     },
+    hints: {
+      label: 'Indices',
+      cities: 'Afficher les villes',
+      names: 'Révéler les noms',
+    },
   },
 
   input: {
@@ -108,6 +113,8 @@ export const fr: Messages = {
       'Continuez à sauter pour grimper vers la cible. L’indice chaud / froid se réchauffe à mesure que votre total s’en approche — regardez le nombre « restants » diminuer.',
     step3: (band, guesses) =>
       `Terminez votre total à moins de ${band} sous la cible pour gagner. Dépassez-la et c’est perdu — tout comme épuiser vos ${guesses} essais. Moins de sauts, meilleur score.`,
+    note: (min) =>
+      `Seules les villes de plus de ${min} habitants sont dans le jeu — les plus petites ne sont pas devinables.`,
     cta: 'C’est parti',
   },
 

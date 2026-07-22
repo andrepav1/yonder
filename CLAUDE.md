@@ -103,7 +103,8 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 - `src/store/` — persistence behind a `KeyValueStore` seam (`storage.ts`, memory +
   localStorage adapters): `statsStore.ts` (pure `updateStats` streak logic + the
   `StatsStore` wrapper: stats, streaks, guess distribution, per-day round save +
-  idempotent `recordResult`) and `prefs.ts` (unit + language + onboarding flag).
+  idempotent `recordResult`) and `prefs.ts` (unit + language + onboarding flag +
+  per-day `HintLevel` — how far the in-round hint reveal is unlocked, `load/saveHintLevel`).
 - `src/App.tsx` — orchestrates play: pick the active mode (daily vs practice),
   generate the puzzle, load/restore the saved daily round (daily lock), handle
   guesses, record the result, share. Holds both a persisted **daily** round and
@@ -112,13 +113,17 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   impure boundary) mints a fresh random seed per practice puzzle. On finish it
   builds the globe **reveal** — `exploreAnswers` (Layer 1) plus `findCompletions`
   from the stopping point (Layer 2) — and hands it to `Globe`, along with `allCities()`
-  as the globe's explorable (zoom-to-reveal) city universe.
+  as the globe's explorable (zoom-to-reveal) city universe. Also owns the **hint level**
+  (daily persisted via `load/saveHintLevel`, practice in-memory + reset per puzzle),
+  passing it to `Globe` (to gate the dots) and to the header `Menu` (which unlocks it
+  via an `onHint` callback).
 - `src/ui/*` — React shell: `Globe` (the interactive board — see below), `GuessInput`
   (fuzzy typeahead), `GuessRow` (leg, running total, remaining, bearing, hot/cold), `ResultCard`
   (score + share, or a **New puzzle** button in practice; the answer _reveal_ lives
   on the globe, not a text list), `HowToPlay`, `StatsPanel`, `About` (what the game
   is + credits), `Modal` (bottom-sheet), `Menu` (header overflow popover: mode
-  switch + How to play / Statistics / About), `LanguageSwitcher` (header language
+  switch + in-round **hints** (Show cities / Reveal names, hidden once finished) +
+  How to play / Statistics / About), `LanguageSwitcher` (header language
   picker — a native `<select>` over a globe icon), `icons.tsx` (inline SVG — no
   emoji chrome). Every component pulls copy from `useI18n().t` — no hard-coded strings.
 - `src/ui/Globe.tsx` — the main guessing surface: a drag-to-spin **orthographic
@@ -140,7 +145,13 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   cities, filtered by `exploreMinPopulation(zoom, rules)` (biggest first, more as you
   zoom in) then culled to the near hemisphere + viewport and capped at
   `rules.explore.maxDots`; tap one to read its name (caption + label). Excludes the
-  start / guessed / reveal cities (they carry their own markers). Zooming simply
+  start / guessed / reveal cities (they carry their own markers). This layer is
+  **gated by hints while playing** (`hintLevel` prop): 0 = no dots (the default),
+  ≥1 shows the dots, ≥2 also makes them tappable for names; once `finished` the dots
+  always show and are always tappable regardless. The two hint levels are unlocked from
+  the header overflow **menu** (`Menu.tsx`), not the globe — the Globe just reads
+  `hintLevel` and renders accordingly. Hints are a free assist — purely presentational
+  here; the persisted level lives in `App`. Zooming simply
   **grows the globe past the board** (the SVG overflows). The `.globe` stays a plain
   in-flow block in the **normal document layer** (`touch-action: none`, no `z-index` of
   its own — a negative `z-index` once promoted it into a compositing layer where the

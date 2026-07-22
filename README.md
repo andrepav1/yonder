@@ -37,6 +37,9 @@ win. You get **6 guesses**, and fewer hops is a better score.
   percentage, so it's unit-independent (same in km or miles).
 - **Score (bragging rights):** it's golf — the streak and guess distribution reward
   reaching the band in as **few hops** as possible.
+- **Guessable cities:** only cities with a population **≥ 100,000** are in the game
+  (~6.2k worldwide) — smaller towns can't be guessed. The How-to-play primer says so up
+  front, so players know the field.
 
 ### The globe
 
@@ -48,10 +51,19 @@ to override); pins on the far side of the Earth are hidden until you rotate them
 view.
 
 You can also **zoom** the globe — pinch, scroll, or the `+`/`−` buttons — to explore.
-Real cities appear as quiet dots: the **biggest cities show first**, and the further
-you zoom in, the more (progressively smaller) cities appear around you. **Tap any city**
-to read its name in your own language. It's a free-roam layer for learning the map;
-it never affects the puzzle.
+
+While you're playing, the globe stays clean: **no city dots are shown** until you spend a
+hint (or the round ends). The two hints live in the header **≡ menu**, keeping the board
+uncluttered:
+
+- **Show cities** reveals the explorable dots — the **biggest cities first**, and the
+  further you zoom in, the more (progressively smaller) cities appear around you.
+- **Reveal names** then lets you **tap any city** to read its name in your own language.
+
+Hints are a **free assist** — they never affect your score, streak, stats, or the shared
+result. In the daily puzzle an unlocked hint sticks for the rest of the round (it survives
+a reload); practice hints reset with each new puzzle. Either way, once the round is over
+the dots always show and are always tappable.
 
 ### Per-guess feedback
 

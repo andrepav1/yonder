@@ -57,6 +57,11 @@ export const pt: Messages = {
       ideal: 'Mais perto do alvo',
       completion: 'Teria concluído seu trajeto',
     },
+    hints: {
+      label: 'Dicas',
+      cities: 'Mostrar cidades',
+      names: 'Revelar nomes',
+    },
   },
 
   input: {
@@ -108,6 +113,8 @@ export const pt: Messages = {
       'Continue saltando para se aproximar do alvo. A dica quente / frio esquenta conforme seu total se aproxima — veja o número «faltam» diminuir.',
     step3: (band, guesses) =>
       `Pare seu total a menos de ${band} abaixo do alvo para vencer. Passe e você perde — assim como esgotar as ${guesses} tentativas. Menos saltos, melhor pontuação.`,
+    note: (min) =>
+      `Só as cidades com mais de ${min} habitantes estão no jogo — as menores não podem ser adivinhadas.`,
     cta: 'Vamos explorar',
   },
 

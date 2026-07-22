@@ -57,6 +57,11 @@ export const de: Messages = {
       ideal: 'Am nächsten zum Ziel',
       completion: 'Hätte deine Reise beendet',
     },
+    hints: {
+      label: 'Hinweise',
+      cities: 'Städte zeigen',
+      names: 'Namen zeigen',
+    },
   },
 
   input: {
@@ -108,6 +113,8 @@ export const de: Messages = {
       'Springe weiter, um dem Ziel näherzukommen. Der Heiß-/Kalt-Hinweis wird wärmer, je näher deine Summe kommt — sieh zu, wie die „noch“-Zahl schrumpft.',
     step3: (band, guesses) =>
       `Lande deine Summe bis ${band} unter dem Ziel, um zu gewinnen. Überschreite es und du verlierst — ebenso, wenn deine ${guesses} Versuche aufgebraucht sind. Weniger Sprünge sind besser.`,
+    note: (min) =>
+      `Nur Städte mit mehr als ${min} Einwohnern sind im Spiel — kleinere Orte kannst du nicht raten.`,
     cta: 'Auf geht’s',
   },
 

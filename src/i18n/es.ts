@@ -57,6 +57,11 @@ export const es: Messages = {
       ideal: 'Más cerca del objetivo',
       completion: 'Habría completado tu recorrido',
     },
+    hints: {
+      label: 'Pistas',
+      cities: 'Mostrar ciudades',
+      names: 'Revelar nombres',
+    },
   },
 
   input: {
@@ -108,6 +113,8 @@ export const es: Messages = {
       'Sigue saltando para acercarte al objetivo. La pista de calor / frío se calienta a medida que tu total se aproxima — mira cómo baja el número «restante».',
     step3: (band, guesses) =>
       `Termina tu total a menos de ${band} bajo el objetivo para ganar. Si te pasas, pierdes — igual que si agotas los ${guesses} intentos. Menos saltos, mejor puntuación.`,
+    note: (min) =>
+      `Solo las ciudades con más de ${min} habitantes están en el juego — las más pequeñas no se pueden adivinar.`,
     cta: 'A explorar',
   },
 
