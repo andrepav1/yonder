@@ -134,6 +134,7 @@ npm run lint         # ESLint (flat config)
 npm run typecheck    # tsc, strict
 npm run build        # production build → dist/
 npm run data:build   # regenerate src/data/cities.json from ./data-src
+npm run data:elevation    # regenerate src/data/elevation.json from NOAA ETOPO (needs network)
 npm run preview:puzzles   # print generated puzzles for several dates
 ```
 
@@ -174,9 +175,11 @@ src/
   styles/globals.css  # the "Terra" design system (see DESIGN.md)
   App.tsx  main.tsx   # app shell + entry
   data/cities.json    # committed compact dataset (built artifact)
+  data/elevation.json # committed globe relief bands (built artifact)
 scripts/
   build-cities.mjs    # GeoNames -> cities.json (incl. localized names)
   enrich-cities.mjs   # attach/refresh translations on an existing cities.json
+  build-elevation.mjs # NOAA ETOPO -> elevation.json (globe hypsometric bands)
   preview-puzzles.mts # dev: print sample puzzles
   screenshot.mjs      # dev: phone-sized screenshots of the real UI
 ```
@@ -189,10 +192,11 @@ behind each rule.
 ## Data & deployment
 
 City data (names, coordinates, and localized alternate names) ©
-[GeoNames](https://www.geonames.org/), licensed **CC BY 4.0**. The compact
-`cities.json` is committed, so the app is fully static — it deploys to **Vercel**
-(framework preset **Vite**, build command `npm run build`, output `dist/`) with no
-backend.
+[GeoNames](https://www.geonames.org/), licensed **CC BY 4.0**. The globe's elevation
+relief is derived from [NOAA NCEI **ETOPO 2022**](https://www.ncei.noaa.gov/products/etopo-global-relief-model)
+(public domain). The compact `cities.json` and `elevation.json` are committed, so the
+app is fully static — it deploys to **Vercel** (framework preset **Vite**, build
+command `npm run build`, output `dist/`) with no backend.
 
 ## Support & monetization
 
@@ -214,6 +218,9 @@ the AdSense activation steps, and the deferred revenue tiers).
 ## Tech
 
 React + Vite + TypeScript, ESLint + Prettier, Vitest, GitHub Actions CI. The globe is
-rendered with **d3-geo** (orthographic projection + geodesic circle) over a bundled
-low-res land outline (**world-atlas** TopoJSON, hydrated with **topojson-client**) —
-all client-side, no runtime network.
+rendered with **d3-geo** (orthographic projection + geodesic circle). Its base is a
+**hypsometric elevation map** — brown/blue relief bands (ocean depth → land height)
+contoured from **NOAA ETOPO 2022** with **d3-contour** and bundled as TopoJSON —
+with a crisp coastline (**world-atlas** TopoJSON) stroked over the top, all hydrated
+with **topojson-client**. Every band tint is a theme-aware CSS token, so the relief
+adapts to light/dark mode. All client-side, no runtime network.

@@ -44,8 +44,14 @@ deep blue. `4` = win, in the band (hottest); `0` = far from the target or busted
 remains — so the guess-row swatch, the **globe guess pins**, and the share squares
 always agree.
 
-**Globe** (`--globe-ocean/-land/-graticule/-edge`): a muted, low-contrast Earth so the
-land in light, deep ink ocean + warm umber land in dark. The **journey** linking the
+**Globe** (`--globe-ocean/-graticule/-coast` + the `--hypso-0…9` ramp): a muted,
+low-contrast Earth rendered as a **hypsometric elevation map** — five ocean-depth
+blues (shelf → deep) grading into six land tans/browns (lowland → snow-capped peak),
+painted deepest-first so they stack into relief; the deepest ocean is the sphere's
+`--globe-ocean` base, and a `--globe-coast` hairline keeps coastlines crisp. Kept
+low-contrast in both themes — pale blues + warm tans in light, deep ink ocean + muted
+umber land in dark — so the accent ring + pins still carry the eye. The **journey**
+linking the
 start through each guess is a soft `--fg` line; the start city is an accent halo + dot;
 guess pins are small ramp-coloured dots. On finish the globe reveals the cities the
 player could have guessed, colour-coded so they never read as guesses: `--reveal`

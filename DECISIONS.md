@@ -4,6 +4,35 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
+## 2026-07-22 — Hypsometric relief globe (brown/blue elevation map)
+
+- **Context.** The globe drew land as one flat brown fill and the ocean as one flat
+  blue disc — readable, but plain. We wanted a real **elevation map**: shades of brown
+  for land height, shades of blue for ocean depth.
+- **Options weighed.** (a) A **raster texture** wrapped on the sphere via canvas
+  reprojection — most photoreal, but it rewrites the all-SVG globe into a canvas hybrid,
+  adds an image asset, and can't easily follow our light/dark theme (fixed pixels). (b)
+  Purely **procedural gradients** — tiny, but decorative, not a true elevation map. (c)
+  **Vector hypsometric bands** — contour the world into a handful of depth/height bands
+  and paint them as stacked SVG paths.
+- **Decision.** Went with **(c) vector bands.** It stays true to the globe's existing
+  nature — all-SVG, all-vector, geometry-from-props, bundled, no runtime network — and,
+  crucially, keeps every band colour a **CSS token**, so the relief adapts to light/dark
+  mode like the rest of the design system. Source is **NOAA ETOPO 2022** (public domain,
+  includes bathymetry, so one grid gives both land *and* ocean), streamed **coarse
+  (0.5°) via OPeNDAP** at build time so we never download the full ~450 MB grid, then
+  contoured with **d3-contour**, simplified, and committed as a ~200 KB TopoJSON
+  (`elevation.json`).
+- **How it renders.** Bands are painted **deepest → highest**, each as a nested
+  "value ≥ threshold" region, so higher bands overpaint lower ones into a continuous
+  hypsometric tint (the sphere's base colour shows through only in the deepest trenches).
+  A crisp coastline (the existing world-atlas land outline, stroke-only) is drawn over
+  the bands so coasts stay sharp despite the coarse elevation grid.
+- **Balance.** Chose ~0.5° resolution + 11 bands (5 ocean, 6 land) as the "balanced"
+  point: a clear, smooth elevation feel at 320 px without bloating the bundle or the
+  per-frame reprojection cost. `THRESHOLDS` (in `build-elevation.mjs`) and the
+  `--hypso-*` CSS ramp must be kept in lockstep — same count, same order.
+
 ## 2026-07-21 — Fix: zoomed globe covered the header (logo + settings)
 
 - **Context.** The "grow the sphere past the board, behind the UI" effect leans purely on
