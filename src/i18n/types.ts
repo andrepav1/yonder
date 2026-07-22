@@ -147,6 +147,8 @@ export interface Messages {
     step1: string
     step2: string
     step3: (band: string, guesses: number) => string
+    /** Note that only cities above the dataset population floor are guessable. */
+    note: (minPopulation: string) => string
     cta: string
   }
 

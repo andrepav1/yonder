@@ -975,6 +975,12 @@ button {
 .howto__step p {
   margin: 0;
 }
+/* A quiet footnote after the steps — the dataset's population floor. */
+.howto__note {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+}
 
 /* ---------- Stats ---------- */
 

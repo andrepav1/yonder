@@ -114,6 +114,8 @@ export const en: Messages = {
       'Keep hopping to climb toward the target. The hot / cold cue warms up as your running total nears it — watch the “to go” number shrink.',
     step3: (band, guesses) =>
       `Land your total within ${band} below the target to win. Go over and you bust — so does running out of ${guesses} guesses. Fewer hops is a better score.`,
+    note: (min) =>
+      `Only cities with more than ${min} people are in the game — smaller towns can’t be guessed.`,
     cta: 'Let’s wander',
   },
 

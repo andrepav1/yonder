@@ -14,6 +14,7 @@ interface HowToPlayProps {
 export function HowToPlay({ rules, puzzle, unit, onClose }: HowToPlayProps) {
   const { t } = useI18n()
   const band = bandLabel(puzzle.targetKm, rules.tolerancePct, unit, t)
+  const minPop = rules.dataset.minPopulation.toLocaleString(t.numberLocale)
   return (
     <Modal title={t.howTo.title} onClose={onClose}>
       <p style={{ marginTop: 0 }}>{t.howTo.intro}</p>
@@ -30,6 +31,8 @@ export function HowToPlay({ rules, puzzle, unit, onClose }: HowToPlayProps) {
         <span className="howto__num">3</span>
         <p>{t.howTo.step3(band, rules.guesses)}</p>
       </div>
+
+      <p className="howto__note">{t.howTo.note(minPop)}</p>
 
       <button className="btn" onClick={onClose}>
         {t.howTo.cta}

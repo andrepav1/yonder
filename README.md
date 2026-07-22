@@ -37,6 +37,9 @@ win. You get **6 guesses**, and fewer hops is a better score.
   percentage, so it's unit-independent (same in km or miles).
 - **Score (bragging rights):** it's golf — the streak and guess distribution reward
   reaching the band in as **few hops** as possible.
+- **Guessable cities:** only cities with a population **≥ 100,000** are in the game
+  (~6.2k worldwide) — smaller towns can't be guessed. The How-to-play primer says so up
+  front, so players know the field.
 
 ### The globe
 

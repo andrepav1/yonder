@@ -113,6 +113,8 @@ export const it: Messages = {
       'Continua a saltare per avvicinarti all’obiettivo. L’indizio caldo / freddo si scalda man mano che il totale si avvicina — guarda il numero « rimanenti » diminuire.',
     step3: (band, guesses) =>
       `Fermati con il totale entro ${band} sotto l’obiettivo per vincere. Superalo e hai perso — così come esaurire i ${guesses} tentativi. Meno salti, punteggio migliore.`,
+    note: (min) =>
+      `Solo le città con più di ${min} abitanti sono nel gioco — i centri più piccoli non si possono indovinare.`,
     cta: 'Andiamo',
   },
 
