@@ -67,8 +67,8 @@
      slides *beneath* the surrounding cards (paint order); a touch of
      transparency lets it show through them while text stays readable. Only the
      info panels use these — the guess form + buttons stay fully opaque. */
-  --panel: color-mix(in srgb, var(--surface) 88%, transparent);
-  --panel-win: color-mix(in srgb, var(--win-weak) 88%, transparent);
+  --panel: color-mix(in srgb, var(--surface) 80%, transparent);
+  --panel-win: color-mix(in srgb, var(--win-weak) 80%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -171,6 +171,11 @@ button {
   align-items: center;
   justify-content: space-between;
   padding-top: 0.75rem;
+  /* Sit above the globe so a zoomed sphere growing upward slides *behind* the
+     header (logo + settings) instead of covering it — same lift the `.prompt`
+     below uses. */
+  position: relative;
+  z-index: 1;
 }
 .hdr__brand {
   display: flex;
@@ -561,7 +566,9 @@ button {
   transform: scale(0.97);
 }
 .guess__submit:disabled {
-  opacity: 0.45;
+  /* Stay solid over the globe — only dim enough to read as inactive. A low
+     opacity let the zoomed sphere show straight through the button. */
+  opacity: 0.7;
   cursor: not-allowed;
 }
 .guess__submit:focus-visible {

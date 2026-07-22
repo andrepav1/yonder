@@ -146,8 +146,9 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   its own — a negative `z-index` once promoted it into a compositing layer where the
   browser ignored `touch-action`, so pinch zoomed the page and drag went flaky); the
   enlarged sphere slides *beneath* the surrounding — often translucent — UI purely by
-  paint order (panels after it paint on top; `.prompt` above it is lifted with a
-  `z-index`). Presentational as ever — geometry from
+  paint order (panels after it paint on top; the two panels above it — `.prompt` and the
+  `.hdr` header — are each lifted with `position: relative; z-index: 1` so the growing
+  sphere recedes behind them instead of covering the logo + settings). Presentational as ever — geometry from
   props, no runtime network; land is bundled.
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
