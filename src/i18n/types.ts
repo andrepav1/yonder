@@ -90,6 +90,15 @@ export interface Messages {
       /** Tag on a city that would have finished the run from where they stopped. */
       completion: string
     }
+    /** In-round hint controls that progressively reveal the explorable cities. */
+    hints: {
+      /** Group label for the hint controls. */
+      label: string
+      /** Hint 1 — reveal the (unnamed) city dots on the globe. */
+      cities: string
+      /** Hint 2 — also let the player tap a dot to read its city name. */
+      names: string
+    }
   }
 
   input: {

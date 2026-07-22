@@ -95,14 +95,37 @@ interface GlobeProps {
   unit: Unit
   /** The explorable city universe (biggest population first). Tap to read a name. */
   cities: City[]
+  /**
+   * In-round hint reveal: 0 = no city dots (the default while playing),
+   * 1 = dots visible, 2 = dots visible + tappable for names. Once the round is
+   * finished the dots always show and are always tappable, regardless of this.
+   */
+  hintLevel?: number
+  /** Unlock a hint level (only raises it — the caller never lowers it). */
+  onHint?: (level: number) => void
   /** Learning reveal, shown once the round is over. */
   reveal?: RevealData
   finished?: boolean
 }
 
-export function Globe({ start, guesses, rules, unit, cities, reveal, finished }: GlobeProps) {
+export function Globe({
+  start,
+  guesses,
+  rules,
+  unit,
+  cities,
+  hintLevel = 0,
+  onHint,
+  reveal,
+  finished,
+}: GlobeProps) {
   const { t, locale } = useI18n()
   const { minZoom, maxZoom } = rules.explore
+  // The explorable city dots are hidden while playing until a hint unlocks them
+  // (level ≥ 1 shows the dots, level ≥ 2 lets you tap one for its name). Once the
+  // round is over the dots always show and are always tappable.
+  const showCities = !!finished || hintLevel >= 1
+  const citiesInteractive = !!finished || hintLevel >= 2
   // Rotation is [λ, φ]: spin the globe so the start city faces the viewer first.
   const [rotation, setRotation] = useState<LngLat>([-start.lng, -start.lat])
   // Zoom magnifies the globe (1 = the full disc fits the board).
@@ -289,6 +312,7 @@ export function Globe({ start, guesses, rules, unit, cities, reveal, finished }:
   // hemisphere + viewport, and capped (biggest kept — candidates are pop-sorted).
   const exploreDots = useMemo(() => {
     const dots: { city: City; x: number; y: number }[] = []
+    if (!showCities) return dots
     for (const c of exploreCandidates) {
       if (dots.length >= rules.explore.maxDots) break
       const p = place(c.lng, c.lat)
@@ -298,7 +322,7 @@ export function Globe({ start, guesses, rules, unit, cities, reveal, finished }:
       dots.push({ city: c, x: p[0], y: p[1] })
     }
     return dots
-  }, [exploreCandidates, projection, rules.explore.maxDots])
+  }, [exploreCandidates, projection, rules.explore.maxDots, showCities])
 
   // Whichever selection the player is engaging with — hovered (mouse) beats the
   // pinned tap-selection — drives the label, caption, and missed-leg.
@@ -431,11 +455,15 @@ export function Globe({ start, guesses, rules, unit, cities, reveal, finished }:
         best = { type: 'reveal', pin }
       }
     }
-    for (const dot of exploreDots) {
-      const d = Math.hypot(dot.x - sx, dot.y - sy)
-      if (d <= bestD) {
-        bestD = d
-        best = { type: 'city', city: dot.city }
+    // City dots are only selectable (name reveal) once hint 2 is unlocked or the
+    // round is over; at hint 1 they show but stay anonymous.
+    if (citiesInteractive) {
+      for (const dot of exploreDots) {
+        const d = Math.hypot(dot.x - sx, dot.y - sy)
+        if (d <= bestD) {
+          bestD = d
+          best = { type: 'city', city: dot.city }
+        }
       }
     }
     return best
@@ -482,7 +510,9 @@ export function Globe({ start, guesses, rules, unit, cities, reveal, finished }:
                     <circle className="globe__city-halo" cx={dot.x} cy={dot.y} r={7} />
                   )}
                   <circle
-                    className={`globe__city${isActive ? ' globe__city--active' : ''}`}
+                    className={`globe__city${isActive ? ' globe__city--active' : ''}${
+                      citiesInteractive ? '' : ' globe__city--static'
+                    }`}
                     cx={dot.x}
                     cy={dot.y}
                     r={isActive ? 3.4 : 1.7}
@@ -592,6 +622,32 @@ export function Globe({ start, guesses, rules, unit, cities, reveal, finished }:
           </button>
         </div>
       </div>
+
+      {/* Hint controls: progressively reveal the explorable city dots while
+          playing. Hidden once the round is over — everything is revealed then. */}
+      {!finished && onHint && (
+        <div className="globe__hints" role="group" aria-label={t.globe.hints.label}>
+          <span className="globe__hints-label">{t.globe.hints.label}</span>
+          <button
+            type="button"
+            className="globe__hint-btn"
+            aria-pressed={hintLevel >= 1}
+            disabled={hintLevel >= 1}
+            onClick={() => onHint(1)}
+          >
+            {t.globe.hints.cities}
+          </button>
+          <button
+            type="button"
+            className="globe__hint-btn"
+            aria-pressed={hintLevel >= 2}
+            disabled={hintLevel >= 2}
+            onClick={() => onHint(2)}
+          >
+            {t.globe.hints.names}
+          </button>
+        </div>
+      )}
 
       {/* Caption: the engaged city's detail, or the end-of-round reveal hint */}
       {(active || (finished && revealPins.length > 0)) && (

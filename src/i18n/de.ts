@@ -57,6 +57,11 @@ export const de: Messages = {
       ideal: 'Am nächsten zum Ziel',
       completion: 'Hätte deine Reise beendet',
     },
+    hints: {
+      label: 'Hinweise',
+      cities: 'Städte zeigen',
+      names: 'Namen zeigen',
+    },
   },
 
   input: {

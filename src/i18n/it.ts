@@ -57,6 +57,11 @@ export const it: Messages = {
       ideal: 'Più vicina al bersaglio',
       completion: 'Avrebbe concluso il tuo percorso',
     },
+    hints: {
+      label: 'Aiuti',
+      cities: 'Mostra le città',
+      names: 'Rivela i nomi',
+    },
   },
 
   input: {

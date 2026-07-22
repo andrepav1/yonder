@@ -58,6 +58,11 @@ export const en: Messages = {
       ideal: 'Closest to target',
       completion: 'Would have finished your run',
     },
+    hints: {
+      label: 'Hints',
+      cities: 'Show cities',
+      names: 'Reveal names',
+    },
   },
 
   input: {

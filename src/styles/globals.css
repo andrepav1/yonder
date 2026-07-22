@@ -363,6 +363,40 @@ button {
   opacity: 0.4;
   cursor: default;
 }
+/* In-round hint controls, sitting just below the globe. Two pills that unlock
+   the explorable dots (hint 1) then their names (hint 2); an unlocked pill
+   takes on the reveal accent and is disabled. */
+.globe__hints {
+  margin-top: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.5rem;
+}
+.globe__hints-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+.globe__hint-btn {
+  font-size: 0.8rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--globe-edge);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  color: var(--fg);
+  cursor: pointer;
+}
+.globe__hint-btn:disabled {
+  cursor: default;
+}
+.globe__hint-btn[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--reveal) 55%, var(--globe-edge));
+  background: color-mix(in srgb, var(--reveal) 12%, var(--surface));
+  color: var(--reveal);
+}
 /* Explorable cities: quiet dots, subordinate to the game markers, that grow +
    gain a halo when engaged. Population sets which show; zoom sets how many. */
 .globe__city {
@@ -376,6 +410,10 @@ button {
   opacity: 1;
   stroke: var(--surface);
   stroke-width: 1;
+}
+/* Hint-1 dots: visible but anonymous — no name reveal until hint 2. */
+.globe__city--static {
+  cursor: default;
 }
 .globe__city-halo {
   fill: color-mix(in srgb, var(--fg-muted) 26%, transparent);

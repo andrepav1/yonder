@@ -8,6 +8,31 @@ import { type KeyValueStore, defaultStore } from './storage'
 const UNIT_KEY = 'yondle:unit:v1'
 const LOCALE_KEY = 'yondle:locale:v1'
 const ONBOARDED_KEY = 'yondle:onboarded:v1'
+const hintsKey = (date: string) => `yondle:hints:${date}`
+
+/**
+ * How far the in-round hint reveal has been unlocked: 0 = no city dots,
+ * 1 = dots visible, 2 = dots visible + tappable for names. Persisted per daily
+ * date so an unlocked hint survives a reload; practice keeps this in memory only.
+ */
+export type HintLevel = 0 | 1 | 2
+
+/** The saved hint level for a daily date (0 when none unlocked). */
+export function loadHintLevel(
+  date: string,
+  storage: KeyValueStore = defaultStore(),
+): HintLevel {
+  const v = storage.getItem(hintsKey(date))
+  return v === '1' ? 1 : v === '2' ? 2 : 0
+}
+
+export function saveHintLevel(
+  date: string,
+  level: HintLevel,
+  storage: KeyValueStore = defaultStore(),
+): void {
+  storage.setItem(hintsKey(date), String(level))
+}
 
 export function loadUnit(fallback: Unit, storage: KeyValueStore = defaultStore()): Unit {
   const v = storage.getItem(UNIT_KEY)

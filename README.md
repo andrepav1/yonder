@@ -48,10 +48,18 @@ to override); pins on the far side of the Earth are hidden until you rotate them
 view.
 
 You can also **zoom** the globe — pinch, scroll, or the `+`/`−` buttons — to explore.
-Real cities appear as quiet dots: the **biggest cities show first**, and the further
-you zoom in, the more (progressively smaller) cities appear around you. **Tap any city**
-to read its name in your own language. It's a free-roam layer for learning the map;
-it never affects the puzzle.
+
+While you're playing, the globe stays clean: **no city dots are shown** until you spend a
+hint (or the round ends). Two hint buttons sit just below the globe:
+
+- **Show cities** reveals the explorable dots — the **biggest cities first**, and the
+  further you zoom in, the more (progressively smaller) cities appear around you.
+- **Reveal names** then lets you **tap any city** to read its name in your own language.
+
+Hints are a **free assist** — they never affect your score, streak, stats, or the shared
+result. In the daily puzzle an unlocked hint sticks for the rest of the round (it survives
+a reload); practice hints reset with each new puzzle. Either way, once the round is over
+the dots always show and are always tappable.
 
 ### Per-guess feedback
 

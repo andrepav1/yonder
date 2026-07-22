@@ -57,6 +57,11 @@ export const ko: Messages = {
       ideal: '목표에 가장 가까움',
       completion: '여기서 완주할 수 있었음',
     },
+    hints: {
+      label: '힌트',
+      cities: '도시 표시',
+      names: '이름 표시',
+    },
   },
 
   input: {

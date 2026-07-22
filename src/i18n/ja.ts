@@ -57,6 +57,11 @@ export const ja: Messages = {
       ideal: '目標に最も近い',
       completion: 'ここからゴールできた',
     },
+    hints: {
+      label: 'ヒント',
+      cities: '都市を表示',
+      names: '名前を表示',
+    },
   },
 
   input: {

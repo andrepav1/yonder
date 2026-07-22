@@ -6,7 +6,15 @@ import { utcDateString } from '@/lib/puzzle'
 import { createRound, isFinished, guessesLeft, type GuessError } from '@/lib/engine'
 import { findCompletions } from '@/lib/reveal'
 import { createStatsStore, type Stats } from '@/store/statsStore'
-import { loadUnit, saveUnit, isOnboarded, setOnboarded } from '@/store/prefs'
+import {
+  loadUnit,
+  saveUnit,
+  isOnboarded,
+  setOnboarded,
+  loadHintLevel,
+  saveHintLevel,
+  type HintLevel,
+} from '@/store/prefs'
 import { formatDistance, bandLabel } from '@/lib/format'
 import { cityLabel, allCities } from '@/lib/cities'
 import { useI18n } from '@/i18n/context'
@@ -65,6 +73,10 @@ export default function App() {
   )
   const [stats, setStats] = useState<Stats>(() => store.loadStats())
   const [unit, setUnit] = useState<Unit>(() => loadUnit(rules.units.default))
+  // How far the hint reveal is unlocked. Daily persists (survives reloads);
+  // practice is in-memory and resets with each fresh puzzle.
+  const [dailyHint, setDailyHint] = useState<HintLevel>(() => loadHintLevel(date))
+  const [practiceHint, setPracticeHint] = useState<HintLevel>(0)
   const [toast, setToast] = useState('')
   const [showHowTo, setShowHowTo] = useState(() => !isOnboarded())
   const [showStats, setShowStats] = useState(false)
@@ -78,6 +90,19 @@ export default function App() {
   const puzzle = useMemo(() => activeMode.generate(seed), [activeMode, seed])
   const round = practice ? practiceRound : dailyRound
   const finished = isFinished(round)
+  const hintLevel = practice ? practiceHint : dailyHint
+
+  // Unlock a hint (only ever raises the level). Daily writes through to storage
+  // so the reveal survives a reload; practice stays in memory.
+  const useHint = (level: number) => {
+    const next = Math.min(2, Math.max(hintLevel, level)) as HintLevel
+    if (practice) {
+      setPracticeHint(next)
+      return
+    }
+    setDailyHint(next)
+    saveHintLevel(date, next)
+  }
 
   // The end-of-round "learn the map" reveal: cities the player could have
   // guessed. `ideal` = the closest single-hop wins from the start (precomputed);
@@ -148,6 +173,7 @@ export default function App() {
     setToast('')
     setPracticeSeed(s)
     setPracticeRound(createRound(s))
+    setPracticeHint(0)
   }
 
   const changeUnit = (u: Unit) => {
@@ -238,6 +264,8 @@ export default function App() {
           rules={rules}
           unit={unit}
           cities={allCities()}
+          hintLevel={hintLevel}
+          onHint={useHint}
           reveal={reveal}
           finished={finished}
         />

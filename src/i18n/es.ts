@@ -57,6 +57,11 @@ export const es: Messages = {
       ideal: 'Más cerca del objetivo',
       completion: 'Habría completado tu recorrido',
     },
+    hints: {
+      label: 'Pistas',
+      cities: 'Mostrar ciudades',
+      names: 'Revelar nombres',
+    },
   },
 
   input: {

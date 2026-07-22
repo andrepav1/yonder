@@ -466,3 +466,29 @@ at and read as a leftover from the single-shot game.
     `moved` flag). This gives a second finger a brief window to land and switch the
     gesture to pinch before any spin happens. A drag *resumed* from a pinch (leftover
     finger) has no press and still spins immediately, as intended.
+
+## 2026-07-22 — Hint system: gate the explorable dots while playing
+
+- **Context.** The explorable city-dot layer used to be visible for the whole round —
+  you could zoom in and tap any real city to read its name at any time. That quietly
+  handed players a search tool: the answer set is "cities near a distance from the
+  start", and being able to scan/label every nearby city trivialises the puzzle.
+- **Decision.** Hide the dots during play and put them behind two opt-in **hints**,
+  surfaced as a small bar below the globe:
+  - **Hint 1 — Show cities**: render the dots (still anonymous).
+  - **Hint 2 — Reveal names**: also let a tap read a dot's name.
+
+  Once the round is **over** (win *or* loss) the dots always show and are always
+  tappable, independent of hints — the end-of-round "learn the map" reveal is unchanged.
+- **Free assist, not a penalty.** Hints don't touch the golf score, streak, stats, or
+  the shared result. Rationale: the share string already carries no city names and the
+  score is guess-count + final total; making hints costly would mean threading a
+  penalty through `scoring.ts` / `share.ts` / stats and their invariant tests for a
+  learning aid. Kept it a pure UI gate instead — the door is open to a tracked/penalised
+  variant later (it's a single `hintLevel` today).
+- **Where the state lives.** `hintLevel` (0/1/2) is owned by `App`, not baked into the
+  serializable `RoundState` (it's a UI concern, and keeping it out of `RoundState` leaves
+  the engine/modes and their determinism untouched). Daily persists it per date via
+  `prefs.ts:load/saveHintLevel` (an unlocked hint survives a reload); practice keeps it
+  in memory and resets it with each fresh puzzle. `Globe` stays purely presentational:
+  it takes `hintLevel` + an `onHint` unlock callback and renders accordingly.

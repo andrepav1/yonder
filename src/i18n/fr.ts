@@ -57,6 +57,11 @@ export const fr: Messages = {
       ideal: 'Au plus près de la cible',
       completion: 'Aurait terminé votre parcours',
     },
+    hints: {
+      label: 'Indices',
+      cities: 'Afficher les villes',
+      names: 'Révéler les noms',
+    },
   },
 
   input: {

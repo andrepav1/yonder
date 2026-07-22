@@ -55,6 +55,11 @@ export const zh: Messages = {
       ideal: '最接近目标',
       completion: '本可以从这里完成',
     },
+    hints: {
+      label: '提示',
+      cities: '显示城市',
+      names: '显示名称',
+    },
   },
 
   input: {
