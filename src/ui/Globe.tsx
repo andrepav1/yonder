@@ -26,8 +26,9 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { geoOrthographic, geoPath, geoGraticule10, geoDistance } from 'd3-geo'
 import { feature } from 'topojson-client'
-import type { FeatureCollection } from 'geojson'
+import type { Feature, FeatureCollection } from 'geojson'
 import landTopo from 'world-atlas/land-110m.json'
+import elevationTopo from '@/data/elevation.json'
 import type { AnswerCity, City, GuessResult } from '@/lib/types'
 import type { GameRules, Unit } from '@/config/rules'
 import { tempLevel } from '@/lib/scoring'
@@ -42,6 +43,32 @@ const land = feature(
   landTopo as any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (landTopo as any).objects.land,
+) as unknown as FeatureCollection
+
+// Hypsometric elevation bands (ocean depth + land height), likewise hydrated
+// once. Sorted by threshold ascending so painting them in order stacks deepest
+// → highest into a nested brown/blue relief; the array index is the band's tint
+// (globe__hypso--N), matching THRESHOLDS in scripts/build-elevation.mjs.
+const elevationBands: Feature[] = (() => {
+  const fc = feature(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    elevationTopo as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (elevationTopo as any).objects.bands,
+  ) as unknown as FeatureCollection
+  return [...fc.features].sort(
+    (a, b) => Number(a.properties?.v ?? 0) - Number(b.properties?.v ?? 0),
+  )
+})()
+
+// The ice-sheet overlay (Greenland + Antarctica), painted over the bands so the
+// two great ice caps read as ice, not the brown highlands their surface height
+// would otherwise colour them.
+const iceSheets: FeatureCollection = feature(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  elevationTopo as any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (elevationTopo as any).objects.ice,
 ) as unknown as FeatureCollection
 
 const SIZE = 320 // internal SVG units; CSS scales it to the column width
@@ -296,6 +323,11 @@ export function Globe({
 
   const landPath = useMemo(() => path(land) ?? '', [path])
   const graticulePath = useMemo(() => path(geoGraticule10()) ?? '', [path])
+  // The hypsometric bands, projected at the current rotation/zoom. One path per
+  // elevation band; d3-geo clips each to the near hemisphere for us.
+  const bandPaths = useMemo(() => elevationBands.map((f) => path(f) ?? ''), [path])
+  // The ice sheets, projected the same way (a single combined path).
+  const icePath = useMemo(() => path(iceSheets) ?? '', [path])
   // The running journey: start → each guessed city, in order.
   const journeyPath = useMemo(() => {
     if (guesses.length === 0) return ''
@@ -494,10 +526,17 @@ export function Globe({
           {/* Map layers: the globe grows freely past the board when zoomed
               (the SVG lets it overflow; the whole surface sits below the UI). */}
           <g>
-            {/* Ocean sphere */}
+            {/* Ocean sphere (deepest-ocean base tint) */}
             <circle className="globe__sphere" cx={SIZE / 2} cy={SIZE / 2} r={sphereR} />
+            {/* Hypsometric relief: ocean-depth + land-height bands, deepest first */}
+            {bandPaths.map((d, i) =>
+              d ? <path key={`hy-${i}`} className={`globe__hypso globe__hypso--${i}`} d={d} /> : null,
+            )}
+            {/* Ice caps over the relief, so Greenland/Antarctica read as ice */}
+            {icePath && <path className="globe__ice" d={icePath} />}
             <path className="globe__graticule" d={graticulePath} />
-            <path className="globe__land" d={landPath} />
+            {/* Crisp coastline over the bands */}
+            <path className="globe__coast" d={landPath} />
 
             {/* Explorable cities: biggest first, more as you zoom in */}
             {exploreDots.map((dot) => {

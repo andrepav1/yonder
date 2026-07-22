@@ -101,6 +101,17 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 - `src/data/cities.json` — **committed** compact dataset (array-of-arrays; see
   `fields`). Built by `scripts/build-cities.mjs`. Each tuple's optional 8th element is
   the `{ locale: name }` translations map (present only for cities that have any).
+- `src/data/elevation.json` — **committed** hypsometric relief for the globe: a
+  TopoJSON with two objects — `bands` (nested elevation/depth bands; each geometry's
+  `properties.v` is the band's lower-bound in metres) and `ice` (the Greenland +
+  Antarctica ice sheets). Built by `scripts/build-elevation.mjs` from NOAA ETOPO 2022
+  (streamed coarse via OPeNDAP, contoured with d3-contour, simplified). The Globe
+  paints the bands deepest→highest as a brown/blue elevation map, then the ice on
+  top; the band count + order mirror the `--hypso-*` CSS ramp. The ice comes from the
+  same source — ETOPO's *surface* minus its *bedrock* grid is the ice thickness,
+  contoured at a small threshold — so the two great ice caps read as ice, not the
+  brown highlands their surface height would otherwise colour them. Presentational
+  only — no game logic reads it.
 - `src/modes/daily.ts` — the `GameMode` descriptors (`generate(seed)`/`apply`/
   `score`/`share`) built by a shared `makeMode` factory + a `modes` registry.
   Ships **two** modes: `dailyMode` (seed = UTC date, streak-tracked) and
@@ -138,8 +149,14 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   picker — a native `<select>` over a globe icon), `icons.tsx` (inline SVG — no
   emoji chrome). Every component pulls copy from `useI18n().t` — no hard-coded strings.
 - `src/ui/Globe.tsx` — the main guessing surface: a drag-to-spin **orthographic
-  globe** (d3-geo) over a bundled land outline (`world-atlas` land-110m TopoJSON,
-  hydrated once with `topojson-client`). Purely presentational — all geometry comes
+  globe** (d3-geo). Its base is a **hypsometric elevation map** — the `elevation.json`
+  bands (hydrated once with `topojson-client`) painted deepest→highest as nested
+  brown/blue relief (ocean depth → land height), then the `ice` sheets
+  (Greenland/Antarctica) as `--globe-ice` on top, with a crisp coastline
+  (`world-atlas` land-110m TopoJSON) stroked over the top. The band tints are the
+  `--hypso-*` CSS ramp (theme-aware); the deepest ocean is the sphere's
+  `--globe-ocean` base.
+  Purely presentational — all geometry comes
   from props. Renders the start-city marker, the **journey** (a line linking start →
   each guess in order — the legs that sum toward the target) and guess pins coloured by
   `tempLevel`, and — only once `finished` — an explorable **reveal** (via the `reveal`
@@ -184,6 +201,7 @@ npm run lint         # eslint (flat config)
 npm run typecheck    # tsc -b --noEmit
 npm run build        # production build → dist/ (static, Vercel)
 npm run data:build   # rebuild src/data/cities.json from ./data-src (see below)
+npm run data:elevation    # rebuild src/data/elevation.json from NOAA ETOPO (needs network)
 npm run preview:puzzles   # eyeball generated puzzles for several dates
 npm run build && npm run screenshot   # phone-sized screenshots of the real UI
 ```
@@ -218,6 +236,19 @@ logic lives in `selectAlternateNames` and is reused by `scripts/enrich-cities.mj
 (`npm run data:enrich -- <alternateNamesV2.txt>`), which attaches/refreshes translations
 onto an already-built `cities.json` **without** re-downloading the three base dumps.
 
+**Globe elevation.** `src/data/elevation.json` is the other committed, bundled
+artifact — the hypsometric relief the globe paints under the coastline. Rebuild it
+with `npm run data:elevation` (`scripts/build-elevation.mjs`, needs network): it
+streams a coarse (0.5°, block-averaged) subset of the **NOAA ETOPO 2022** global
+relief grid via OPeNDAP — so no giant download — contours it into fixed
+depth/height bands with **d3-contour**, reprojects the contours from grid space to
+lon/lat, and writes a quantized + simplified TopoJSON (~215 KB). The `THRESHOLDS`
+array (5 ocean + 6 land bands) must stay in lockstep with the `--hypso-*` colour
+ramp in `globals.css` — same count, same order. It also fetches ETOPO's *bedrock*
+grid and contours (surface − bedrock) at `ICE_THICKNESS_MIN` to emit the `ice`
+object — Greenland + Antarctica — since ETOPO models thick ice only under those two
+sheets, so nothing else is falsely flagged.
+
 ## Conventions
 
 - **TypeScript, strict.** `noUncheckedIndexedAccess` is on — index access is
@@ -231,3 +262,4 @@ onto an already-built `cities.json` **without** re-downloading the three base du
 ## Data attribution
 
 City data © GeoNames, licensed **CC BY 4.0**. Attribution belongs in the app footer.
+Globe elevation relief derived from **NOAA NCEI ETOPO 2022** (public domain).

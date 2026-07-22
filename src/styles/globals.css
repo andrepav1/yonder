@@ -41,11 +41,26 @@
   --temp-0: #3f6c93;
   --on-temp: #fffaf5;
 
-  /* Globe — muted ocean/land so the accent ring + pins carry the eye */
-  --globe-ocean: #d5e3e8;
-  --globe-land: #e7d6ba;
+  /* Globe — a muted hypsometric elevation map (ocean-depth blues + land-height
+     browns, ice caps on top) kept low-contrast so the accent ring + pins lead */
+  --globe-ocean: #7ba7c4; /* sphere base: deepest ocean (below the first band) */
   --globe-graticule: #bacdd3;
-  --globe-edge: #aebfc6;
+  --globe-edge: #a7b9c1;
+  --globe-coast: #9aa891;
+  --globe-ice: #eef3f6; /* Greenland/Antarctica ice sheets (over the bands) */
+  /* Hypsometric ramp — 5 ocean-depth blues (shelf→deep) then 6 land tans/browns
+     (lowland→peak). Order + count mirror THRESHOLDS in scripts/build-elevation.mjs;
+     each band paints the "value ≥ threshold" region, deepest first. */
+  --hypso-0: #8fb6cd; /* -6000..-4000 m */
+  --hypso-1: #a3c5d6; /* -4000..-2000 */
+  --hypso-2: #bad4df; /* -2000..-500  */
+  --hypso-3: #d0e0e9; /* -500..0 (continental shelf) */
+  --hypso-4: #e2d6ac; /* 0..250 m lowland */
+  --hypso-5: #d4c191; /* 250..750 */
+  --hypso-6: #c2a877; /* 750..1500 */
+  --hypso-7: #ab8b5f; /* 1500..3000 */
+  --hypso-8: #8f6f49; /* 3000..5000 */
+  --hypso-9: #efe7db; /* >5000 m (snow-capped peaks) */
 
   /* Type */
   --font-display: 'Calistoga', Georgia, 'Times New Roman', serif;
@@ -100,10 +115,21 @@
     --temp-0: #6aa0c8;
     --on-temp: #1a120c;
 
-    --globe-ocean: #142027;
-    --globe-land: #34291c;
+    --globe-ocean: #0f1c24; /* deepest ocean */
     --globe-graticule: #25343b;
     --globe-edge: #35464d;
+    --globe-coast: #46586044;
+    --globe-ice: #93a7b0; /* muted cool grey so ice reads without glaring */
+    --hypso-0: #142833;
+    --hypso-1: #1b3540;
+    --hypso-2: #21414d;
+    --hypso-3: #294e5a; /* shelf */
+    --hypso-4: #3a3020; /* lowland */
+    --hypso-5: #453826;
+    --hypso-6: #52432c;
+    --hypso-7: #5f4e33;
+    --hypso-8: #6d5a3b;
+    --hypso-9: #837156; /* peaks */
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.45);
@@ -394,11 +420,68 @@ button {
   fill: none;
   stroke: var(--globe-graticule);
   stroke-width: 0.4;
+  opacity: 0.7;
 }
-.globe__land {
-  fill: var(--globe-land);
-  stroke: var(--globe-edge);
-  stroke-width: 0.3;
+/* Hypsometric elevation bands: nested "value ≥ threshold" fills, painted
+   deepest→highest so each overpaints the one below into a brown/blue relief.
+   Purely presentational; a hairline stroke of the same colour closes the
+   sub-pixel seams quantization can leave between adjacent bands. */
+.globe__hypso {
+  stroke-width: 0.35;
+}
+.globe__hypso--0 {
+  fill: var(--hypso-0);
+  stroke: var(--hypso-0);
+}
+.globe__hypso--1 {
+  fill: var(--hypso-1);
+  stroke: var(--hypso-1);
+}
+.globe__hypso--2 {
+  fill: var(--hypso-2);
+  stroke: var(--hypso-2);
+}
+.globe__hypso--3 {
+  fill: var(--hypso-3);
+  stroke: var(--hypso-3);
+}
+.globe__hypso--4 {
+  fill: var(--hypso-4);
+  stroke: var(--hypso-4);
+}
+.globe__hypso--5 {
+  fill: var(--hypso-5);
+  stroke: var(--hypso-5);
+}
+.globe__hypso--6 {
+  fill: var(--hypso-6);
+  stroke: var(--hypso-6);
+}
+.globe__hypso--7 {
+  fill: var(--hypso-7);
+  stroke: var(--hypso-7);
+}
+.globe__hypso--8 {
+  fill: var(--hypso-8);
+  stroke: var(--hypso-8);
+}
+.globe__hypso--9 {
+  fill: var(--hypso-9);
+  stroke: var(--hypso-9);
+}
+/* Ice sheets (Greenland + Antarctica) over the bands, so they read as ice caps
+   rather than brown highlands. A hairline stroke of the same colour closes the
+   sub-pixel seams quantization can leave. */
+.globe__ice {
+  fill: var(--globe-ice);
+  stroke: var(--globe-ice);
+  stroke-width: 0.35;
+}
+/* Crisp coastline over the bands (the land outline, stroke only). */
+.globe__coast {
+  fill: none;
+  stroke: var(--globe-coast);
+  stroke-width: 0.4;
 }
 .globe__edge {
   fill: none;
