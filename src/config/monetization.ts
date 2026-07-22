@@ -28,8 +28,7 @@ export interface MonetizationConfig {
 }
 
 export const defaultMonetization: MonetizationConfig = {
-  // TODO(owner): swap in your real Buy Me a Coffee handle — this is a placeholder.
-  supportUrl: 'https://www.buymeacoffee.com/andrepav1',
+  supportUrl: 'https://buymeacoffee.com/bigpav',
   ads: {
     // Empty = AdSense stays dormant (no script, no markup). To go live, paste
     // your IDs: `client` = "ca-pub-…", `resultSlot` = the ad unit's data-ad-slot.
