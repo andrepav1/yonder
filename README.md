@@ -208,7 +208,8 @@ determinism-sacred pure core (`lib/*` never imports it):
   markup is emitted**, so the app stays fully static + offline-friendly.
 
 Everything degrades to nothing when unconfigured, so the game ships unchanged until
-you fill these in.
+you fill these in. See **`MONETIZATION.md`** for the full playbook (current values,
+the AdSense activation steps, and the deferred revenue tiers).
 
 ## Tech
 

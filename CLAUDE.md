@@ -45,6 +45,7 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   `src/ui/*` — the pure core (`lib/*`) must never import it. Everything is opt-in:
   empty strings render nothing (no ad script loads, no ad markup), so the app stays
   fully static + offline-friendly by default. Not game rules → not determinism-sacred.
+  See `MONETIZATION.md` for the playbook (current values + AdSense activation steps).
 - `src/lib/prng.ts` — `hashString` (FNV-1a) + `mulberry32` seeded PRNG. Pure.
 - `src/lib/geo.ts` — `haversineKm`, `initialBearingDeg`, `compass16`,
   `bearingArrow`, km/mi conversion. Pure.
