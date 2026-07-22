@@ -229,6 +229,9 @@ export default function App() {
               onHowTo={() => setShowHowTo(true)}
               onStats={() => setShowStats(true)}
               onAbout={() => setShowAbout(true)}
+              hintLevel={hintLevel}
+              onHint={useHint}
+              finished={finished}
             />
           </div>
         </header>
@@ -265,7 +268,6 @@ export default function App() {
           unit={unit}
           cities={allCities()}
           hintLevel={hintLevel}
-          onHint={useHint}
           reveal={reveal}
           finished={finished}
         />

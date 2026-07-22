@@ -50,7 +50,8 @@ view.
 You can also **zoom** the globe — pinch, scroll, or the `+`/`−` buttons — to explore.
 
 While you're playing, the globe stays clean: **no city dots are shown** until you spend a
-hint (or the round ends). Two hint buttons sit just below the globe:
+hint (or the round ends). The two hints live in the header **≡ menu**, keeping the board
+uncluttered:
 
 - **Show cities** reveals the explorable dots — the **biggest cities first**, and the
   further you zoom in, the more (progressively smaller) cities appear around you.

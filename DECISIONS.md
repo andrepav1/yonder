@@ -473,13 +473,22 @@ at and read as a leftover from the single-shot game.
   you could zoom in and tap any real city to read its name at any time. That quietly
   handed players a search tool: the answer set is "cities near a distance from the
   start", and being able to scan/label every nearby city trivialises the puzzle.
-- **Decision.** Hide the dots during play and put them behind two opt-in **hints**,
-  surfaced as a small bar below the globe:
+- **Decision.** Hide the dots during play and put them behind two opt-in **hints**:
   - **Hint 1 — Show cities**: render the dots (still anonymous).
   - **Hint 2 — Reveal names**: also let a tap read a dot's name.
 
   Once the round is **over** (win *or* loss) the dots always show and are always
   tappable, independent of hints — the end-of-round "learn the map" reveal is unchanged.
+- **Placement — the header ≡ menu, not the board.** The hints first lived in a bar
+  below the globe, but that put a permanent control in the main play view for something
+  most players won't touch. Moved them into the existing header overflow menu, in a
+  `HINTS` group between the mode radios and How to play / Statistics / About — an
+  unlocked hint shows a check and disables (mirroring the Daily/Practice radios), and the
+  group is hidden once the round is finished. The taller popover surfaced a latent
+  stacking bug: `.hdr` and `.prompt` were both `z-index: 1` siblings, so the later
+  `.prompt` painted over the header's popover once it grew tall enough to overlap the
+  target text. Fixed by lifting `.hdr` to `z-index: 2` (still above the globe, now above
+  the prompt too).
 - **Free assist, not a penalty.** Hints don't touch the golf score, streak, stats, or
   the shared result. Rationale: the share string already carries no city names and the
   score is guess-count + final total; making hints costly would mean threading a

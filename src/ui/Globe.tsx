@@ -96,13 +96,12 @@ interface GlobeProps {
   /** The explorable city universe (biggest population first). Tap to read a name. */
   cities: City[]
   /**
-   * In-round hint reveal: 0 = no city dots (the default while playing),
-   * 1 = dots visible, 2 = dots visible + tappable for names. Once the round is
-   * finished the dots always show and are always tappable, regardless of this.
+   * In-round hint reveal (unlocked from the header menu): 0 = no city dots (the
+   * default while playing), 1 = dots visible, 2 = dots visible + tappable for
+   * names. Once the round is finished the dots always show and are always
+   * tappable, regardless of this.
    */
   hintLevel?: number
-  /** Unlock a hint level (only raises it — the caller never lowers it). */
-  onHint?: (level: number) => void
   /** Learning reveal, shown once the round is over. */
   reveal?: RevealData
   finished?: boolean
@@ -115,7 +114,6 @@ export function Globe({
   unit,
   cities,
   hintLevel = 0,
-  onHint,
   reveal,
   finished,
 }: GlobeProps) {
@@ -622,32 +620,6 @@ export function Globe({
           </button>
         </div>
       </div>
-
-      {/* Hint controls: progressively reveal the explorable city dots while
-          playing. Hidden once the round is over — everything is revealed then. */}
-      {!finished && onHint && (
-        <div className="globe__hints" role="group" aria-label={t.globe.hints.label}>
-          <span className="globe__hints-label">{t.globe.hints.label}</span>
-          <button
-            type="button"
-            className="globe__hint-btn"
-            aria-pressed={hintLevel >= 1}
-            disabled={hintLevel >= 1}
-            onClick={() => onHint(1)}
-          >
-            {t.globe.hints.cities}
-          </button>
-          <button
-            type="button"
-            className="globe__hint-btn"
-            aria-pressed={hintLevel >= 2}
-            disabled={hintLevel >= 2}
-            onClick={() => onHint(2)}
-          >
-            {t.globe.hints.names}
-          </button>
-        </div>
-      )}
 
       {/* Caption: the engaged city's detail, or the end-of-round reveal hint */}
       {(active || (finished && revealPins.length > 0)) && (
