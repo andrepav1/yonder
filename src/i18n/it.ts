@@ -29,6 +29,15 @@ export const it: Messages = {
     about: 'Informazioni',
   },
 
+  support: {
+    cta: 'Offrimi un caffè',
+    note: 'Ti piace la passeggiata quotidiana? Aiuta a mantenere Yondle gratuito.',
+  },
+
+  ads: {
+    label: 'Pubblicità',
+  },
+
   about: {
     tagline: 'Un gioco di geografia quotidiano.',
     intro:

@@ -29,6 +29,15 @@ export const zh: Messages = {
     about: '关于',
   },
 
+  support: {
+    cta: '请我喝杯咖啡',
+    note: '喜欢每日环游吗？帮助 Yondle 保持免费。',
+  },
+
+  ads: {
+    label: '广告',
+  },
+
   about: {
     tagline: '每日地理猜谜游戏。',
     intro:

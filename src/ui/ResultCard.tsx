@@ -4,6 +4,8 @@ import { scoreRound } from '@/lib/scoring'
 import { formatDistance, remainingPhrase } from '@/lib/format'
 import { useI18n } from '@/i18n/context'
 import { ShareIcon, CheckIcon, ShuffleIcon } from './icons'
+import { SupportLink } from './SupportLink'
+import { AdSlot } from './AdSlot'
 
 interface ResultCardProps {
   state: RoundState
@@ -67,6 +69,13 @@ export function ResultCard({
           {copied ? t.result.copied : t.result.share}
         </button>
       )}
+
+      <div className="result__support">
+        <span className="result__support-note">{t.support.note}</span>
+        <SupportLink />
+      </div>
+
+      <AdSlot />
     </section>
   )
 }

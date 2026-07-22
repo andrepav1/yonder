@@ -39,6 +39,12 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 ## Architecture (light seams for future modes/multiplayer)
 
 - `src/config/rules.ts` — the one declarative `GameRules` object + `defaultRules`.
+- `src/config/monetization.ts` — the declarative `MonetizationConfig` (Tier-1
+  revenue: a `supportUrl` donation link + AdSense `client`/`resultSlot` ids) +
+  `defaultMonetization`. **Deliberately separate from `rules.ts`** and read only by
+  `src/ui/*` — the pure core (`lib/*`) must never import it. Everything is opt-in:
+  empty strings render nothing (no ad script loads, no ad markup), so the app stays
+  fully static + offline-friendly by default. Not game rules → not determinism-sacred.
 - `src/lib/prng.ts` — `hashString` (FNV-1a) + `mulberry32` seeded PRNG. Pure.
 - `src/lib/geo.ts` — `haversineKm`, `initialBearingDeg`, `compass16`,
   `bearingArrow`, km/mi conversion. Pure.
@@ -120,8 +126,12 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 - `src/ui/*` — React shell: `Globe` (the interactive board — see below), `GuessInput`
   (fuzzy typeahead), `GuessRow` (leg, running total, remaining, bearing, hot/cold), `ResultCard`
   (score + share, or a **New puzzle** button in practice; the answer _reveal_ lives
-  on the globe, not a text list), `HowToPlay`, `StatsPanel`, `About` (what the game
-  is + credits), `Modal` (bottom-sheet), `Menu` (header overflow popover: mode
+  on the globe, not a text list; also hosts the opt-in `SupportLink` + `AdSlot`),
+  `SupportLink` (external donation link — renders nothing unless
+  `monetization.supportUrl` is set; also shown in `About`), `AdSlot` (post-result
+  AdSense unit — renders nothing, and loads no script, unless `monetization.ads`
+  client + slot are configured), `HowToPlay`, `StatsPanel`, `About` (what the game
+  is + credits + support link), `Modal` (bottom-sheet), `Menu` (header overflow popover: mode
   switch + in-round **hints** (Show cities / Reveal names, hidden once finished) +
   How to play / Statistics / About), `LanguageSwitcher` (header language
   picker — a native `<select>` over a globe icon), `icons.tsx` (inline SVG — no

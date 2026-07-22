@@ -30,6 +30,15 @@ export const en: Messages = {
     about: 'About',
   },
 
+  support: {
+    cta: 'Buy me a coffee',
+    note: 'Enjoying the daily wander? Help keep Yondle free.',
+  },
+
+  ads: {
+    label: 'Advertisement',
+  },
+
   about: {
     tagline: 'A daily geography guessing game.',
     intro:

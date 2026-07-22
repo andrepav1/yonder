@@ -29,6 +29,15 @@ export const es: Messages = {
     about: 'Acerca de',
   },
 
+  support: {
+    cta: 'Invítame a un café',
+    note: '¿Disfrutas del paseo diario? Ayuda a mantener Yondle gratis.',
+  },
+
+  ads: {
+    label: 'Publicidad',
+  },
+
   about: {
     tagline: 'Un juego diario de geografía.',
     intro:

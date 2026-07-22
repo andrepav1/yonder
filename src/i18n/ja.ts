@@ -29,6 +29,15 @@ export const ja: Messages = {
     about: 'このゲームについて',
   },
 
+  support: {
+    cta: 'コーヒーを一杯おごる',
+    note: '毎日の旅を楽しんでいますか？Yondle を無料で続けるために応援してください。',
+  },
+
+  ads: {
+    label: '広告',
+  },
+
   about: {
     tagline: '毎日の地理あてゲーム。',
     intro:

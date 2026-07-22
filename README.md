@@ -148,7 +148,8 @@ Peek at the deterministic generator (same for everyone on that date):
 
 ```
 src/
-  config/rules.ts     # ← all tunables, one declarative object
+  config/rules.ts     # ← all game tunables, one declarative object
+  config/monetization.ts  # ← ads + donation switches (opt-in; UI-only, never in lib/)
   lib/                # pure, tested core (no I/O)
     prng.ts           # mulberry32 + date-string hash
     geo.ts            # haversine, bearing, compass, unit conversion
@@ -169,7 +170,7 @@ src/
     storage.ts        # memory + localStorage adapters
     statsStore.ts     # stats, streaks, distribution, daily round save
     prefs.ts          # unit + language + onboarding flag
-  ui/                 # React shell (Globe, GuessInput, GuessRow, ResultCard, Menu, About, LanguageSwitcher, …)
+  ui/                 # React shell (Globe, GuessInput, GuessRow, ResultCard, AdSlot, SupportLink, Menu, About, LanguageSwitcher, …)
   styles/globals.css  # the "Terra" design system (see DESIGN.md)
   App.tsx  main.tsx   # app shell + entry
   data/cities.json    # committed compact dataset (built artifact)
@@ -192,6 +193,22 @@ City data (names, coordinates, and localized alternate names) ©
 `cities.json` is committed, so the app is fully static — it deploys to **Vercel**
 (framework preset **Vite**, build command `npm run build`, output `dist/`) with no
 backend.
+
+## Support & monetization
+
+Yondle stays free and static. The optional, **opt-in** revenue bits live in one
+declarative file, `src/config/monetization.ts` — deliberately kept out of the
+determinism-sacred pure core (`lib/*` never imports it):
+
+- **Donations** — set `supportUrl` to your "buy me a coffee" / tip link and a
+  support link appears in the About dialog and on the end-of-round result. Empty
+  string hides it.
+- **Ads** — set the AdSense `client` + `resultSlot` ids to render one non-intrusive
+  unit on the result card. Left empty (the default) **no ad script loads and no ad
+  markup is emitted**, so the app stays fully static + offline-friendly.
+
+Everything degrades to nothing when unconfigured, so the game ships unchanged until
+you fill these in.
 
 ## Tech
 
