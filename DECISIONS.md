@@ -501,3 +501,30 @@ at and read as a leftover from the single-shot game.
   `prefs.ts:load/saveHintLevel` (an unlocked hint survives a reload); practice keeps it
   in memory and resets it with each fresh puzzle. `Globe` stays purely presentational:
   it takes `hintLevel` + an `onHint` unlock callback and renders accordingly.
+
+## 2026-07-22 — Tier-1 monetization: opt-in donations + ads, off the pure core
+
+- **Context.** Yondle is a static, backend-less daily game — hard to monetize
+  directly (à la Wordle), but with real daily retention. We want revenue that
+  doesn't compromise the offline-friendly, deterministic, dependency-light design.
+- **Decision — start with Tier 1 only: a donation link + one post-result ad slot.**
+  Both are pure UI, both fully opt-in. Deferred the heavier bets (freemium archive
+  behind auth+payments, education/B2B, sponsored puzzles) — see `MONETIZATION.md`.
+- **Config lives in its own file, NOT `rules.ts`.** `src/config/monetization.ts`
+  holds a declarative `MonetizationConfig` (`supportUrl` + AdSense `client`/
+  `resultSlot`) + `defaultMonetization`. Kept separate because these are commercial/
+  presentational switches, not **game rules** — folding them into `rules.ts` would
+  drag ad ids and a URL through the determinism-sacred core and its year-long
+  solvability tests. Only `src/ui/*` reads it; `lib/*` must never import it.
+- **Everything degrades to nothing.** Empty strings render nothing: no support link,
+  and — crucially — the AdSense script never loads and no ad markup is emitted. So
+  the app stays 100% static + offline-friendly by default; a deploy only starts
+  serving ads once real ids are pasted in. This keeps the "no runtime network" property
+  intact for anyone who doesn't opt in.
+- **Placement.** Support link on the `ResultCard` (after the share button) and in
+  `About`; the single ad unit sits at the very bottom of the result, after a divider —
+  the least intrusive spot, shown only once a round is finished. `SupportLink` /
+  `AdSlot` are their own components so the surface stays swappable.
+- **Not determinism-sacred.** Changing these never affects puzzle generation, scoring,
+  or the shared result, so they carry no invariant tests — the `render-nothing` default
+  is the safety property that matters.

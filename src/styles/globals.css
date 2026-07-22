@@ -761,6 +761,67 @@ button {
   color: var(--fg-muted);
 }
 
+/* ---------- Support / donation link ---------- */
+.result__support {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+}
+.result__support-note {
+  font-size: 0.82rem;
+  color: var(--fg-muted);
+}
+.support {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+}
+.support:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+.support:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: var(--r-sm);
+}
+.support svg {
+  color: var(--accent);
+}
+.support--compact {
+  margin-top: 0.6rem;
+}
+
+/* ---------- Ad slot (opt-in; empty unless configured) ---------- */
+.result__ad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+}
+.result__ad-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--fg-muted);
+}
+.result__ad .adsbygoogle {
+  width: 100%;
+  min-height: 90px;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

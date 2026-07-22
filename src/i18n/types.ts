@@ -55,6 +55,20 @@ export interface Messages {
     about: string
   }
 
+  /** Support / donation link (shown when a support URL is configured). */
+  support: {
+    /** Link label, e.g. "Buy me a coffee". */
+    cta: string
+    /** One-line nudge shown alongside it, e.g. on the result card. */
+    note: string
+  }
+
+  /** Advertising slot chrome. */
+  ads: {
+    /** Small transparency label rendered above an ad unit. */
+    label: string
+  }
+
   about: {
     /** One-line description under the title. */
     tagline: string

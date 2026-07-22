@@ -29,6 +29,15 @@ export const de: Messages = {
     about: 'Über',
   },
 
+  support: {
+    cta: 'Spendier mir einen Kaffee',
+    note: 'Gefällt dir die tägliche Reise? Hilf mit, Yondle kostenlos zu halten.',
+  },
+
+  ads: {
+    label: 'Werbung',
+  },
+
   about: {
     tagline: 'Ein tägliches Geografie-Ratespiel.',
     intro:

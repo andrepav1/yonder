@@ -29,6 +29,15 @@ export const ko: Messages = {
     about: '정보',
   },
 
+  support: {
+    cta: '커피 한 잔 사주기',
+    note: '매일의 여정을 즐기고 계신가요? Yondle을 무료로 유지하도록 도와주세요.',
+  },
+
+  ads: {
+    label: '광고',
+  },
+
   about: {
     tagline: '매일 즐기는 지리 추측 게임.',
     intro:

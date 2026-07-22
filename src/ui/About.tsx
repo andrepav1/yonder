@@ -1,5 +1,6 @@
 import { useI18n } from '@/i18n/context'
 import { Modal } from './Modal'
+import { SupportLink } from './SupportLink'
 
 interface AboutProps {
   onClose: () => void
@@ -14,6 +15,7 @@ export function About({ onClose }: AboutProps) {
       <p>{t.about.intro}</p>
       <p>{t.about.rules}</p>
       <p className="about__credits">{t.about.credits}</p>
+      <SupportLink compact />
       <button className="btn" onClick={onClose}>
         {t.modal.close}
       </button>
