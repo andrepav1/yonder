@@ -41,7 +41,8 @@
   --temp-0: #3f6c93;
   --on-temp: #fffaf5;
 
-  /* Globe — muted ocean/land so the accent ring + pins carry the eye */
+  /* Globe — a muted hypsometric elevation map (ocean-depth blues + land-height
+     browns, ice caps on top) kept low-contrast so the accent ring + pins lead */
   --globe-ocean: #7ba7c4; /* sphere base: deepest ocean (below the first band) */
   --globe-graticule: #bacdd3;
   --globe-edge: #a7b9c1;
