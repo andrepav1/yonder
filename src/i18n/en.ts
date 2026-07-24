@@ -90,6 +90,7 @@ export const en: Messages = {
     duplicate: 'You already guessed that city.',
     startCity: 'That’s the start city — pick somewhere else.',
     finished: 'Today’s round is over.',
+    overshoot: 'That hop overshoots the target — try a closer city.',
   },
 
   format: {
@@ -122,7 +123,7 @@ export const en: Messages = {
     step2:
       'Keep hopping to climb toward the target. The hot / cold cue warms up as your running total nears it — watch the “to go” number shrink.',
     step3: (band, guesses) =>
-      `Land your total within ${band} below the target to win. Go over and you bust — so does running out of ${guesses} guesses. Fewer hops is a better score.`,
+      `Land your total within ${band} below the target to win. A hop that would go over is blocked — just pick a closer city. You only lose by using up all ${guesses} guesses. Fewer hops is a better score.`,
     note: (min) =>
       `Only cities with more than ${min} people are in the game — smaller towns can’t be guessed.`,
     cta: 'Let’s wander',

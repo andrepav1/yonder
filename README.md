@@ -4,8 +4,10 @@ A daily, mobile-first **geography guessing game**. Every day, everyone in the wo
 gets the **same** puzzle: one **start city** and one **target distance**. Build a
 journey city by city — each guess adds the great-circle (haversine) distance from your
 **previous** city (the start, on the first hop) to a **running total**. Reach the
-target without going over. Overshoot and you bust; land your total just under it to
-win. You get **6 guesses**, and fewer hops is a better score.
+target without going over. A hop that would overshoot is **blocked** — it costs you
+nothing, so you just pick a closer city; you only lose by using up all your guesses
+before landing your total just under the target. You get **6 guesses**, and fewer hops
+is a better score.
 
 > **Project status:** v1 is complete — the pure, tested game core (distance/bearing,
 > dataset + fuzzy autocomplete, deterministic generator, scoring, engine, share, stats)
@@ -21,7 +23,8 @@ win. You get **6 guesses**, and fewer hops is a better score.
 | Guesses per day | **6** hops                                                     | `rules.guesses`                    |
 | Scoring         | **cumulative** — sum of each leg (previous city → next)        | `src/lib/scoring.ts`               |
 | Win band        | running total in **[target·98%, target]** (one-sided; no over) | `rules.tolerancePct`               |
-| Bust            | total **over** the target, or out of 6 guesses                 | `src/lib/engine.ts`                |
+| Overshoot       | a hop that would go **over** is **blocked** (no turn spent, forgiving default) | `rules.overshoot.endsRound`        |
+| Lose            | out of 6 guesses short of the band (overshoot ends it only under sudden-death) | `src/lib/engine.ts`                |
 | Score           | golf: **fewer hops is better**                                 | guess distribution                 |
 | Target distance | **500–10000 km**, validated to have ≥3 single-hop wins         | `rules.target`, `rules.generation` |
 | Start city      | population-weighted, **≥ 1,000,000** (recognizable)            | `rules.startCity`                  |

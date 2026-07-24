@@ -83,7 +83,10 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   level, graded by how much of the journey remains; 0 also = bust/overshoot).
 - `src/lib/engine.ts` — **pure** round state machine: `createRound`, `applyGuess`
   (adds the next leg from the previous city; rejects finished / start-city / duplicate
-  without using a turn; ends the round on a win, an **overshoot**, or out of guesses),
+  **and — by default — an `overshoot`** without using a turn; ends the round on a win
+  or out of guesses). Because legs only ever add, an overshoot can never recover, so
+  the forgiving default (`rules.overshoot.endsRound: false`) **blocks** the busting hop
+  instead of losing on it — flip the knob to `true` for classic sudden death.
   `guessesLeft`. Every transition returns a new serializable `RoundState`.
 - `src/lib/share.ts` — **pure** Wordle-style share string (hot/cold squares per hop +
   leg arrows, a reach-% line, no city names).

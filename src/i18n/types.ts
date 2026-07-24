@@ -133,6 +133,7 @@ export interface Messages {
     duplicate: string
     startCity: string
     finished: string
+    overshoot: string
   }
 
   /** Word templates for `remainingPhrase` (number is pre-formatted). */

@@ -93,16 +93,46 @@ describe('engine', () => {
     expect(guessesLeft(state, defaultRules)).toBeGreaterThan(0)
   })
 
-  it('loses immediately on an overshoot, even with guesses left', () => {
-    const { state } = applyGuess(
+  it('blocks an overshooting hop without ending the round or using a turn', () => {
+    const { state, error } = applyGuess(
       createRound('2026-07-15'),
       puzzle,
       east(20, 2), // ~2225 km — past the target
       defaultRules,
     )
+    expect(error).toBe('overshoot')
+    expect(state.status).toBe('playing')
+    expect(state.guesses).toHaveLength(0)
+    expect(guessesLeft(state, defaultRules)).toBe(defaultRules.guesses)
+  })
+
+  it('keeps the running total intact after a blocked overshoot', () => {
+    const played = applyGuess(createRound('2026-07-15'), puzzle, east(4, 2), defaultRules)
+      .state // ~445 km — a good first hop
+    const blocked = applyGuess(played, puzzle, east(20, 3), defaultRules) // would bust
+    expect(blocked.error).toBe('overshoot')
+    expect(blocked.state.guesses).toHaveLength(1)
+    expect(blocked.state.guesses[0]!.cumulativeKm).toBeCloseTo(
+      played.guesses[0]!.cumulativeKm,
+      6,
+    )
+    // The player can still finish from where they were.
+    const win = applyGuess(blocked.state, puzzle, east(8.983, 4), defaultRules)
+    expect(win.error).toBeUndefined()
+  })
+
+  it('loses immediately on an overshoot when overshoot.endsRound is set', () => {
+    const suddenDeath = { ...defaultRules, overshoot: { endsRound: true } }
+    const { state, error } = applyGuess(
+      createRound('2026-07-15'),
+      puzzle,
+      east(20, 2), // ~2225 km — past the target
+      suddenDeath,
+    )
+    expect(error).toBeUndefined()
     expect(state.status).toBe('lost')
     expect(state.guesses[0]!.over).toBe(true)
-    expect(guessesLeft(state, defaultRules)).toBeGreaterThan(0)
+    expect(guessesLeft(state, suddenDeath)).toBeGreaterThan(0)
   })
 
   it('transitions to lost after exhausting all guesses without reaching the band', () => {

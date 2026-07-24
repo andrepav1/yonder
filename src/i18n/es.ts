@@ -89,6 +89,7 @@ export const es: Messages = {
     duplicate: 'Ya has propuesto esa ciudad.',
     startCity: 'Esa es la ciudad de salida — elige otra.',
     finished: 'La partida de hoy ha terminado.',
+    overshoot: 'Ese salto se pasa del objetivo — prueba una ciudad más cercana.',
   },
 
   format: {
@@ -121,7 +122,7 @@ export const es: Messages = {
     step2:
       'Sigue saltando para acercarte al objetivo. La pista de calor / frío se calienta a medida que tu total se aproxima — mira cómo baja el número «restante».',
     step3: (band, guesses) =>
-      `Termina tu total a menos de ${band} bajo el objetivo para ganar. Si te pasas, pierdes — igual que si agotas los ${guesses} intentos. Menos saltos, mejor puntuación.`,
+      `Termina tu total a menos de ${band} bajo el objetivo para ganar. Un salto que se pasaría queda bloqueado — solo elige una ciudad más cercana. Solo pierdes si agotas los ${guesses} intentos. Menos saltos, mejor puntuación.`,
     note: (min) =>
       `Solo las ciudades con más de ${min} habitantes están en el juego — las más pequeñas no se pueden adivinar.`,
     cta: 'A explorar',

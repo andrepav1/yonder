@@ -89,6 +89,7 @@ export const fr: Messages = {
     duplicate: 'Vous avez déjà proposé cette ville.',
     startCity: 'C’est la ville de départ — choisissez-en une autre.',
     finished: 'La partie du jour est terminée.',
+    overshoot: 'Ce saut dépasse la cible — essayez une ville plus proche.',
   },
 
   format: {
@@ -121,7 +122,7 @@ export const fr: Messages = {
     step2:
       'Continuez à sauter pour grimper vers la cible. L’indice chaud / froid se réchauffe à mesure que votre total s’en approche — regardez le nombre « restants » diminuer.',
     step3: (band, guesses) =>
-      `Terminez votre total à moins de ${band} sous la cible pour gagner. Dépassez-la et c’est perdu — tout comme épuiser vos ${guesses} essais. Moins de sauts, meilleur score.`,
+      `Terminez votre total à moins de ${band} sous la cible pour gagner. Un saut qui dépasserait la cible est bloqué — choisissez simplement une ville plus proche. Vous ne perdez qu’en épuisant vos ${guesses} essais. Moins de sauts, meilleur score.`,
     note: (min) =>
       `Seules les villes de plus de ${min} habitants sont dans le jeu — les plus petites ne sont pas devinables.`,
     cta: 'C’est parti',

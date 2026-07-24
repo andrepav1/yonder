@@ -89,6 +89,7 @@ export const de: Messages = {
     duplicate: 'Diese Stadt hast du schon geraten.',
     startCity: 'Das ist die Startstadt — wähle eine andere.',
     finished: 'Die heutige Runde ist vorbei.',
+    overshoot: 'Dieser Sprung überschreitet das Ziel — wähle eine nähere Stadt.',
   },
 
   format: {
@@ -121,7 +122,7 @@ export const de: Messages = {
     step2:
       'Springe weiter, um dem Ziel näherzukommen. Der Heiß-/Kalt-Hinweis wird wärmer, je näher deine Summe kommt — sieh zu, wie die „noch“-Zahl schrumpft.',
     step3: (band, guesses) =>
-      `Lande deine Summe bis ${band} unter dem Ziel, um zu gewinnen. Überschreite es und du verlierst — ebenso, wenn deine ${guesses} Versuche aufgebraucht sind. Weniger Sprünge sind besser.`,
+      `Lande deine Summe bis ${band} unter dem Ziel, um zu gewinnen. Ein Sprung, der darüber hinausginge, wird blockiert — wähle einfach eine nähere Stadt. Du verlierst nur, wenn deine ${guesses} Versuche aufgebraucht sind. Weniger Sprünge sind besser.`,
     note: (min) =>
       `Nur Städte mit mehr als ${min} Einwohnern sind im Spiel — kleinere Orte kannst du nicht raten.`,
     cta: 'Auf geht’s',

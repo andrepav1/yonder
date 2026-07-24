@@ -6,7 +6,7 @@ import type { GameRules } from '@/config/rules'
 import { evaluateLeg } from './scoring'
 
 /** Reasons a guess can be rejected without consuming a turn. */
-export type GuessError = 'finished' | 'start-city' | 'duplicate'
+export type GuessError = 'finished' | 'start-city' | 'duplicate' | 'overshoot'
 
 export interface ApplyResult {
   state: RoundState
@@ -30,10 +30,13 @@ export function isFinished(state: RoundState): boolean {
 
 /**
  * Apply a guessed city, extending the path. Rejects (without using a turn) a
- * guess made after the round is over, the start city itself, or a city already
- * on the path. Otherwise the leg from the previous point to this city is added
- * to the running total, and the round transitions to won (inside the band),
- * lost (overshot the target, or out of guesses), or keeps playing.
+ * guess made after the round is over, the start city itself, a city already on
+ * the path, or — unless `rules.overshoot.endsRound` — a hop that would push the
+ * running total past the target (it can never recover, so it's blocked rather
+ * than counted). Otherwise the leg from the previous point to this city is
+ * added to the running total, and the round transitions to won (inside the
+ * band), lost (out of guesses, or an overshoot under sudden-death rules), or
+ * keeps playing.
  */
 export function applyGuess(
   state: RoundState,
@@ -51,6 +54,12 @@ export function applyGuess(
   const from = last ? last.city : puzzle.start
   const priorCumulativeKm = last ? last.cumulativeKm : 0
   const result = evaluateLeg(puzzle, from, priorCumulativeKm, city, rules)
+  // Legs only add, so an overshoot is unrecoverable. Unless the rules make it
+  // sudden death, block the hop (no turn spent) so a single over-eager guess
+  // never ends the round — the player just picks somewhere closer.
+  if (result.over && !rules.overshoot.endsRound) {
+    return { state, error: 'overshoot' }
+  }
   const guesses = [...state.guesses, result]
   const status = result.won
     ? 'won'

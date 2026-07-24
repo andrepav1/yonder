@@ -89,6 +89,7 @@ export const pt: Messages = {
     duplicate: 'Você já palpitou nessa cidade.',
     startCity: 'Essa é a cidade de partida — escolha outra.',
     finished: 'A partida de hoje acabou.',
+    overshoot: 'Esse salto ultrapassa o alvo — tente uma cidade mais próxima.',
   },
 
   format: {
@@ -121,7 +122,7 @@ export const pt: Messages = {
     step2:
       'Continue saltando para se aproximar do alvo. A dica quente / frio esquenta conforme seu total se aproxima — veja o número «faltam» diminuir.',
     step3: (band, guesses) =>
-      `Pare seu total a menos de ${band} abaixo do alvo para vencer. Passe e você perde — assim como esgotar as ${guesses} tentativas. Menos saltos, melhor pontuação.`,
+      `Pare seu total a menos de ${band} abaixo do alvo para vencer. Um salto que ultrapassaria o alvo é bloqueado — basta escolher uma cidade mais próxima. Você só perde ao esgotar as ${guesses} tentativas. Menos saltos, melhor pontuação.`,
     note: (min) =>
       `Só as cidades com mais de ${min} habitantes estão no jogo — as menores não podem ser adivinhadas.`,
     cta: 'Vamos explorar',
