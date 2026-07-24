@@ -22,6 +22,13 @@ export const ko: Messages = {
     practiceEyebrow: '출발 도시',
     newPuzzle: '새 문제',
     practiceNote: '연습 문제는 데일리 연속 기록에 영향을 주지 않습니다.',
+    title: '모드',
+    catalog: {
+      classic: {
+        name: '클래식',
+        blurb: '도시를 건너뛰며 목표 거리를 초과하지 않고 도달하세요.',
+      },
+    },
   },
 
   menu: {

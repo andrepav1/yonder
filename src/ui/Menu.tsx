@@ -12,11 +12,13 @@ import {
   TagIcon,
 } from './icons'
 
-export type MenuMode = 'daily' | 'practice'
-
 interface AppMenuProps {
-  mode: MenuMode
-  onSelectMode: (mode: MenuMode) => void
+  /** True when the daily is the active board (drives the Daily item's check). */
+  isDaily: boolean
+  /** Return to the daily. */
+  onDaily: () => void
+  /** Open the Modes picker modal. */
+  onModes: () => void
   onHowTo: () => void
   onStats: () => void
   onAbout: () => void
@@ -29,14 +31,15 @@ interface AppMenuProps {
 }
 
 /**
- * Header overflow menu: game mode (Daily / Practice), the in-round hints, plus
- * How to play, Statistics, and About. A lightweight popover — closes on outside
+ * Header overflow menu: Daily / Modes navigation, the in-round hints, plus How
+ * to play, Statistics, and About. A lightweight popover — closes on outside
  * pointer, Escape, or picking an item (hint toggles keep it open so both can be
  * unlocked in one visit). Keeps the header — and the board — uncluttered.
  */
 export function AppMenu({
-  mode,
-  onSelectMode,
+  isDaily,
+  onDaily,
+  onModes,
   onHowTo,
   onStats,
   onAbout,
@@ -85,22 +88,16 @@ export function AppMenu({
           <button
             className="menu__item"
             role="menuitemradio"
-            aria-checked={mode === 'daily'}
-            onClick={pick(() => onSelectMode('daily'))}
+            aria-checked={isDaily}
+            onClick={pick(onDaily)}
           >
             <CalendarIcon size={18} />
             <span className="menu__label">{t.modes.daily}</span>
-            {mode === 'daily' && <CheckIcon size={16} className="menu__check" />}
+            {isDaily && <CheckIcon size={16} className="menu__check" />}
           </button>
-          <button
-            className="menu__item"
-            role="menuitemradio"
-            aria-checked={mode === 'practice'}
-            onClick={pick(() => onSelectMode('practice'))}
-          >
+          <button className="menu__item" role="menuitem" onClick={pick(onModes)}>
             <ShuffleIcon size={18} />
-            <span className="menu__label">{t.modes.practice}</span>
-            {mode === 'practice' && <CheckIcon size={16} className="menu__check" />}
+            <span className="menu__label">{t.modes.title}</span>
           </button>
 
           {!finished && (

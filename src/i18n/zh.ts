@@ -22,6 +22,13 @@ export const zh: Messages = {
     practiceEyebrow: '你的出发地',
     newPuzzle: '换一题',
     practiceNote: '练习题不计入你的每日连胜。',
+    title: '模式',
+    catalog: {
+      classic: {
+        name: '经典',
+        blurb: '在城市间跳跃，不超过目标距离地抵达。',
+      },
+    },
   },
 
   menu: {

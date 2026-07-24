@@ -46,6 +46,12 @@ export interface Messages {
     newPuzzle: string
     /** Reassurance that practice rounds are off the record. */
     practiceNote: string
+    /** Menu item + modal heading for the mode picker. */
+    title: string
+    /** Per-mode card copy in the Modes modal, keyed by mode id. */
+    catalog: {
+      classic: { name: string; blurb: string }
+    }
   }
 
   menu: {

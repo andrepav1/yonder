@@ -23,6 +23,13 @@ export const en: Messages = {
     practiceEyebrow: 'Your departure',
     newPuzzle: 'New puzzle',
     practiceNote: 'Practice puzzles don’t affect your daily streak.',
+    title: 'Modes',
+    catalog: {
+      classic: {
+        name: 'Classic',
+        blurb: 'Hop city to city to reach the target distance without overshooting.',
+      },
+    },
   },
 
   menu: {

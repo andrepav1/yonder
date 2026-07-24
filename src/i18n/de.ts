@@ -22,6 +22,14 @@ export const de: Messages = {
     practiceEyebrow: 'Dein Startpunkt',
     newPuzzle: 'Neues Rätsel',
     practiceNote: 'Übungsrunden zählen nicht für deine tägliche Serie.',
+    title: 'Modi',
+    catalog: {
+      classic: {
+        name: 'Klassisch',
+        blurb:
+          'Springe von Stadt zu Stadt, um die Zieldistanz zu erreichen, ohne sie zu überschreiten.',
+      },
+    },
   },
 
   menu: {

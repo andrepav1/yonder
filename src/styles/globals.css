@@ -1126,6 +1126,79 @@ button {
   color: var(--fg-muted);
 }
 
+/* ---------- Modes modal ---------- */
+.modes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+.modecard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0.85rem;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--fg);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.modecard:hover {
+  background: var(--surface-2);
+  border-color: var(--accent);
+}
+.modecard:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+.modecard[aria-current='true'] {
+  border-color: var(--accent);
+}
+.modecard__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--accent);
+}
+.modecard__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.modecard__name {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  font-size: 0.98rem;
+}
+.modecard__check {
+  color: var(--accent);
+}
+.modecard__blurb {
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  line-height: 1.35;
+}
+
+/* Result actions — share + (in free play) a new-puzzle button, stacked. */
+.result__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
 /* ---------- Stats ---------- */
 
 .stats__grid {

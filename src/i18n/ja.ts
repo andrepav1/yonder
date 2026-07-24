@@ -22,6 +22,13 @@ export const ja: Messages = {
     practiceEyebrow: '出発地',
     newPuzzle: '新しい問題',
     practiceNote: '練習の問題はデイリーの連続記録に影響しません。',
+    title: 'モード',
+    catalog: {
+      classic: {
+        name: 'クラシック',
+        blurb: '都市から都市へ跳んで、目標距離を超えずに到達しよう。',
+      },
+    },
   },
 
   menu: {

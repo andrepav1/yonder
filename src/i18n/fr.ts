@@ -22,6 +22,14 @@ export const fr: Messages = {
     practiceEyebrow: 'Votre départ',
     newPuzzle: 'Nouvelle partie',
     practiceNote: 'Les parties d’entraînement n’affectent pas votre série quotidienne.',
+    title: 'Modes',
+    catalog: {
+      classic: {
+        name: 'Classique',
+        blurb:
+          'Sautez de ville en ville pour atteindre la distance cible sans la dépasser.',
+      },
+    },
   },
 
   menu: {

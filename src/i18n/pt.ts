@@ -22,6 +22,14 @@ export const pt: Messages = {
     practiceEyebrow: 'A sua partida',
     newPuzzle: 'Novo desafio',
     practiceNote: 'As partidas de treino não afetam a sua sequência diária.',
+    title: 'Modos',
+    catalog: {
+      classic: {
+        name: 'Clássico',
+        blurb:
+          'Salte de cidade em cidade para atingir a distância-alvo sem ultrapassar.',
+      },
+    },
   },
 
   menu: {

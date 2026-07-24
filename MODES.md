@@ -154,8 +154,12 @@ Captured so the descriptor stays honest about what it must eventually span:
    all 133 tests green, no UI change. (The richer setup/goal/present descriptor slots
    sketched above arrive with the modal + Hidden Destination, when a real second mode
    validates the shape.)
-2. **Navigation + modal.** ⋯ menu → Daily / Modes; the Modes modal with cards; free-play
-   plumbing (ephemeral round, New puzzle + Share); retire the old Practice path.
+2. **Navigation + modal.** ✅ **Done.** The ⋯ menu now carries **Daily** / **Modes** nav
+   items; `ModesModal` lists every `freeModes` descriptor as an icon + name + blurb card
+   (copy in `t.modes.catalog[id]`); App swaps between the saved daily and an ephemeral
+   free-play round keyed by `freeModeId` (never persisted → reload lands on the daily),
+   with New puzzle + Share on free rounds. The old Practice mode/toggle is retired
+   (`classicMode` replaces it). Screenshot harness updated to drive the new flow.
 3. **Capital data.** Add the `PPLC` capital flag to the dataset build + a `capitals()`
    selector, guarded by a dataset-integrity test.
 4. **Hidden Destination.** The descriptor + capitals-only guess input + distance/bearing

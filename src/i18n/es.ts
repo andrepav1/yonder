@@ -22,6 +22,14 @@ export const es: Messages = {
     practiceEyebrow: 'Tu salida',
     newPuzzle: 'Nuevo desafío',
     practiceNote: 'Las partidas de práctica no afectan tu racha diaria.',
+    title: 'Modos',
+    catalog: {
+      classic: {
+        name: 'Clásico',
+        blurb:
+          'Salta de ciudad en ciudad para alcanzar la distancia objetivo sin pasarte.',
+      },
+    },
   },
 
   menu: {

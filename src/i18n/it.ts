@@ -22,6 +22,14 @@ export const it: Messages = {
     practiceEyebrow: 'La tua partenza',
     newPuzzle: 'Nuova sfida',
     practiceNote: 'Le partite di allenamento non influenzano la tua serie giornaliera.',
+    title: 'Modalità',
+    catalog: {
+      classic: {
+        name: 'Classica',
+        blurb:
+          'Salta di città in città per raggiungere la distanza obiettivo senza superarla.',
+      },
+    },
   },
 
   menu: {

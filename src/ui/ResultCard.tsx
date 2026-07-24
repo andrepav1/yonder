@@ -14,7 +14,7 @@ interface ResultCardProps {
   unit: Unit
   onShare: () => void
   copied: boolean
-  /** In practice mode, offered instead of sharing — start a fresh puzzle. */
+  /** In free-play, offered alongside sharing — start a fresh puzzle. */
   onNewPuzzle?: () => void
 }
 
@@ -58,17 +58,18 @@ export function ResultCard({
 
       <div className="result__answer-note">{t.result.answerNote}</div>
 
-      {onNewPuzzle ? (
-        <button className="btn" onClick={onNewPuzzle}>
-          <ShuffleIcon />
-          {t.modes.newPuzzle}
-        </button>
-      ) : (
+      <div className="result__actions">
         <button className="btn" onClick={onShare}>
           {copied ? <CheckIcon /> : <ShareIcon />}
           {copied ? t.result.copied : t.result.share}
         </button>
-      )}
+        {onNewPuzzle && (
+          <button className="btn btn--ghost" onClick={onNewPuzzle}>
+            <ShuffleIcon />
+            {t.modes.newPuzzle}
+          </button>
+        )}
+      </div>
 
       <div className="result__support">
         <span className="result__support-note">{t.support.note}</span>

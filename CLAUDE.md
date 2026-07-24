@@ -130,39 +130,44 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   descriptor pairs a **`ModeLogic`** (the pure play strategy — Classic's is
   `classicLogic`) with its `rules`; `apply`/`score` just delegate to it through the
   generic engine, so the UI never sees mode-specific logic. Ships **two** descriptors
-  today: `dailyMode` (seed = UTC date, streak-tracked) and `practiceMode` (seed = a
-  random token, unlimited free play) — both Classic for now. `generate` is
-  deterministic in its seed; the practice randomness lives at the App boundary, never
-  in `lib/*`. Adding a mode = a `ModeLogic` + a descriptor (see `MODES.md`).
+  today: `dailyMode` (seed = UTC date, streak-tracked) and `classicMode` (seed = a
+  random token, free play) — both Classic for now. `freeModes` is the ordered list the
+  Modes modal renders (card copy in `t.modes.catalog[id]`, icon mapped in the modal);
+  `modes` is the id→descriptor registry (daily + every free mode). `generate` is
+  deterministic in its seed; the free-play randomness lives at the App boundary, never
+  in `lib/*`. Adding a mode = a `ModeLogic` + a descriptor in `freeModes` (see `MODES.md`).
 - `src/store/` — persistence behind a `KeyValueStore` seam (`storage.ts`, memory +
   localStorage adapters): `statsStore.ts` (pure `updateStats` streak logic + the
   `StatsStore` wrapper: stats, streaks, guess distribution, per-day round save +
   idempotent `recordResult`) and `prefs.ts` (unit + language + onboarding flag +
   per-day `HintLevel` — how far the in-round hint reveal is unlocked, `load/saveHintLevel`).
-- `src/App.tsx` — orchestrates play: pick the active mode (daily vs practice),
-  generate the puzzle, load/restore the saved daily round (daily lock), handle
-  guesses, record the result, share. Holds both a persisted **daily** round and
-  an ephemeral in-memory **practice** round; only daily writes to the store or
-  the streak/stats, and practice never does. `makePracticeSeed()` (the sole
-  impure boundary) mints a fresh random seed per practice puzzle. On finish it
-  builds the globe **reveal** — `exploreAnswers` (Layer 1) plus `findCompletions`
-  from the stopping point (Layer 2) — and hands it to `Globe`, along with `allCities()`
-  as the globe's explorable (zoom-to-reveal) city universe. Also owns the **hint level**
-  (daily persisted via `load/saveHintLevel`, practice in-memory + reset per puzzle),
-  passing it to `Globe` (to gate the dots) and to the header `Menu` (which unlocks it
-  via an `onHint` callback).
+- `src/App.tsx` — orchestrates play. The **daily** (`freeModeId === null`) is the home
+  board — the only saved, streak-tracked round; picking a mode from the Modes modal
+  sets `freeModeId` and swaps in an ephemeral **free-play** round (a fresh random seed,
+  its own in-memory round + hint level), and `goDaily()` returns home. `freeModeId` is
+  never persisted, so a reload always lands on the daily. Only the daily writes to the
+  store or the streak/stats; free play never does. `makeFreeSeed()` (the sole impure
+  boundary) mints a fresh random seed per free puzzle; `newFreePuzzle()` reshuffles the
+  active mode. On finish it builds the globe **reveal** — `exploreAnswers` (Layer 1)
+  plus `findCompletions` from the stopping point (Layer 2) — and hands it to `Globe`,
+  along with `allCities()` as the globe's explorable (zoom-to-reveal) city universe.
+  Owns the **hint level** (daily persisted via `load/saveHintLevel`, free-play in-memory
+  + reset per puzzle) and the **Modes modal** open state, passing hints to `Globe` (to
+  gate the dots) and the nav (`onDaily` / `onModes`) + hint unlock (`onHint`) to `Menu`.
 - `src/ui/*` — React shell: `Globe` (the interactive board — see below), `GuessInput`
   (fuzzy typeahead), `GuessRow` (leg, running total, remaining, bearing, hot/cold), `ResultCard`
-  (score + share, or a **New puzzle** button in practice; the answer _reveal_ lives
+  (score + **Share**, plus a **New puzzle** button in free play; the answer _reveal_ lives
   on the globe, not a text list; also hosts the opt-in `SupportLink` + `AdSlot`),
   `SupportLink` (external donation link — renders nothing unless
   `monetization.supportUrl` is set; also shown in `About`), `AdSlot` (post-result
   AdSense unit — renders nothing, and loads no script, unless `monetization.ads`
   client + slot are configured), `HowToPlay`, `StatsPanel`, `About` (what the game
-  is + credits + support link), `Modal` (bottom-sheet), `Menu` (header overflow popover: mode
-  switch + in-round **hints** (Show cities / Reveal names, hidden once finished) +
-  How to play / Statistics / About), `LanguageSwitcher` (header language
-  picker — a native `<select>` over a globe icon), `icons.tsx` (inline SVG — no
+  is + credits + support link), `Modal` (bottom-sheet), `ModesModal` (the mode picker —
+  a `Modal` listing every `freeModes` descriptor as an icon + name + blurb card;
+  selecting one loads it as a free-play round), `Menu` (header overflow popover:
+  **Daily** / **Modes** nav + in-round **hints** (Show cities / Reveal names, hidden
+  once finished) + How to play / Statistics / About), `LanguageSwitcher` (header
+  language picker — a native `<select>` over a globe icon), `icons.tsx` (inline SVG — no
   emoji chrome). Every component pulls copy from `useI18n().t` — no hard-coded strings.
 - `src/ui/Globe.tsx` — the main guessing surface: a drag-to-spin **orthographic
   globe** (d3-geo). Its base is a **hypsometric elevation map** — the `elevation.json`

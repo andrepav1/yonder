@@ -55,19 +55,21 @@ function makeMode(id: string, label: string, logic: ModeLogic, rules: GameRules)
 export const dailyMode: GameMode = makeMode('daily', 'Daily', classicLogic, defaultRules)
 
 /**
- * Free-play mode: unlimited random puzzles for practice/exploration. Same rules
- * as the daily, but each round is a fresh random puzzle and nothing is recorded
- * against the daily streak or stats (that lives in the App orchestration).
+ * Classic as a free-play mode: the same rules as the daily, but each round is a
+ * fresh random puzzle and nothing is recorded against the streak or stats (that
+ * lives in the App orchestration). This is the first card in the Modes modal.
  */
-export const practiceMode: GameMode = makeMode(
-  'practice',
-  'Practice',
-  classicLogic,
-  defaultRules,
-)
+export const classicMode: GameMode = makeMode('classic', 'Classic', classicLogic, defaultRules)
 
-/** Registry of available modes. Adding a mode = adding a descriptor here. */
+/**
+ * The free-play modes offered in the Modes modal, in display order. Their card
+ * copy (name + blurb) lives in `t.modes.catalog[id]`; their icon is mapped in
+ * the modal. Adding a mode = a `ModeLogic` + a descriptor here (see `MODES.md`).
+ */
+export const freeModes: GameMode[] = [classicMode]
+
+/** Registry for id lookup — the daily plus every free-play mode. */
 export const modes: Record<string, GameMode> = {
   [dailyMode.id]: dailyMode,
-  [practiceMode.id]: practiceMode,
+  ...Object.fromEntries(freeModes.map((m) => [m.id, m])),
 }
