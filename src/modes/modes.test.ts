@@ -31,14 +31,14 @@ describe('classic free-play mode', () => {
       )
       // The closest revealed answer is a genuine single-hop win (at/under target).
       const nearest = p.answers[0]!
-      expect(haversineKm(p.start, nearest.city)).toBeLessThanOrEqual(p.targetKm)
+      expect(haversineKm(p.start!, nearest.city)).toBeLessThanOrEqual(p.targetKm)
     }
   })
 
   it('different seeds generally produce different puzzles', () => {
     const starts = new Set(
       ['free-1', 'free-2', 'free-3', 'free-4', 'free-5'].map(
-        (s) => classicMode.generate(s).start.id,
+        (s) => classicMode.generate(s).start!.id,
       ),
     )
     expect(starts.size).toBeGreaterThan(1)

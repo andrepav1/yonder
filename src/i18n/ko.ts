@@ -35,8 +35,8 @@ export const ko: Messages = {
 
   hidden: {
     eyebrow: '숨겨진 수도를 찾으세요',
-    anchorLabel: '기준 도시',
-    clue: (distance) => `약 ${distance} 거리`,
+    title: '지구 어딘가',
+    lead: '추측할 때마다 그곳까지의 거리와 방향을 알려줍니다.',
     hint: (guesses) => `수도를 추측해 좁혀가세요 · ${guesses}번`,
     away: (distance) => `${distance} 거리`,
     found: '찾았어요!',
@@ -82,6 +82,7 @@ export const ko: Messages = {
   globe: {
     label: (startCity) =>
       `${startCity}을(를) 중심으로 한 지구본. 도시 경로를 표시합니다. 드래그하여 회전.`,
+    worldLabel: '인터랙티브 지구본. 드래그하여 회전.',
     zoomIn: '확대',
     zoomOut: '축소',
     reveal: {
@@ -93,6 +94,7 @@ export const ko: Messages = {
     hints: {
       label: '힌트',
       cities: '도시 표시',
+      capitals: '수도 표시',
       names: '이름 표시',
     },
   },

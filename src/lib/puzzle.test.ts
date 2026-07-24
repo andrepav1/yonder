@@ -30,7 +30,7 @@ describe('generatePuzzle — determinism', () => {
   it('generally differs across dates', () => {
     const starts = new Set(
       ['2026-01-01', '2026-03-14', '2026-07-15', '2026-11-02'].map(
-        (d) => generatePuzzle(d).start.id,
+        (d) => generatePuzzle(d).start!.id,
       ),
     )
     expect(starts.size).toBeGreaterThan(1)
@@ -62,10 +62,10 @@ describe('generatePuzzle — invariants over a full year', () => {
   it('only uses well-known start cities and never lists the start as an answer', () => {
     for (const date of dates) {
       const p = generatePuzzle(date)
-      expect(p.start.population).toBeGreaterThanOrEqual(
+      expect(p.start!.population).toBeGreaterThanOrEqual(
         defaultRules.startCity.minPopulation,
       )
-      for (const a of p.answers) expect(a.city.id).not.toBe(p.start.id)
+      for (const a of p.answers) expect(a.city.id).not.toBe(p.start!.id)
     }
   })
 
@@ -83,7 +83,7 @@ describe('generatePuzzle — invariants over a full year', () => {
       const low = p.targetKm * (1 - p.tolerancePct)
       let prevDelta = -1
       for (const a of p.exploreAnswers) {
-        const dist = haversineKm(p.start, a.city)
+        const dist = haversineKm(p.start!, a.city)
         expect(dist).toBeGreaterThanOrEqual(low - 0.01)
         expect(dist).toBeLessThanOrEqual(p.targetKm + 0.01)
         const delta = Math.abs(a.distanceKm - p.targetKm)
@@ -100,7 +100,7 @@ describe('generatePuzzle — invariants over a full year', () => {
       const high = p.targetKm // one-sided: a single-hop win is never over target
       let prevDelta = -1
       for (const a of p.answers) {
-        const dist = haversineKm(p.start, a.city)
+        const dist = haversineKm(p.start!, a.city)
         expect(dist).toBeGreaterThanOrEqual(low - 0.01)
         expect(dist).toBeLessThanOrEqual(high + 0.01)
         expect(a.distanceKm).toBeCloseTo(dist, 6)

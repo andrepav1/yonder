@@ -18,7 +18,7 @@ for (const date of dates) {
   const band = `${Math.round(p.targetKm * (1 - p.tolerancePct))}–${p.targetKm} km`
   console.log(`\n${date}  seed=${p.seed}`)
   console.log(
-    `  START: ${cityLabel(p.start)}  (pop ${p.start.population.toLocaleString()})`,
+    `  START: ${cityLabel(p.start!)}  (pop ${p.start!.population.toLocaleString()})`,
   )
   console.log(
     `  TARGET: ${p.targetKm} km   win band ${p.tolerancePct * 100}% under = ${band} (single hop; don't overshoot)`,

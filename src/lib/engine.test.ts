@@ -13,6 +13,8 @@ const start: City = {
   lng: 0,
   population: 1_000_000,
 }
+// The opt-in forgiving variant: a busting hop is rejected rather than fatal.
+const blocking = { ...defaultRules, overshoot: { endsRound: false } }
 const east = (deg: number, id: number): City => ({
   id,
   name: `E${id}`,
@@ -85,18 +87,28 @@ describe('engine', () => {
     expect(guessesLeft(state, defaultRules)).toBeGreaterThan(0)
   })
 
-  it('blocks an overshooting hop without ending the round or using a turn', () => {
+  it('loses immediately on an overshoot (the default)', () => {
     // ~2225 km — past the target.
     const { state, error } = guess(createRound('2026-07-15'), east(20, 2))
+    expect(error).toBeUndefined()
+    expect(state.status).toBe('lost')
+    expect(state.guesses[0]!.over).toBe(true)
+    expect(guessesLeft(state, defaultRules)).toBeGreaterThan(0)
+  })
+
+  it('blocks an overshooting hop instead when overshoot.endsRound is off', () => {
+    // ~2225 km — past the target.
+    const { state, error } = guess(createRound('2026-07-15'), east(20, 2), blocking)
     expect(error).toBe('overshoot')
     expect(state.status).toBe('playing')
     expect(state.guesses).toHaveLength(0)
-    expect(guessesLeft(state, defaultRules)).toBe(defaultRules.guesses)
+    expect(guessesLeft(state, blocking)).toBe(blocking.guesses)
   })
 
   it('keeps the running total intact after a blocked overshoot', () => {
-    const played = guess(createRound('2026-07-15'), east(4, 2)).state // ~445 km first hop
-    const blocked = guess(played, east(20, 3)) // would bust
+    // ~445 km first hop
+    const played = guess(createRound('2026-07-15'), east(4, 2), blocking).state
+    const blocked = guess(played, east(20, 3), blocking) // would bust
     expect(blocked.error).toBe('overshoot')
     expect(blocked.state.guesses).toHaveLength(1)
     expect(blocked.state.guesses[0]!.cumulativeKm).toBeCloseTo(
@@ -104,18 +116,8 @@ describe('engine', () => {
       6,
     )
     // The player can still finish from where they were.
-    const win = guess(blocked.state, east(8.983, 4))
+    const win = guess(blocked.state, east(8.983, 4), blocking)
     expect(win.error).toBeUndefined()
-  })
-
-  it('loses immediately on an overshoot when overshoot.endsRound is set', () => {
-    const suddenDeath = { ...defaultRules, overshoot: { endsRound: true } }
-    // ~2225 km — past the target.
-    const { state, error } = guess(createRound('2026-07-15'), east(20, 2), suddenDeath)
-    expect(error).toBeUndefined()
-    expect(state.status).toBe('lost')
-    expect(state.guesses[0]!.over).toBe(true)
-    expect(guessesLeft(state, suddenDeath)).toBeGreaterThan(0)
   })
 
   it('transitions to lost after exhausting all guesses without reaching the band', () => {

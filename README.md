@@ -4,8 +4,8 @@ A daily, mobile-first **geography guessing game**. Every day, everyone in the wo
 gets the **same** puzzle: one **start city** and one **target distance**. Build a
 journey city by city — each guess adds the great-circle (haversine) distance from your
 **previous** city (the start, on the first hop) to a **running total**. Reach the
-target without going over. A hop that would overshoot is **blocked** — it costs you
-nothing, so you just pick a closer city; you only lose by using up all your guesses
+target without going over. Cross the target and you **bust** — the round ends there,
+because a running total can only ever climb. You also lose by using up all your guesses
 before landing your total just under the target. You get **6 guesses**, and fewer hops
 is a better score.
 
@@ -24,8 +24,8 @@ is a better score.
 | Guesses per day | **6** hops                                                     | `rules.guesses`                    |
 | Scoring         | **cumulative** — sum of each leg (previous city → next)        | `src/lib/scoring.ts`               |
 | Win band        | running total in **[target·98%, target]** (one-sided; no over) | `rules.tolerancePct`               |
-| Overshoot       | a hop that would go **over** is **blocked** (no turn spent, forgiving default) | `rules.overshoot.endsRound`        |
-| Lose            | out of 6 guesses short of the band (overshoot ends it only under sudden-death) | `src/lib/engine.ts`                |
+| Overshoot       | going **over** ends the round as a loss (`endsRound: false` blocks the hop instead) | `rules.overshoot.endsRound`        |
+| Lose            | overshooting, or out of 6 guesses short of the band             | `src/lib/engine.ts`                |
 | Score           | golf: **fewer hops is better**                                 | guess distribution                 |
 | Target distance | **500–10000 km**, validated to have ≥3 single-hop wins         | `rules.target`, `rules.generation` |
 | Start city      | population-weighted, **≥ 1,000,000** (recognizable)            | `rules.startCity`                  |
@@ -102,9 +102,11 @@ touch your daily streak, win %, or guess distribution). Hit **New puzzle** to re
 or **Daily** in the menu to go home. Two modes today:
 
 - **Classic** — the daily's rules as free play: build a journey to the target distance.
-- **Hidden Destination** — a deduction game: find a **secret capital**. You get the
-  distance + bearing from an anchor city, then guess capitals; each reports how far
-  (and which way) it is from the mystery city, hot/cold. Name it exactly within 8 tries.
+- **Hidden Destination** — a deduction game: find a **secret capital**. There's no
+  start city and no opening clue — every clue is earned. Guess capitals; each reports
+  how far (and which way) it is from the mystery city, hot/cold. Name it exactly within
+  8 tries. The in-round city hint reveals **capitals only** — the pool the answer is
+  drawn from — rather than the whole dataset.
 
 Under the hood this is the game's mode seam: every mode is a declarative descriptor
 (setup / play / goal / present) over one generic engine, so a new variant is a

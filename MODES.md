@@ -103,17 +103,19 @@ modes can carry their own shape (a hidden `target` city, a per-leg `kind`, a
 
 Build a journey city by city; each hop adds the great-circle distance from your
 previous city to a running total. Land the total in `[target·(1−tol), target]` without
-overshooting, in as few hops as possible. A hop that would overshoot is **blocked**
-(no turn spent) unless `overshoot.endsRound` — see `DECISIONS.md` 2026-07-24. 6 guesses.
+overshooting, in as few hops as possible. Overshooting **ends the round** as a loss;
+setting `overshoot.endsRound: false` blocks the busting hop instead (no turn spent) —
+see `DECISIONS.md` 2026-07-24. 6 guesses.
 
 ### Hidden Destination — `free`  *(first new mode)*
 
 A **deduction** game — find a secret city.
 
 - **Setup.** A hidden **capital** is chosen from the capitals-only pool
-  (`cityPool` = capitals; the answer set is ~200, small enough to reason over). A start
-  city anchors the puzzle: the prompt gives the **distance + bearing from the start to
-  the hidden capital** as the opening clue. Deterministic in the seed.
+  (`cityPool` = capitals; the answer set is ~200, small enough to reason over) — and
+  nothing else. There is **no start city and no opening clue**: a named origin plus its
+  distance and bearing would pin the answer's position for free, which is exactly the
+  work a guess is meant to do. Deterministic in the seed.
 - **Play.** Each guess is a **capital** (the guess input is restricted to the same pool
   — every guess is both a probe and a possible answer, no wasted turns). Its reading is
   the **distance from the guess to the hidden city + the bearing toward it**, shown as a
@@ -165,14 +167,16 @@ Captured so the descriptor stays honest about what it must eventually span:
    (`npm run data:capitals`) refreshes it onto the committed `cities.json` without a full
    rebuild (translations untouched). The loader hydrates `City.capital` and exposes
    `capitals()` / `isCapital()` — ~160 national capitals — guarded by `capitals.test.ts`.
-4. **Hidden Destination.** ✅ **Done.** `lib/hidden.ts` — `generateHidden` (seeded
-   capital target + anchor start ≥ `rules.hidden.minClueKm` away), `hiddenLogic`
+4. **Hidden Destination.** ✅ **Done.** `lib/hidden.ts` — `generateHidden` (a seeded
+   capital target, and nothing else — no start, no opening clue), `hiddenLogic`
    (`ModeLogic`: exact-match win, duplicate reject, per-guess distance+bearing to the
    target, proximity `temp`), `hiddenTempLevel`, and `buildHiddenShare`. `PuzzleSpec`
-   grew an optional `target`; `GuessResult` grew optional `toTargetKm` + `temp` (Classic
-   ignores both). The UI branches on `GameMode.kind`: the prompt shows the anchor clue,
-   `GuessInput` takes a capitals-only `pool`, `GuessRow`/`ResultCard` render the
-   deduction layout, and the `Globe` drops the journey line and colours pins by the
-   mode-supplied `temp`. Guarded by `hidden.test.ts`. Wired as the second `freeModes` card.
+   grew an optional `target` and made `start` optional (journey modes have an origin;
+   deduction modes don't); `GuessResult` grew optional `toTargetKm` + `temp` (Classic
+   ignores both). The UI branches on `GameMode.kind`: the prompt states the rule instead
+   of a clue, `GuessInput` takes a capitals-only `pool`, `GuessRow`/`ResultCard` render
+   the deduction layout, and the `Globe` drops the start marker + journey line, takes
+   the capitals as its `exploreAll` hint pool, and colours pins by the mode-supplied
+   `temp`. Guarded by `hidden.test.ts`. Wired as the second `freeModes` card.
 
 Each phase is independently green and commit-scoped.

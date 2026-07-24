@@ -108,12 +108,18 @@ export interface PuzzleSpec {
   date: string
   /** 32-bit seed derived from `date`. */
   seed: number
-  start: City
-  /** Target great-circle distance from `start`, in km (rounded). */
+  /**
+   * Where the round is measured from. Journey modes (Classic) always have one;
+   * deduction modes that grade each guess on its own (Hidden Destination) have
+   * no origin at all and omit it.
+   */
+  start?: City
+  /** Target great-circle distance from `start`, in km (rounded). 0 when unused. */
   targetKm: number
   /**
-   * Hidden Destination: the mystery city to find (a capital). `targetKm` is then
-   * the start→target distance — the opening anchor clue. Absent in Classic.
+   * Hidden Destination: the mystery city to find (a capital). The round has no
+   * `start` and no `targetKm` — every clue comes from the player's own guesses.
+   * Absent in Classic.
    */
   target?: City
   /** One-sided win-band width below the target, as a fraction (mirrors rules.tolerancePct). */

@@ -2,12 +2,14 @@
 // and the end-of-round "learn the map" reveal. An orthographic globe (drag to
 // spin, pinch/scroll/buttons to zoom) that renders, over a bundled low-res land
 // outline:
-//   • the day's start city (where the journey begins),
+//   • the day's start city, when the mode has one (where the journey begins —
+//     Hidden Destination has no origin, so it opens on a plain world view),
 //   • the journey so far as a line linking start → each guess in order (the
 //     legs whose lengths sum toward the target), pins coloured on the shared
 //     hot→cold ramp,
 //   • an explorable layer of real cities — the biggest first, more revealed the
-//     further you zoom in — that you can tap to read a city's name, and
+//     further you zoom in (or the whole `cities` pool at once when `exploreAll`,
+//     as Hidden Destination does with its capitals) — tap one to read its name, and
 //   • once finished, an explorable reveal of cities the player *could* have
 //     guessed: the closest single-hop wins from the start (ideal), plus the
 //     cities that would have completed the run from where they actually stopped
@@ -86,6 +88,9 @@ const ZOOM_STEP = 1.4
 // before it scales the zoom, so a small spread magnifies more (>1 = faster,
 // snappier pinch). 1 would track the fingers exactly.
 const PINCH_SENSITIVITY = 1.6
+// Opening view for a mode with no start city: [λ, φ] facing 20°E / 15°N, which
+// puts most of the landmasses on the near hemisphere.
+const HOME_ROTATION: LngLat = [-20, -15]
 
 type LngLat = [number, number]
 
@@ -95,19 +100,26 @@ export interface RevealData {
   ideal: AnswerCity[]
   /** Cities that would have completed the run from where the player stopped. */
   completions: AnswerCity[]
-  /** The point completions are measured from (last guess, or the start). */
-  from: City
-  /** Hidden Destination: the single mystery city, revealed as the answer. */
-  answer?: AnswerCity
+  /**
+   * The point completions are measured from (last guess, or the start). Absent
+   * in modes with no journey (Hidden Destination), which reveal only `answer`.
+   */
+  from?: City
+  /**
+   * Hidden Destination: the single mystery city, revealed as the answer. It has
+   * no distance to report — the round measured nothing from anywhere.
+   */
+  answer?: City
 }
 
 type RevealKind = 'ideal' | 'completion' | 'answer'
 interface RevealPin {
   city: City
-  distanceKm: number
+  /** Distance from `from`, km. Absent on a pin that measures from nowhere. */
+  distanceKm?: number
   kind: RevealKind
   /** The point this pin's distance is measured from (start, or the stop point). */
-  from: City
+  from?: City
 }
 
 /** What the player is pointing at / has pinned: a reveal pin, or a plain city. */
@@ -118,12 +130,24 @@ type Selection =
 const selectionCity = (s: Selection): City => (s.type === 'reveal' ? s.pin.city : s.city)
 
 interface GlobeProps {
-  start: City
+  /**
+   * Where the round begins — drawn as the start marker and the anchor the globe
+   * first faces. Omitted by modes with no origin (Hidden Destination), which
+   * open on a plain world view.
+   */
+  start?: City
   guesses: GuessResult[]
   rules: GameRules
   unit: Unit
   /** The explorable city universe (biggest population first). Tap to read a name. */
   cities: City[]
+  /**
+   * Show every city in `cities` at any zoom instead of filtering by the
+   * zoom/population ramp. For modes whose pool is already small and curated —
+   * Hidden Destination passes the ~160 capitals, so its hint reveals capitals
+   * (the only cities that can be the answer) rather than the whole dataset.
+   */
+  exploreAll?: boolean
   /**
    * In-round hint reveal (unlocked from the header menu): 0 = no city dots (the
    * default while playing), 1 = dots visible, 2 = dots visible + tappable for
@@ -148,6 +172,7 @@ export function Globe({
   rules,
   unit,
   cities,
+  exploreAll = false,
   hintLevel = 0,
   reveal,
   finished,
@@ -160,8 +185,11 @@ export function Globe({
   // round is over the dots always show and are always tappable.
   const showCities = !!finished || hintLevel >= 1
   const citiesInteractive = !!finished || hintLevel >= 2
-  // Rotation is [λ, φ]: spin the globe so the start city faces the viewer first.
-  const [rotation, setRotation] = useState<LngLat>([-start.lng, -start.lat])
+  // Rotation is [λ, φ]: spin the globe so the start city faces the viewer first
+  // (a neutral world view when the mode has no start).
+  const [rotation, setRotation] = useState<LngLat>(() =>
+    start ? [-start.lng, -start.lat] : HOME_ROTATION,
+  )
   // Zoom magnifies the globe (1 = the full disc fits the board).
   const [zoom, setZoom] = useState(minZoom)
   // A tap pins a selection; hovering (mouse) previews one transiently. The
@@ -227,11 +255,17 @@ export function Globe({
   }
 
   // Re-centre + reset zoom whenever the day (and thus start) changes.
+  const startLng = start?.lng
+  const startLat = start?.lat
   useEffect(() => {
     stopAnim()
-    setRotation([-start.lng, -start.lat])
+    setRotation(
+      startLng !== undefined && startLat !== undefined
+        ? [-startLng, -startLat]
+        : HOME_ROTATION,
+    )
     setZoom(minZoom)
-  }, [start.lng, start.lat, minZoom])
+  }, [startLng, startLat, minZoom])
 
   // Spin to the latest guess whenever a new one lands.
   const last = guesses[guesses.length - 1]
@@ -264,14 +298,10 @@ export function Globe({
     if (!finished || !reveal) return []
     const pins: RevealPin[] = []
     const seen = new Set<number>()
+    // The mystery city stands alone: no origin, so no distance to report.
     if (reveal.answer) {
-      seen.add(reveal.answer.city.id)
-      pins.push({
-        city: reveal.answer.city,
-        distanceKm: reveal.answer.distanceKm,
-        kind: 'answer',
-        from: reveal.from,
-      })
+      seen.add(reveal.answer.id)
+      pins.push({ city: reveal.answer, kind: 'answer' })
     }
     for (const a of reveal.completions) {
       if (seen.has(a.city.id)) continue
@@ -286,6 +316,17 @@ export function Globe({
     return pins
   }, [finished, reveal, start])
 
+  // When a mode reveals a single answer (Hidden Destination), spin it into view
+  // — it's the whole point of the ending, and the last guess may have left it on
+  // the far hemisphere. Declared after the spin-to-latest-guess effect so it
+  // wins the frame in which the round finishes.
+  const answerLng = reveal?.answer?.lng
+  const answerLat = reveal?.answer?.lat
+  useEffect(() => {
+    if (finished && answerLng !== undefined && answerLat !== undefined)
+      animateTo(answerLng, answerLat)
+  }, [finished, answerLng, answerLat])
+
   // A selection only makes sense against the current reveal; drop it when the
   // reveal set changes (day / round change).
   useEffect(() => {
@@ -295,10 +336,13 @@ export function Globe({
 
   // The explorable city universe at the current zoom: cities big enough to show,
   // minus the ones that already carry their own marker (start, guesses, reveal).
-  const exploreThreshold = exploreMinPopulation(zoom, rules)
+  // A curated pool (`exploreAll`) is small enough to show whole at any zoom.
+  const exploreThreshold = exploreAll ? 0 : exploreMinPopulation(zoom, rules)
   const revealIds = useMemo(() => new Set(revealPins.map((p) => p.city.id)), [revealPins])
+  const startId = start?.id
   const exploreCandidates = useMemo(() => {
-    const excluded = new Set<number>([start.id])
+    const excluded = new Set<number>()
+    if (startId !== undefined) excluded.add(startId)
     for (const g of guesses) excluded.add(g.city.id)
     for (const id of revealIds) excluded.add(id)
     const out: City[] = []
@@ -308,7 +352,7 @@ export function Globe({
       out.push(c)
     }
     return out
-  }, [cities, exploreThreshold, start.id, guesses, revealIds])
+  }, [cities, exploreThreshold, startId, guesses, revealIds])
 
   // Drop a pinned city that has zoomed out of existence, so its label/caption
   // never outlive its dot.
@@ -348,13 +392,13 @@ export function Globe({
   const icePath = useMemo(() => path(iceSheets) ?? '', [path])
   // The running journey: start → each guessed city, in order.
   const journeyPath = useMemo(() => {
-    if (!showJourney || guesses.length === 0) return ''
+    if (!showJourney || !start || guesses.length === 0) return ''
     const coordinates: LngLat[] = [
       [start.lng, start.lat],
       ...guesses.map((g): LngLat => [g.city.lng, g.city.lat]),
     ]
     return path({ type: 'LineString', coordinates }) ?? ''
-  }, [path, start.lng, start.lat, guesses, showJourney])
+  }, [path, start, guesses, showJourney])
 
   // The explore dots actually on screen: projected, culled to the near
   // hemisphere + viewport, and capped (biggest kept — candidates are pop-sorted).
@@ -380,14 +424,16 @@ export function Globe({
   // The missing hop for an engaged completion — the leg the player didn't take.
   const activeLegPath = useMemo(() => {
     if (!active || active.type !== 'reveal' || active.pin.kind !== 'completion') return ''
+    const from = active.pin.from
+    if (!from) return ''
     const coordinates: LngLat[] = [
-      [active.pin.from.lng, active.pin.from.lat],
+      [from.lng, from.lat],
       [active.pin.city.lng, active.pin.city.lat],
     ]
     return path({ type: 'LineString', coordinates }) ?? ''
   }, [path, active])
 
-  const startXY = place(start.lng, start.lat)
+  const startXY = start ? place(start.lng, start.lat) : null
 
   // ---- Pointer drag → rotation, pinch → zoom --------------------------
   // Pointer capture keeps every move/up for a pressed pointer routed to the SVG
@@ -534,7 +580,7 @@ export function Globe({
           className="globe__svg"
           viewBox={`0 0 ${SIZE} ${SIZE}`}
           role="img"
-          aria-label={t.globe.label(cityLabel(start, locale))}
+          aria-label={start ? t.globe.label(cityLabel(start, locale)) : t.globe.worldLabel}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
@@ -646,7 +692,8 @@ export function Globe({
               )
             })()}
 
-          {startXY &&
+          {start &&
+            startXY &&
             (() => {
               const l = labelLayout(startXY[0], startXY[1])
               return (
@@ -687,9 +734,11 @@ export function Globe({
             active.type === 'reveal' ? (
               <span className="globe__caption-detail">
                 <strong>{cityLabel(active.pin.city, locale)}</strong>
-                <span className="globe__caption-dist mono">
-                  {formatDistance(active.pin.distanceKm, unit, t)}
-                </span>
+                {active.pin.distanceKm !== undefined && (
+                  <span className="globe__caption-dist mono">
+                    {formatDistance(active.pin.distanceKm, unit, t)}
+                  </span>
+                )}
                 <span className={`globe__tag globe__tag--${active.pin.kind}`}>
                   {active.pin.kind === 'completion'
                     ? t.globe.reveal.completion

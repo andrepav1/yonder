@@ -16,16 +16,18 @@ function play(
   city: City,
   rules: GameRules,
 ): PlayOutcome {
-  if (city.id === puzzle.start.id) return { error: 'start-city' }
+  const start = puzzle.start
+  if (!start) throw new Error('classicLogic requires a puzzle.start')
+  if (city.id === start.id) return { error: 'start-city' }
   if (state.guesses.some((g) => g.city.id === city.id)) return { error: 'duplicate' }
 
   const last = state.guesses[state.guesses.length - 1]
-  const from = last ? last.city : puzzle.start
+  const from = last ? last.city : start
   const priorCumulativeKm = last ? last.cumulativeKm : 0
   const result = evaluateLeg(puzzle, from, priorCumulativeKm, city, rules)
-  // Legs only add, so an overshoot is unrecoverable. Unless the rules make it
-  // sudden death, block the hop (no turn spent) so a single over-eager guess
-  // never ends the round — the player just picks somewhere closer.
+  // Legs only add, so an overshoot is unrecoverable — by default it ends the
+  // round. Flipping `overshoot.endsRound` off instead blocks the hop (no turn
+  // spent), which is gentler but can strand a player with no legal move left.
   if (result.over && !rules.overshoot.endsRound) return { error: 'overshoot' }
 
   const willBe = state.guesses.length + 1

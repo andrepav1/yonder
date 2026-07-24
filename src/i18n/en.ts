@@ -36,8 +36,8 @@ export const en: Messages = {
 
   hidden: {
     eyebrow: 'Find the hidden capital',
-    anchorLabel: 'Clue from',
-    clue: (distance) => `about ${distance} away`,
+    title: 'Somewhere on Earth',
+    lead: 'Every guess reports how far it is — and which way to go.',
     hint: (guesses) => `guess capitals to close in · ${guesses} tries`,
     away: (distance) => `${distance} away`,
     found: 'Found it!',
@@ -83,6 +83,7 @@ export const en: Messages = {
   globe: {
     label: (startCity) =>
       `Globe centred on ${startCity}, showing your journey of guesses. Drag to spin.`,
+    worldLabel: 'Interactive globe. Drag to spin.',
     zoomIn: 'Zoom in',
     zoomOut: 'Zoom out',
     reveal: {
@@ -94,6 +95,7 @@ export const en: Messages = {
     hints: {
       label: 'Hints',
       cities: 'Show cities',
+      capitals: 'Show capitals',
       names: 'Reveal names',
     },
   },

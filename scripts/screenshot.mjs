@@ -27,6 +27,7 @@ const facts = JSON.parse(
 )
 const ANSWER = facts.answer ?? ''
 const PARTIAL = facts.partial ?? ''
+const BUST = facts.bust ?? ''
 
 const MIME = {
   '.html': 'text/html',
@@ -73,6 +74,7 @@ async function run() {
       onboarded = true,
       play = false,
       win = false,
+      bust = false,
       menu = false,
       modesModal = false,
       free = false,
@@ -80,6 +82,8 @@ async function run() {
       hiddenGuess = '',
       hiddenGuesses = [],
       tapReveal = false,
+      hint = false,
+      menuAfter = false,
     } = {},
   ) => {
     const ctx = await browser.newContext({
@@ -124,12 +128,32 @@ async function run() {
       // A one-hop win (distance lands in the band).
       await guess(page, ANSWER)
     }
+    if (bust && BUST) {
+      // A hop far past the target: overshooting ends the round as a loss.
+      await guess(page, BUST)
+    }
+    if (hint) {
+      // Unlock the city/capital dot hint from the header menu.
+      await page.click('.menu .iconbtn')
+      await page.waitForTimeout(200)
+      await page.locator('[role="menuitemcheckbox"]').first().click()
+      await page.keyboard.press('Escape')
+      await page.waitForTimeout(300)
+    }
     if (tapReveal) {
-      // Tap the first revealed "could-have-guessed" pin to open its callout.
-      const pin = page.locator('.globe__reveal').first()
+      // Tap a revealed pin to open its callout — the answer pin when the mode
+      // has one (Hidden Destination), else the first "could-have-guessed" pin.
+      const answerPin = page.locator('.globe__reveal--answer')
+      const pin = (await answerPin.count()) ? answerPin.first() : page.locator('.globe__reveal').first()
       await pin.waitFor({ state: 'attached', timeout: 2000 }).catch(() => {})
       await pin.click({ force: true }).catch(() => {})
       await page.waitForTimeout(300)
+    }
+    if (menuAfter) {
+      // Re-open the header menu once the mode is loaded (the hint labels are
+      // mode-specific — capitals-only modes say so).
+      await page.click('.menu .iconbtn')
+      await page.waitForTimeout(250)
     }
     await page.waitForTimeout(500)
     await page.screenshot({ path: join(OUT, `${name}.png`), fullPage: true })
@@ -144,12 +168,16 @@ async function run() {
   await shot('free-light', { free: true })
   await shot('hidden-light', { hidden: true })
   await shot('hidden-guess-light', { hidden: true, hiddenGuess: 'Paris' })
+  // The capitals-only hint layer: every capital, at any zoom.
+  await shot('hidden-hint-light', { hidden: true, hiddenGuess: 'Paris', hint: true })
+  await shot('hidden-menu-light', { hidden: true, menuAfter: true })
   await shot('hidden-reveal-light', {
     hidden: true,
     hiddenGuesses: ['Tokyo', 'Cairo', 'Lima', 'Ottawa', 'Canberra', 'Oslo', 'Hanoi', 'Quito'],
     tapReveal: true,
   })
   await shot('play-light', { play: true })
+  await shot('bust-light', { bust: true })
   await shot('win-light', { win: true })
   await shot('explore-light', { win: true, tapReveal: true })
   await shot('explore-dark', { dark: true, win: true, tapReveal: true })

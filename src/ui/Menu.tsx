@@ -28,6 +28,11 @@ interface AppMenuProps {
   onHint: (level: number) => void
   /** Hide the hint controls once the round is over — the dots always show then. */
   finished: boolean
+  /**
+   * The active mode's city hint reveals capitals only (Hidden Destination), so
+   * the control says so rather than promising every city on the globe.
+   */
+  capitalsOnly?: boolean
 }
 
 /**
@@ -46,6 +51,7 @@ export function AppMenu({
   hintLevel,
   onHint,
   finished,
+  capitalsOnly = false,
 }: AppMenuProps) {
   const { t } = useI18n()
   const [open, setOpen] = useState(false)
@@ -112,7 +118,9 @@ export function AppMenu({
                 onClick={() => onHint(1)}
               >
                 <EyeIcon size={18} />
-                <span className="menu__label">{t.globe.hints.cities}</span>
+                <span className="menu__label">
+                  {capitalsOnly ? t.globe.hints.capitals : t.globe.hints.cities}
+                </span>
                 {hintLevel >= 1 && <CheckIcon size={16} className="menu__check" />}
               </button>
               <button
