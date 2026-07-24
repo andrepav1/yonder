@@ -82,7 +82,7 @@ export const it: Messages = {
 
   guessRow: {
     insideBand: 'Nella fascia!',
-    overshot: 'Superato!',
+    overshot: (over) => `Superato di ${over}!`,
   },
 
   errors: {

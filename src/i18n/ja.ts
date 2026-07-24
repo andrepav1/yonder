@@ -82,7 +82,7 @@ export const ja: Messages = {
 
   guessRow: {
     insideBand: '範囲内！',
-    overshot: '超過！',
+    overshot: (over) => `${over} 超過！`,
   },
 
   errors: {

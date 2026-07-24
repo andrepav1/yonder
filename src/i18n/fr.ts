@@ -82,7 +82,7 @@ export const fr: Messages = {
 
   guessRow: {
     insideBand: 'Dans la zone !',
-    overshot: 'Dépassé !',
+    overshot: (over) => `Dépassé de ${over} !`,
   },
 
   errors: {

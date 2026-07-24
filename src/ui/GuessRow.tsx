@@ -19,7 +19,7 @@ export function GuessRow({ result, rules, unit }: GuessRowProps) {
   const status = result.won
     ? t.guessRow.insideBand
     : result.over
-      ? t.guessRow.overshot
+      ? t.guessRow.overshot(formatDistance(Math.abs(result.remainingKm), unit, t))
       : remainingPhrase(result.remainingKm, unit, t)
   const statusMod = result.won
     ? ' grow__delta--win'

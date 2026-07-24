@@ -82,7 +82,7 @@ export const es: Messages = {
 
   guessRow: {
     insideBand: '¡En la zona!',
-    overshot: '¡Te pasaste!',
+    overshot: (over) => `¡Te pasaste por ${over}!`,
   },
 
   errors: {

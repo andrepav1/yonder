@@ -124,7 +124,8 @@ export interface Messages {
 
   guessRow: {
     insideBand: string
-    overshot: string
+    /** Overshoot label with how far past the target the total landed, e.g. "Overshot by 320 km". */
+    overshot: (over: string) => string
   }
 
   /** Rejected-guess toasts, keyed to engine `GuessError`. */
