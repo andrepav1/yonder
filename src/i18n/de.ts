@@ -37,8 +37,8 @@ export const de: Messages = {
 
   hidden: {
     eyebrow: 'Finde die versteckte Hauptstadt',
-    anchorLabel: 'Hinweis ab',
-    clue: (distance) => `etwa ${distance} entfernt`,
+    title: 'Irgendwo auf der Erde',
+    lead: 'Jeder Tipp verrät die Entfernung — und die Richtung.',
     hint: (guesses) => `rate Hauptstädte, um näher zu kommen · ${guesses} Versuche`,
     away: (distance) => `${distance} entfernt`,
     found: 'Gefunden!',
@@ -84,6 +84,7 @@ export const de: Messages = {
   globe: {
     label: (startCity) =>
       `Globus zentriert auf ${startCity}, zeigt deine Städtereise. Zum Drehen ziehen.`,
+    worldLabel: 'Interaktiver Globus. Zum Drehen ziehen.',
     zoomIn: 'Vergrößern',
     zoomOut: 'Verkleinern',
     reveal: {
@@ -95,6 +96,7 @@ export const de: Messages = {
     hints: {
       label: 'Hinweise',
       cities: 'Städte zeigen',
+      capitals: 'Hauptstädte zeigen',
       names: 'Namen zeigen',
     },
   },

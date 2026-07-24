@@ -55,11 +55,11 @@ export interface Messages {
   hidden: {
     /** Prompt eyebrow. */
     eyebrow: string
-    /** Label above the anchor city (the clue's reference point). */
-    anchorLabel: string
-    /** Clue line: how far the mystery capital is (distance pre-formatted). */
-    clue: (distance: string) => string
-    /** Hint under the clue. */
+    /** Prompt headline, standing where Classic shows its start city. */
+    title: string
+    /** Lead line: what a guess tells you (the mode has no opening clue). */
+    lead: string
+    /** Hint under the lead. */
     hint: (guesses: number) => string
     /** Guess-row status: distance from a guess to the mystery city (pre-formatted). */
     away: (distance: string) => string
@@ -119,6 +119,8 @@ export interface Messages {
   globe: {
     /** aria-label for the interactive globe. */
     label: (startCity: string) => string
+    /** aria-label for the globe in a mode with no start city. */
+    worldLabel: string
     /** aria-label for the zoom-in control. */
     zoomIn: string
     /** aria-label for the zoom-out control. */
@@ -140,6 +142,8 @@ export interface Messages {
       label: string
       /** Hint 1 — reveal the (unnamed) city dots on the globe. */
       cities: string
+      /** Hint 1, in a capitals-only mode — reveal the capital dots. */
+      capitals: string
       /** Hint 2 — also let the player tap a dot to read its city name. */
       names: string
     }

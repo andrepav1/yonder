@@ -35,8 +35,8 @@ export const zh: Messages = {
 
   hidden: {
     eyebrow: '找出隐藏的首都',
-    anchorLabel: '线索起点',
-    clue: (distance) => `大约 ${distance}`,
+    title: '地球上的某处',
+    lead: '每次猜测都会告诉你距离和方向。',
     hint: (guesses) => `猜首都逐步逼近 · ${guesses} 次`,
     away: (distance) => `${distance}`,
     found: '找到了！',
@@ -80,6 +80,7 @@ export const zh: Messages = {
 
   globe: {
     label: (startCity) => `以 ${startCity} 为中心的地球，显示你的城市路线。拖动可旋转。`,
+    worldLabel: '可交互地球。拖动可旋转。',
     zoomIn: '放大',
     zoomOut: '缩小',
     reveal: {
@@ -91,6 +92,7 @@ export const zh: Messages = {
     hints: {
       label: '提示',
       cities: '显示城市',
+      capitals: '显示首都',
       names: '显示名称',
     },
   },

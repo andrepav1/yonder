@@ -4,8 +4,8 @@ A daily, mobile-first **geography guessing game**. Every UTC day everyone gets t
 same puzzle: one **start city** + one **target distance**. Build a journey by naming
 cities: each guess adds the great-circle (haversine) distance from your **previous**
 city (the start for the first hop) to a **running total**. Reach the target — land in
-`[target·(1−tol), target]` — without overshooting. Overshoot, or run out of the 6
-guesses, and you lose. Fewer hops is a better (golf) score. See `README.md` for the
+`[target·(1−tol), target]` — without overshooting. Overshoot (the round ends there —
+the total only climbs), or run out of the 6 guesses, and you lose. Fewer hops is a better (golf) score. See `README.md` for the
 player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 
 > **Status:** v1 is fully built — the pure core (distance/bearing, dataset +
@@ -56,6 +56,8 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   `City.names` is an optional `{ locale: name }` map (`CityNames`) carrying only the
   localized names that **differ** from the canonical `name` (English is never stored).
   `City.capital` is an optional flag (true only for national capitals — GeoNames `PPLC`).
+  `PuzzleSpec.start` is **optional** — journey modes (Classic) have an origin, deduction
+  modes (Hidden Destination) have none, and `classicLogic` guards on it.
   `PuzzleSpec.target` (optional) is the mystery city for Hidden Destination; `GuessResult`
   carries optional `toTargetKm` + `temp` for modes that grade a guess by proximity
   (Classic leaves both unset and derives everything from the cumulative-path fields).
@@ -102,15 +104,18 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   back-compat. Every transition returns a new serializable `RoundState`.
 - `src/lib/classic.ts` — **pure**: `classicLogic`, the original game as the first
   `ModeLogic`. A guess adds the next leg from the previous city; rejects start-city /
-  duplicate **and — by default — an `overshoot`** without using a turn; ends the round
-  on a win or out of guesses. Because legs only ever add, an overshoot can never
-  recover, so the forgiving default (`rules.overshoot.endsRound: false`) **blocks** the
-  busting hop instead of losing on it — flip the knob to `true` for classic sudden
-  death. Composes the distance/band primitives from `scoring.ts`.
+  duplicate without using a turn; ends the round on a win, an **overshoot**, or out of
+  guesses. Because legs only ever add, an overshoot can never recover, so by default
+  (`rules.overshoot.endsRound: true`) it **ends the round** as a loss. Flipping the knob
+  to `false` **blocks** the busting hop instead (rejected, no turn spent): gentler, but
+  it can strand a player whose remaining distance is shorter than the nearest city,
+  leaving a round that can neither be won nor ended — see `DECISIONS.md`. Composes the
+  distance/band primitives from `scoring.ts`.
 - `src/lib/hidden.ts` — **pure**: Hidden Destination, a deduction mode (find a secret
-  **capital**; no cumulative path, no overshoot). `generateHidden(seed)` picks a
-  population-weighted capital target + an anchor start ≥ `rules.hidden.minClueKm` away
-  (the opening distance+bearing clue); `hiddenLogic` (`ModeLogic`) evaluates each guess
+  **capital**; no start city, no cumulative path, no overshoot). `generateHidden(seed)`
+  picks a population-weighted capital target and **nothing else** — no origin and no
+  opening clue, since a named start plus its distance+bearing would pin the answer for
+  free; the first guess is the opening probe. `hiddenLogic` (`ModeLogic`) evaluates each guess
   as an independent probe (distance + bearing to the target, proximity `temp`), wins
   only on the exact capital, and ends after `rules.guesses` (8) tries; `hiddenTempLevel`
   grades hot→cold by distance; `buildHiddenShare` is its spoiler-free share. Draws the
@@ -171,9 +176,13 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   never persisted, so a reload always lands on the daily. Only the daily writes to the
   store or the streak/stats; free play never does. `makeFreeSeed()` (the sole impure
   boundary) mints a fresh random seed per free puzzle; `newFreePuzzle()` reshuffles the
-  active mode. On finish it builds the globe **reveal** — `exploreAnswers` (Layer 1)
-  plus `findCompletions` from the stopping point (Layer 2) — and hands it to `Globe`,
-  along with `allCities()` as the globe's explorable (zoom-to-reveal) city universe.
+  active mode. It always generates the **daily** puzzle (the home board, and the puzzle
+  `HowToPlay` explains, whichever mode is on screen) and the active free puzzle beside
+  it. On finish it builds the globe **reveal** — `exploreAnswers` (Layer 1)
+  plus `findCompletions` from the stopping point (Layer 2), or, for Hidden Destination,
+  just the mystery `answer` city — and hands it to `Globe`,
+  along with the globe's explorable (zoom-to-reveal) city universe: `allCities()`, or
+  `capitals()` + `exploreAll` in a capitals-only mode.
   Owns the **hint level** (daily persisted via `load/saveHintLevel`, free-play in-memory
   + reset per puzzle) and the **Modes modal** open state, passing hints to `Globe` (to
   gate the dots) and the nav (`onDaily` / `onModes`) + hint unlock (`onHint`) to `Menu`.
@@ -201,13 +210,17 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   `--hypso-*` CSS ramp (theme-aware); the deepest ocean is the sphere's
   `--globe-ocean` base.
   Purely presentational — all geometry comes
-  from props. Renders the start-city marker, the **journey** (a line linking start →
+  from props. Renders the start-city marker (`start` is **optional** — Hidden
+  Destination has no origin, so the globe opens on a neutral world view), the
+  **journey** (a line linking start →
   each guess in order — the legs that sum toward the target) and guess pins coloured by
   `tempLevel`, and — only once `finished` — an explorable **reveal** (via the `reveal`
   prop): the ideal single-hop wins (violet `--reveal` dots) plus the completions from the
   player's stopping point (win-coloured dots) — both distinct from the smaller,
   ramp-coloured guess pins. A third reveal kind, `answer` (also violet), marks the single
-  mystery city for Hidden Destination (caption tag "The hidden capital"). **Hover** (mouse) previews a pin and
+  mystery city for Hidden Destination (caption tag "The hidden capital"); it carries no
+  distance (nothing to measure from) and the globe **spins it into view** on finish, so
+  the one pin that matters is never left on the far hemisphere. **Hover** (mouse) previews a pin and
   **tap** (a press that doesn't drag) pins the selection — the engaged pin gets a halo +
   a lighter name label, a distance/kind caption below the globe, and, for a completion,
   the dashed **missed leg** from where the player stopped. Spins to face the
@@ -217,13 +230,17 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   and draws an **explorable city layer** from the `cities` prop: quiet dots for real
   cities, filtered by `exploreMinPopulation(zoom, rules)` (biggest first, more as you
   zoom in) then culled to the near hemisphere + viewport and capped at
-  `rules.explore.maxDots`; tap one to read its name (caption + label). Excludes the
+  `rules.explore.maxDots`; tap one to read its name (caption + label). The `exploreAll`
+  prop skips that zoom/population gate for a pool that is already small and curated —
+  Hidden Destination passes `capitals()`, so its hint reveals **capitals only** (the set
+  the answer is drawn from), whole, at any zoom. Excludes the
   start / guessed / reveal cities (they carry their own markers). This layer is
   **gated by hints while playing** (`hintLevel` prop): 0 = no dots (the default),
   ≥1 shows the dots, ≥2 also makes them tappable for names; once `finished` the dots
   always show and are always tappable regardless. The two hint levels are unlocked from
   the header overflow **menu** (`Menu.tsx`), not the globe — the Globe just reads
-  `hintLevel` and renders accordingly. Hints are a free assist — purely presentational
+  `hintLevel` and renders accordingly; the menu's `capitalsOnly` prop relabels hint 1
+  ("Show capitals") in a capitals-only mode. Hints are a free assist — purely presentational
   here; the persisted level lives in `App`. Zooming simply
   **grows the globe past the board** (the SVG overflows). The `.globe` stays a plain
   in-flow block in the **normal document layer** (`touch-action: none`, no `z-index` of

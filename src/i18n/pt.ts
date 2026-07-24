@@ -37,8 +37,8 @@ export const pt: Messages = {
 
   hidden: {
     eyebrow: 'Encontre a capital oculta',
-    anchorLabel: 'Pista a partir de',
-    clue: (distance) => `a cerca de ${distance}`,
+    title: 'Em algum lugar da Terra',
+    lead: 'Cada palpite indica a distância — e para que lado seguir.',
     hint: (guesses) => `adivinhe capitais para se aproximar · ${guesses} tentativas`,
     away: (distance) => `a ${distance}`,
     found: 'Encontrou!',
@@ -84,6 +84,7 @@ export const pt: Messages = {
   globe: {
     label: (startCity) =>
       `Globo centrado em ${startCity}, mostrando seu trajeto de cidades. Arraste para girar.`,
+    worldLabel: 'Globo interativo. Arraste para girar.',
     zoomIn: 'Aproximar',
     zoomOut: 'Afastar',
     reveal: {
@@ -95,6 +96,7 @@ export const pt: Messages = {
     hints: {
       label: 'Dicas',
       cities: 'Mostrar cidades',
+      capitals: 'Mostrar capitais',
       names: 'Revelar nomes',
     },
   },

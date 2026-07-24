@@ -1,9 +1,11 @@
 // Hidden Destination — a deduction mode: find a secret capital. Unlike Classic,
-// there's no cumulative path and no overshoot; each guess is an independent probe
-// that reports its great-circle distance + bearing to the mystery city, and you
-// win by naming that city exactly. Pure + deterministic in the seed, like the
-// rest of `lib/*`. The answer (and the guess pool) is drawn from national
-// capitals (see `capitals()` in `cities.ts`) so the search space stays reasonable.
+// there's no start city, no cumulative path and no overshoot; each guess is an
+// independent probe that reports its great-circle distance + bearing to the
+// mystery city, and you win by naming that city exactly. Every clue is earned:
+// the board opens empty, so the first guess is the opening probe. Pure +
+// deterministic in the seed, like the rest of `lib/*`. The answer (and the guess
+// pool) is drawn from national capitals (see `capitals()` in `cities.ts`) so the
+// search space stays reasonable.
 
 import type { City, GuessResult, PuzzleSpec, RoundState } from './types'
 import type { GameRules } from '@/config/rules'
@@ -11,7 +13,7 @@ import { defaultRules } from '@/config/rules'
 import { haversineKm, initialBearingDeg, bearingArrow } from './geo'
 import { rngFromString, hashString } from './prng'
 import { weightedByPopulation } from './weighted'
-import { allCities, capitals as allCapitals } from './cities'
+import { capitals as allCapitals } from './cities'
 import type { ModeLogic, PlayOutcome } from './mode'
 import { type Messages, en } from '@/i18n'
 
@@ -30,45 +32,31 @@ export function hiddenTempLevel(toTargetKm: number, won: boolean, rules: GameRul
 }
 
 export interface HiddenOptions {
-  cities?: City[]
   capitals?: City[]
   rules?: GameRules
 }
 
 /**
  * Generate a Hidden Destination puzzle. Deterministic in `seed`. Picks a
- * population-weighted mystery capital, then an anchor start city (a big, famous
- * city) at least `rules.hidden.minClueKm` away, so the opening distance+bearing
- * clue is meaningful. Always solvable — the target is itself a guessable capital.
+ * population-weighted mystery capital — and nothing else: the mode has no start
+ * city, because a named origin plus its distance and bearing would pin the
+ * answer's position for free, which is exactly the work a guess is meant to do.
+ * Always solvable — the target is itself a guessable capital.
  */
 export function generateHidden(seed: string, opts: HiddenOptions = {}): PuzzleSpec {
   const rules = opts.rules ?? defaultRules
-  const cities = opts.cities ?? allCities()
   const capitals = opts.capitals ?? allCapitals()
   if (capitals.length === 0) throw new Error('Hidden Destination needs a capital pool')
   const rng = rngFromString(seed)
-  const exp = rules.startCity.weightExponent
-
-  const startPool = cities.filter((c) => c.population >= rules.startCity.minPopulation)
-  const pickTarget = weightedByPopulation(capitals, exp)
-  const pickStart = weightedByPopulation(startPool, exp)
-
-  const target = pickTarget(rng())
-  // Redraw the anchor until it's a distinct city a meaningful distance away.
-  let start = pickStart(rng())
-  let targetKm = haversineKm(start, target)
-  for (let i = 0; i < 60 && (start.id === target.id || targetKm < rules.hidden.minClueKm); i++) {
-    start = pickStart(rng())
-    targetKm = haversineKm(start, target)
-  }
+  const pickTarget = weightedByPopulation(capitals, rules.startCity.weightExponent)
 
   return {
     date: seed,
     seed: hashString(seed),
-    start,
-    targetKm: Math.round(targetKm),
+    // No start and no target distance — every clue is earned by guessing.
+    targetKm: 0,
     tolerancePct: rules.tolerancePct,
-    target,
+    target: pickTarget(rng()),
     answers: [],
     exploreAnswers: [],
     validAnswerCount: 1,

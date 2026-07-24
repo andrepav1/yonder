@@ -35,8 +35,8 @@ export const ja: Messages = {
 
   hidden: {
     eyebrow: 'なぞの首都を見つけよう',
-    anchorLabel: '手がかりの基準',
-    clue: (distance) => `約 ${distance} 先`,
+    title: '地球上のどこか',
+    lead: '推測するたびに、そこからの距離と方角がわかります。',
     hint: (guesses) => `首都を推測して近づこう · ${guesses} 回`,
     away: (distance) => `${distance} 先`,
     found: '見つけた！',
@@ -82,6 +82,7 @@ export const ja: Messages = {
   globe: {
     label: (startCity) =>
       `${startCity} を中心にした地球儀。あなたの都市のルートを表示。ドラッグで回転。`,
+    worldLabel: 'インタラクティブな地球儀。ドラッグで回転。',
     zoomIn: '拡大',
     zoomOut: '縮小',
     reveal: {
@@ -93,6 +94,7 @@ export const ja: Messages = {
     hints: {
       label: 'ヒント',
       cities: '都市を表示',
+      capitals: '首都を表示',
       names: '名前を表示',
     },
   },

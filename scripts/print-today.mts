@@ -4,6 +4,8 @@
 //   answer  — a city that wins in a single hop (distance in the win band).
 //   partial — a city ~halfway to the target: a safe first hop that neither
 //             wins nor overshoots, for the mid-game "play" screenshot.
+//   bust    — a city far past the target: one hop that overshoots and (under
+//             the default sudden-death rule) loses, for the "lost" screenshot.
 //
 // Both names are validated through resolveGuess so the fuzzy input the harness
 // types actually resolves back to the intended city (bare names like "Orléans"
@@ -28,18 +30,27 @@ const answerCity =
 const half = p.targetKm * 0.5
 const bandLow = p.targetKm * (1 - p.tolerancePct)
 const partialCity = allCities()
-  .filter((c) => c.id !== p.start.id)
-  .map((c) => ({ c, dist: haversineKm(p.start, c) }))
+  .filter((c) => c.id !== p.start!.id)
+  .map((c) => ({ c, dist: haversineKm(p.start!, c) }))
   .filter(({ dist }) => dist < bandLow)
   .sort((a, b) => Math.abs(a.dist - half) - Math.abs(b.dist - half))
+  .find(({ c }) => resolvesToSelf(c))?.c
+
+// The farthest unambiguous city from the start — comfortably past any target,
+// so a single hop there busts the round.
+const bustCity = allCities()
+  .map((c) => ({ c, dist: haversineKm(p.start!, c) }))
+  .filter(({ dist }) => dist > p.targetKm)
+  .sort((a, b) => b.dist - a.dist)
   .find(({ c }) => resolvesToSelf(c))?.c
 
 process.stdout.write(
   JSON.stringify({
     date,
-    start: p.start.name,
+    start: p.start!.name,
     targetKm: p.targetKm,
     answer: answerCity?.name ?? '',
     partial: partialCity?.name ?? '',
+    bust: bustCity?.name ?? '',
   }),
 )

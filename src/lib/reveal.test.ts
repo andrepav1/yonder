@@ -12,14 +12,14 @@ describe('findCompletions', () => {
   it('returns cities whose next hop lands the total in the win band', () => {
     const puzzle = generatePuzzle('2026-07-15')
     // Player has covered nothing yet: complete straight from the start.
-    const out = findCompletions(puzzle, puzzle.start, 0, cities, rules, 20)
+    const out = findCompletions(puzzle, puzzle.start!, 0, cities, rules, 20)
     expect(out.length).toBeGreaterThan(0)
     for (const { city, distanceKm } of out) {
       const total = 0 + distanceKm
       expect(total).toBeGreaterThanOrEqual(puzzle.targetKm * (1 - rules.tolerancePct))
       expect(total).toBeLessThanOrEqual(puzzle.targetKm)
       // The leg distance we report matches the great-circle from `from`.
-      expect(distanceKm).toBeCloseTo(haversineKm(puzzle.start, city), 6)
+      expect(distanceKm).toBeCloseTo(haversineKm(puzzle.start!, city), 6)
     }
   })
 
@@ -39,25 +39,25 @@ describe('findCompletions', () => {
 
   it('is empty once the target is reached or overshot', () => {
     const puzzle = generatePuzzle('2026-07-15')
-    expect(findCompletions(puzzle, puzzle.start, puzzle.targetKm, cities, rules, 20)).toEqual([])
+    expect(findCompletions(puzzle, puzzle.start!, puzzle.targetKm, cities, rules, 20)).toEqual([])
     expect(
-      findCompletions(puzzle, puzzle.start, puzzle.targetKm * 1.5, cities, rules, 20),
+      findCompletions(puzzle, puzzle.start!, puzzle.targetKm * 1.5, cities, rules, 20),
     ).toEqual([])
   })
 
   it('excludes the start, the from-city, and any excluded ids', () => {
     const puzzle = generatePuzzle('2026-07-15')
     const exclude = new Set([puzzle.exploreAnswers[0]!.city.id])
-    const out = findCompletions(puzzle, puzzle.start, 0, cities, rules, 50, exclude)
+    const out = findCompletions(puzzle, puzzle.start!, 0, cities, rules, 50, exclude)
     for (const { city } of out) {
-      expect(city.id).not.toBe(puzzle.start.id)
+      expect(city.id).not.toBe(puzzle.start!.id)
       expect(exclude.has(city.id)).toBe(false)
     }
   })
 
   it('honours the limit and sorts closest-to-a-perfect-landing first', () => {
     const puzzle = generatePuzzle('2026-07-15')
-    const out = findCompletions(puzzle, puzzle.start, 0, cities, rules, 5)
+    const out = findCompletions(puzzle, puzzle.start!, 0, cities, rules, 5)
     expect(out.length).toBeLessThanOrEqual(5)
     const errs = out.map((a) => Math.abs(a.distanceKm - puzzle.targetKm))
     for (let i = 1; i < errs.length; i++) expect(errs[i]!).toBeGreaterThanOrEqual(errs[i - 1]!)

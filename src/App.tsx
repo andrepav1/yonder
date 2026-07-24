@@ -15,9 +15,8 @@ import {
   saveHintLevel,
   type HintLevel,
 } from '@/store/prefs'
-import { formatDistance, bandLabel, formatBearing } from '@/lib/format'
+import { formatDistance, bandLabel } from '@/lib/format'
 import { cityLabel, allCities, capitals } from '@/lib/cities'
-import { initialBearingDeg } from '@/lib/geo'
 import { useI18n } from '@/i18n/context'
 import { Globe } from '@/ui/Globe'
 import { GuessInput } from '@/ui/GuessInput'
@@ -89,16 +88,19 @@ export default function App() {
   const free = freeModeId !== null
   const activeMode = freeModeId ? (modes[freeModeId] ?? dailyMode) : dailyMode
   const rules = activeMode.rules
-  const seed = free ? freeSeed : date
-  const puzzle = useMemo(() => activeMode.generate(seed), [activeMode, seed])
+  // The daily puzzle is always generated: it's the home board, and How to play
+  // explains its (Classic) rules whichever mode happens to be on screen.
+  const dailyPuzzle = useMemo(() => dailyMode.generate(date), [date])
+  const freePuzzle = useMemo(
+    () => (freeModeId ? (modes[freeModeId] ?? dailyMode).generate(freeSeed) : null),
+    [freeModeId, freeSeed],
+  )
+  const puzzle = freePuzzle ?? dailyPuzzle
   const round = free ? freeRound : dailyRound
   const finished = isFinished(round)
   const hintLevel = free ? freeHint : dailyHint
   const kind = activeMode.kind
   const hidden = kind === 'hidden'
-  // Hidden Destination's opening clue: the bearing from the anchor to the target.
-  const clueBearing =
-    hidden && puzzle.target ? initialBearingDeg(puzzle.start, puzzle.target) : 0
 
   // Unlock a hint (only ever raises the level). Daily writes through to storage
   // so the reveal survives a reload; free-play stays in memory.
@@ -119,22 +121,20 @@ export default function App() {
   // overshoot). Computed only once the round is over.
   const reveal = useMemo(() => {
     if (!finished) return undefined
-    // Hidden Destination: reveal just the mystery city (as an "ideal" pin).
+    // Hidden Destination: reveal just the mystery city — there's no origin to
+    // measure it from, so the pin carries a name and nothing else.
     if (hidden) {
       const target = puzzle.target
       if (!target) return undefined
-      return {
-        ideal: [],
-        completions: [],
-        from: puzzle.start,
-        answer: { city: target, distanceKm: puzzle.targetKm },
-      }
+      return { ideal: [], completions: [], answer: target }
     }
+    const start = puzzle.start
+    if (!start) return undefined
     const guessedIds = new Set(round.guesses.map((g) => g.city.id))
     const exclude = new Set(guessedIds)
-    exclude.add(puzzle.start.id)
+    exclude.add(start.id)
     const last = round.guesses[round.guesses.length - 1]
-    const from = last ? last.city : puzzle.start
+    const from = last ? last.city : start
     const cumulativeKm = last ? last.cumulativeKm : 0
     const completions =
       round.status === 'won'
@@ -270,6 +270,7 @@ export default function App() {
               hintLevel={hintLevel}
               onHint={useHint}
               finished={finished}
+              capitalsOnly={hidden}
             />
           </div>
         </header>
@@ -278,12 +279,8 @@ export default function App() {
           {hidden ? (
             <>
               <div className="prompt__eyebrow">{t.hidden.eyebrow}</div>
-              <div className="prompt__target-label">{t.hidden.anchorLabel}</div>
-              <div className="prompt__start">{cityLabel(puzzle.start, locale)}</div>
-              <div className="prompt__clue">
-                {t.hidden.clue(formatDistance(puzzle.targetKm, unit, t))}
-                <span className="prompt__dir">{formatBearing(clueBearing)}</span>
-              </div>
+              <div className="prompt__start">{t.hidden.title}</div>
+              <div className="prompt__lead">{t.hidden.lead}</div>
               <div className="prompt__hint">{t.hidden.hint(rules.guesses)}</div>
             </>
           ) : (
@@ -291,7 +288,7 @@ export default function App() {
               <div className="prompt__eyebrow">
                 {free ? t.modes.practiceEyebrow : t.prompt.eyebrow}
               </div>
-              <div className="prompt__start">{cityLabel(puzzle.start, locale)}</div>
+              <div className="prompt__start">{puzzle.start ? cityLabel(puzzle.start, locale) : ''}</div>
               <div className="prompt__target-label">{t.prompt.targetLabel}</div>
               <div className="prompt__target mono">
                 {formatDistance(puzzle.targetKm, unit, t)}
@@ -319,7 +316,10 @@ export default function App() {
           guesses={round.guesses}
           rules={rules}
           unit={unit}
-          cities={allCities()}
+          // Hidden Destination's answer is always a capital, so its hint reveals
+          // the capitals — the whole pool, at any zoom — not the full dataset.
+          cities={hidden ? capitals() : allCities()}
+          exploreAll={hidden}
           hintLevel={hintLevel}
           reveal={reveal}
           finished={finished}
@@ -380,7 +380,12 @@ export default function App() {
         />
       )}
       {showHowTo && (
-        <HowToPlay rules={rules} puzzle={puzzle} unit={unit} onClose={closeHowTo} />
+        <HowToPlay
+          rules={dailyRules}
+          puzzle={dailyPuzzle}
+          unit={unit}
+          onClose={closeHowTo}
+        />
       )}
       {showStats && <StatsPanel stats={stats} onClose={() => setShowStats(false)} />}
       {showAbout && <About onClose={() => setShowAbout(false)} />}

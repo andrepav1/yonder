@@ -15,15 +15,14 @@ describe('generateHidden', () => {
     )
   })
 
-  it('always picks a capital target, a distinct anchor, and a meaningful clue', () => {
+  it('always picks a capital target and gives away nothing else', () => {
     for (const seed of ['h-1', 'h-2', 'h-3', 'h-abc', 'h-zzz', 'h-2026']) {
       const p = generateHidden(seed, { rules })
       expect(p.target, 'target set').toBeDefined()
       expect(capitalSet.has(p.target!.id), 'target is a capital').toBe(true)
-      expect(p.start.id).not.toBe(p.target!.id)
-      // targetKm is the start→target distance (the anchor clue), past the floor.
-      expect(p.targetKm).toBeGreaterThanOrEqual(rules.hidden.minClueKm)
-      expect(p.targetKm).toBeCloseTo(Math.round(haversineKm(p.start, p.target!)), 0)
+      // No start city and no opening distance: every clue is earned by guessing.
+      expect(p.start, 'no start city').toBeUndefined()
+      expect(p.targetKm).toBe(0)
     }
   })
 

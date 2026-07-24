@@ -4,7 +4,71 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
-## 2026-07-24 — Overshoot is blocked, not sudden death
+## 2026-07-24 (later) — The city hint reveals only what can be the answer
+
+- **Context.** The in-round hint ("Show cities") draws the explorable dot layer, filtered
+  by the zoom/population ramp against the full ~6.2k dataset. In Hidden Destination the
+  answer is always a **capital**, so that layer was mostly noise — and worse, actively
+  unhelpful: the zoomed-out floor is 5M, which hides most capitals (the very cities the
+  hint exists to surface) while showing megacities that can never be the answer.
+- **Decision.** A mode hands the Globe its own explorable pool. Hidden passes
+  `capitals()` plus a new `exploreAll` flag that skips the population gate — the pool is
+  ~160 cities, small enough to draw whole at any zoom. The header menu relabels the hint
+  "Show capitals" (`capitalsOnly`) so it promises what it delivers.
+- **Why a flag and not a rule.** The gate exists because 6.2k dots don't fit on a globe;
+  a curated pool has no such problem. That's a property of the *pool*, not a tunable, so
+  it's a Globe prop rather than another `rules.explore.*` knob.
+- **Follow-on.** The end-of-round answer pin gets the same treatment: the globe now spins
+  the mystery capital into view when the round finishes. The reveal is one pin, and the
+  board was left facing the last guess — so the single pin the ending exists for could
+  sit on the far hemisphere, invisible, with no hint where to drag. Classic's reveal is
+  16+ pins clustered near the target and never had this problem.
+
+## 2026-07-24 (later) — Hidden Destination has no start city
+
+- **Context.** The mode shipped with an "anchor" start city whose distance + bearing to
+  the mystery capital was the opening clue. Two problems. (a) **It gives the answer
+  away.** A named point plus a distance *and* a bearing pins a location exactly — that
+  is a full solution vector, handed over before the player does anything. The only work
+  left is naming the capital that sits there, which is precisely the work a single guess
+  already does. (b) **It's Classic's furniture.** A "start city" implies a journey; this
+  mode has no path, no cumulative total, and never measures anything from the start
+  again after the clue. It reads as an origin the player is supposed to travel from.
+- **Decision.** Remove it. `generateHidden` now picks a capital and nothing else; the
+  board opens on a neutral world view and the **first guess is the opening probe**.
+  Still solvable well inside the 8 tries — one probe yields the same distance+bearing
+  the anchor used to hand over — but now it's earned.
+- **Consequence for the core.** `PuzzleSpec.start` became **optional**: journey modes
+  have an origin, deduction modes don't. `classicLogic` guards on it the way
+  `hiddenLogic` already guarded on `target`, and `Globe.start` is optional too. This is
+  the mode seam doing its job — the shared type stopped asserting a Classic-shaped
+  world. `rules.hidden.minClueKm` is gone with the anchor it constrained.
+- **Trade-off.** A player who opens the mode sees no information at all, which is a
+  colder start; the prompt now states the rule ("Every guess reports how far it is — and
+  which way to go") in place of a clue. Judged the better trade: a first guess that
+  *does* something beats a free one that does it for you.
+
+## 2026-07-24 (later) — Overshoot ends the round after all
+
+- **Context.** Reverses the entry below, the same day, after playing it. Blocking the
+  busting hop removed the loss but introduced a worse state: **being stuck**. Legs only
+  add, so once the remaining distance is smaller than the distance to the nearest
+  unguessed city, *every* legal move overshoots — and every one is rejected without
+  spending a turn. The round can then never be won and never be lost. It just sits
+  there: no result card, no share, no stats, no streak entry, nothing to do but walk
+  away. The forgiving rule had turned a losable game into an unfinishable one.
+- **Decision.** `rules.overshoot.endsRound` back to **`true`** (sudden death): the
+  busting hop lands, the round ends, you see "Too far!" and can share it. Losing is a
+  real ending; stuck is not an ending at all. The blocking behaviour stays behind the
+  knob (`false`) and is still tested — it's a legitimate variant for a future mode with
+  a *shrinking* total, where a bust would be recoverable.
+- **Trade-off.** The original complaint the entry below was written for — one over-eager
+  guess ends the day — is back. Accepted knowingly: that's a *hard* game, which is a
+  fixable problem, and the knobs to fix it are difficulty ones (`tolerancePct` band
+  width, `guesses`), not the ending rule. Left untouched for now so the change is
+  one variable; widen the band if the daily proves too punishing.
+
+## 2026-07-24 — Overshoot is blocked, not sudden death (superseded by the entry above)
 
 - **Context.** The one-sided win band plus cumulative-only distance made the game
   brutal: because every leg *adds* to the running total, the first time the total

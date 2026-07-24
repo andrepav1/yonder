@@ -294,20 +294,13 @@ button {
   line-height: 1.1;
   margin-top: 0.1rem;
 }
-/* Hidden Destination clue: the distance + direction to the mystery capital. */
-.prompt__clue {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--accent);
-  line-height: 1.15;
-  margin-top: 0.15rem;
-}
-.prompt__dir {
-  margin-left: 0.5rem;
-  color: var(--fg-muted);
-  font-weight: 500;
+/* Hidden Destination lead: what a guess tells you (the mode has no clue line). */
+.prompt__lead {
+  font-size: 0.95rem;
+  color: var(--fg);
+  line-height: 1.4;
+  max-width: 26ch;
+  margin: 0 auto;
 }
 .prompt__hint {
   font-size: 0.8rem;
