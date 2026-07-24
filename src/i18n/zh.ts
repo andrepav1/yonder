@@ -17,8 +17,6 @@ export const zh: Messages = {
 
   modes: {
     daily: '每日',
-    practice: '练习',
-    practiceLabel: '练习模式',
     practiceEyebrow: '你的出发地',
     newPuzzle: '换一题',
     practiceNote: '练习题不计入你的每日连胜。',

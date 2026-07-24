@@ -17,8 +17,6 @@ export const pt: Messages = {
 
   modes: {
     daily: 'Diário',
-    practice: 'Treino',
-    practiceLabel: 'Modo treino',
     practiceEyebrow: 'A sua partida',
     newPuzzle: 'Novo desafio',
     practiceNote: 'As partidas de treino não afetam a sua sequência diária.',

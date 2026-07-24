@@ -7,25 +7,12 @@ import type { GameRules } from '@/config/rules'
 import { defaultRules } from '@/config/rules'
 import { haversineKm } from './geo'
 import { rngFromString, hashString } from './prng'
+import { weightedByPopulation } from './weighted'
 import { allCities } from './cities'
 
 /** UTC "YYYY-MM-DD" for a given instant (defaults to now). */
 export function utcDateString(d: Date = new Date()): string {
   return d.toISOString().slice(0, 10)
-}
-
-/** Weighted pick from `pool` using precomputed cumulative weights. */
-function weightedPick<T>(pool: T[], cumulative: number[], total: number, r: number): T {
-  const target = r * total
-  // Binary search for the first cumulative weight >= target.
-  let lo = 0
-  let hi = pool.length - 1
-  while (lo < hi) {
-    const mid = (lo + hi) >> 1
-    if (cumulative[mid]! < target) lo = mid + 1
-    else hi = mid
-  }
-  return pool[lo]!
 }
 
 export interface GenerateOptions {
@@ -47,24 +34,18 @@ export function generatePuzzle(date: string, opts: GenerateOptions = {}): Puzzle
   const cities = opts.cities ?? allCities()
   const rng = rngFromString(date)
 
-  // Precompute the start-city pool + cumulative weights once.
+  // Precompute the start-city pool + weighted picker once.
   const pool = cities.filter((c) => c.population >= rules.startCity.minPopulation)
   if (pool.length === 0) {
     throw new Error('No cities meet startCity.minPopulation')
   }
-  const exp = rules.startCity.weightExponent
-  const cumulative: number[] = new Array(pool.length)
-  let total = 0
-  for (let i = 0; i < pool.length; i++) {
-    total += Math.pow(pool[i]!.population, exp)
-    cumulative[i] = total
-  }
+  const pickStart = weightedByPopulation(pool, rules.startCity.weightExponent)
 
   const { minKm, maxKm } = rules.target
   const tol = rules.tolerancePct
 
   for (let attempt = 0; attempt < rules.generation.maxAttempts; attempt++) {
-    const start = weightedPick(pool, cumulative, total, rng())
+    const start = pickStart(rng())
     const targetKm = Math.round(minKm + rng() * (maxKm - minKm))
     // One-sided win band: a single-hop answer must be at/under the target
     // (reaching it exactly wins; going past it would overshoot and lose).

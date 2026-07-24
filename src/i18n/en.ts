@@ -18,8 +18,6 @@ export const en: Messages = {
 
   modes: {
     daily: 'Daily',
-    practice: 'Practice',
-    practiceLabel: 'Practice mode',
     practiceEyebrow: 'Your departure',
     newPuzzle: 'New puzzle',
     practiceNote: 'Practice puzzles don’t affect your daily streak.',

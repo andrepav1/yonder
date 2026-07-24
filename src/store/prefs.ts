@@ -13,7 +13,7 @@ const hintsKey = (date: string) => `yondle:hints:${date}`
 /**
  * How far the in-round hint reveal has been unlocked: 0 = no city dots,
  * 1 = dots visible, 2 = dots visible + tappable for names. Persisted per daily
- * date so an unlocked hint survives a reload; practice keeps this in memory only.
+ * date so an unlocked hint survives a reload; free play keeps this in memory only.
  */
 export type HintLevel = 0 | 1 | 2
 

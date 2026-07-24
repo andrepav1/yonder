@@ -17,8 +17,6 @@ export const ko: Messages = {
 
   modes: {
     daily: '데일리',
-    practice: '연습',
-    practiceLabel: '연습 모드',
     practiceEyebrow: '출발 도시',
     newPuzzle: '새 문제',
     practiceNote: '연습 문제는 데일리 연속 기록에 영향을 주지 않습니다.',

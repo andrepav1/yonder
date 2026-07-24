@@ -17,8 +17,6 @@ export const de: Messages = {
 
   modes: {
     daily: 'Täglich',
-    practice: 'Übung',
-    practiceLabel: 'Übungsmodus',
     practiceEyebrow: 'Dein Startpunkt',
     newPuzzle: 'Neues Rätsel',
     practiceNote: 'Übungsrunden zählen nicht für deine tägliche Serie.',

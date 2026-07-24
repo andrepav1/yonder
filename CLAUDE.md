@@ -47,6 +47,9 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   fully static + offline-friendly by default. Not game rules → not determinism-sacred.
   See `MONETIZATION.md` for the playbook (current values + AdSense activation steps).
 - `src/lib/prng.ts` — `hashString` (FNV-1a) + `mulberry32` seeded PRNG. Pure.
+- `src/lib/weighted.ts` — `weightedByPopulation(pool, exponent)`: builds a
+  population-weighted picker (`r ∈ [0,1)` → pool member, binary search over cumulative
+  weights). Pure; shared by both puzzle generators (`puzzle.ts`, `hidden.ts`).
 - `src/lib/geo.ts` — `haversineKm`, `initialBearingDeg`, `compass16`,
   `bearingArrow`, km/mi conversion. Pure.
 - `src/lib/types.ts` — serializable domain types (`City`, `PuzzleSpec`, `AnswerCity`).

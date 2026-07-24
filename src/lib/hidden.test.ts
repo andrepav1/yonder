@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { generateHidden, hiddenLogic, hiddenTempLevel } from './hidden'
+import { generateHidden, hiddenLogic, hiddenTempLevel, buildHiddenShare } from './hidden'
 import { createRound, applyGuess } from './engine'
 import { capitals } from './cities'
 import { haversineKm } from './geo'
@@ -85,5 +85,33 @@ describe('hiddenTempLevel', () => {
     expect(hiddenTempLevel(warm - 1, false, rules)).toBe(2)
     expect(hiddenTempLevel(cool - 1, false, rules)).toBe(1)
     expect(hiddenTempLevel(cool + 1, false, rules)).toBe(0)
+  })
+})
+
+describe('buildHiddenShare', () => {
+  it('shows the win count on a win and never leaks a city name', () => {
+    const p = generateHidden('hidden-share', { rules })
+    const other = capitals().find((c) => c.id !== p.target!.id)!
+    let s = applyGuess(createRound('hidden-share'), p, other, hiddenLogic, rules).state
+    s = applyGuess(s, p, p.target!, hiddenLogic, rules).state
+    const text = buildHiddenShare(s, p, rules, { url: 'https://example.test' })
+    expect(text).toContain('2/8') // found on the 2nd guess of 8
+    expect(text).toContain('https://example.test')
+    // No spoilers: neither the target nor the probed city appears.
+    expect(text).not.toContain(p.target!.name)
+    expect(text).not.toContain(other.name)
+    // One square row per guess.
+    expect(text.split('\n').filter((l) => /🟥|🟧|🟨|🟦|⬜/.test(l))).toHaveLength(2)
+  })
+
+  it('marks a loss with X/total', () => {
+    const p = generateHidden('hidden-share-lose', { rules })
+    const other = capitals().find((c) => c.id !== p.target!.id)!
+    const s = applyGuess(createRound('hidden-share-lose'), p, other, hiddenLogic, {
+      ...rules,
+      guesses: 1,
+    }).state
+    expect(s.status).toBe('lost')
+    expect(buildHiddenShare(s, p, { ...rules, guesses: 1 })).toContain('X/1')
   })
 })

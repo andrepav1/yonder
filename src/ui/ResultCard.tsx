@@ -36,24 +36,25 @@ export function ResultCard({
   const hidden = kind === 'hidden'
   const breakdown = scoreRound(state.guesses, won, rules)
 
-  const badge = hidden
-    ? won
-      ? t.hidden.resultWin(breakdown.guessesUsed, rules.guesses)
-      : t.hidden.resultLose
-    : won
-      ? t.result.solved(breakdown.guessesUsed, rules.guesses)
-      : breakdown.overshot
-        ? t.result.overshotBadge
-        : t.result.outOfGuesses
-  const headline = hidden
-    ? won
-      ? t.hidden.headlineWin
-      : t.hidden.headlineLose
-    : won
-      ? t.result.headlineWin
-      : breakdown.overshot
-        ? t.result.headlineOver
-        : t.result.headlineClose
+  // Badge + headline, grouped per mode (Hidden: found / out of guesses; Classic:
+  // solved / overshot / out of guesses).
+  const { badge, headline } = hidden
+    ? {
+        badge: won ? t.hidden.resultWin(breakdown.guessesUsed, rules.guesses) : t.hidden.resultLose,
+        headline: won ? t.hidden.headlineWin : t.hidden.headlineLose,
+      }
+    : {
+        badge: won
+          ? t.result.solved(breakdown.guessesUsed, rules.guesses)
+          : breakdown.overshot
+            ? t.result.overshotBadge
+            : t.result.outOfGuesses,
+        headline: won
+          ? t.result.headlineWin
+          : breakdown.overshot
+            ? t.result.headlineOver
+            : t.result.headlineClose,
+      }
 
   return (
     <section className="result" aria-live="polite">

@@ -17,8 +17,6 @@ export const ja: Messages = {
 
   modes: {
     daily: 'デイリー',
-    practice: '練習',
-    practiceLabel: '練習モード',
     practiceEyebrow: '出発地',
     newPuzzle: '新しい問題',
     practiceNote: '練習の問題はデイリーの連続記録に影響しません。',

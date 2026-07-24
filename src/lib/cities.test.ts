@@ -70,6 +70,16 @@ describe('search', () => {
   it('respects the limit', () => {
     expect(search('a', 5).length).toBeLessThanOrEqual(5)
   })
+
+  it('restricts matches to a supplied pool (capitals-only input)', () => {
+    const berlin = allCities().find((c) => c.name === 'Berlin' && c.country === 'Germany')!
+    const pool = [berlin] // pretend the allowed pool is just Berlin
+    // Berlin (in the pool) resolves; Hamburg (not in the pool) is filtered out.
+    expect(search('berlin', 8, undefined, pool).map((r) => r.city.id)).toContain(berlin.id)
+    expect(search('hamburg', 8, undefined, pool)).toEqual([])
+    expect(resolveGuess('hamburg', pool)).toBeNull()
+    expect(resolveGuess('berlin', pool)?.id).toBe(berlin.id)
+  })
 })
 
 describe('cityLabel disambiguation', () => {

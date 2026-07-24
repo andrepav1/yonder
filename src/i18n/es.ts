@@ -17,8 +17,6 @@ export const es: Messages = {
 
   modes: {
     daily: 'Diario',
-    practice: 'Práctica',
-    practiceLabel: 'Modo práctica',
     practiceEyebrow: 'Tu salida',
     newPuzzle: 'Nuevo desafío',
     practiceNote: 'Las partidas de práctica no afectan tu racha diaria.',

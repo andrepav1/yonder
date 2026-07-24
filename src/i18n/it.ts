@@ -17,8 +17,6 @@ export const it: Messages = {
 
   modes: {
     daily: 'Giornaliero',
-    practice: 'Allenamento',
-    practiceLabel: 'Modalità allenamento',
     practiceEyebrow: 'La tua partenza',
     newPuzzle: 'Nuova sfida',
     practiceNote: 'Le partite di allenamento non influenzano la tua serie giornaliera.',

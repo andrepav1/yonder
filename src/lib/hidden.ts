@@ -10,32 +10,10 @@ import type { GameRules } from '@/config/rules'
 import { defaultRules } from '@/config/rules'
 import { haversineKm, initialBearingDeg, bearingArrow } from './geo'
 import { rngFromString, hashString } from './prng'
+import { weightedByPopulation } from './weighted'
 import { allCities, capitals as allCapitals } from './cities'
 import type { ModeLogic, PlayOutcome } from './mode'
 import { type Messages, en } from '@/i18n'
-
-/** Cumulative population weights over a pool, for seeded weighted picking. */
-function cumulativeWeights(pool: City[], exp: number): { cumulative: number[]; total: number } {
-  const cumulative = new Array<number>(pool.length)
-  let total = 0
-  for (let i = 0; i < pool.length; i++) {
-    total += Math.pow(pool[i]!.population, exp)
-    cumulative[i] = total
-  }
-  return { cumulative, total }
-}
-
-function weightedPick(pool: City[], cumulative: number[], total: number, r: number): City {
-  const target = r * total
-  let lo = 0
-  let hi = pool.length - 1
-  while (lo < hi) {
-    const mid = (lo + hi) >> 1
-    if (cumulative[mid]! < target) lo = mid + 1
-    else hi = mid
-  }
-  return pool[lo]!
-}
 
 /**
  * Hot→cold level for how close a guess is to the mystery city: 4 = found it,
@@ -71,16 +49,16 @@ export function generateHidden(seed: string, opts: HiddenOptions = {}): PuzzleSp
   const rng = rngFromString(seed)
   const exp = rules.startCity.weightExponent
 
-  const capW = cumulativeWeights(capitals, exp)
   const startPool = cities.filter((c) => c.population >= rules.startCity.minPopulation)
-  const startW = cumulativeWeights(startPool, exp)
+  const pickTarget = weightedByPopulation(capitals, exp)
+  const pickStart = weightedByPopulation(startPool, exp)
 
-  const target = weightedPick(capitals, capW.cumulative, capW.total, rng())
+  const target = pickTarget(rng())
   // Redraw the anchor until it's a distinct city a meaningful distance away.
-  let start = weightedPick(startPool, startW.cumulative, startW.total, rng())
+  let start = pickStart(rng())
   let targetKm = haversineKm(start, target)
   for (let i = 0; i < 60 && (start.id === target.id || targetKm < rules.hidden.minClueKm); i++) {
-    start = weightedPick(startPool, startW.cumulative, startW.total, rng())
+    start = pickStart(rng())
     targetKm = haversineKm(start, target)
   }
 

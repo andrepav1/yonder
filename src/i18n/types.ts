@@ -34,17 +34,13 @@ export interface Messages {
   }
 
   modes: {
-    /** Menu label / name for the shared daily puzzle. */
+    /** Menu item / name for the shared daily puzzle. */
     daily: string
-    /** Menu label / name for free-play/practice. */
-    practice: string
-    /** Header subtitle shown while in practice mode. */
-    practiceLabel: string
-    /** Prompt eyebrow shown while in practice mode (the daily one is date-specific). */
+    /** Prompt eyebrow shown in a free-play round (the daily one is date-specific). */
     practiceEyebrow: string
-    /** Button that generates a fresh practice puzzle. */
+    /** Button that generates a fresh free-play puzzle. */
     newPuzzle: string
-    /** Reassurance that practice rounds are off the record. */
+    /** Reassurance that free-play rounds are off the record (modal + in-round note). */
     practiceNote: string
     /** Menu item + modal heading for the mode picker. */
     title: string
