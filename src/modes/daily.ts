@@ -6,13 +6,16 @@ import type { City, PuzzleSpec, RoundState, ScoreBreakdown } from '@/lib/types'
 import { type GameRules, defaultRules } from '@/config/rules'
 import { generatePuzzle } from '@/lib/puzzle'
 import { applyGuess, type ApplyResult } from '@/lib/engine'
-import { scoreRound } from '@/lib/scoring'
+import type { ModeLogic } from '@/lib/mode'
+import { classicLogic } from '@/lib/classic'
 import { buildShareText, type ShareOptions } from '@/lib/share'
 
 export interface GameMode {
   id: string
   label: string
   rules: GameRules
+  /** The pure play + scoring strategy this mode delegates to (the mode seam). */
+  logic: ModeLogic
   /**
    * Build the puzzle for a `seed` string. Deterministic in the seed: the daily
    * mode passes the UTC date (same puzzle for everyone that day); the practice
@@ -22,24 +25,25 @@ export interface GameMode {
   generate(seed: string): PuzzleSpec
   /** Extend the round's path with a guessed city (adds the next leg). */
   apply(state: RoundState, puzzle: PuzzleSpec, city: City): ApplyResult
-  score(state: RoundState): ScoreBreakdown
+  score(state: RoundState, puzzle: PuzzleSpec): ScoreBreakdown
   share(state: RoundState, puzzle: PuzzleSpec, opts?: ShareOptions): string
 }
 
-/** Build a descriptor over a set of rules — daily and practice share behaviour. */
-function makeMode(id: string, label: string, rules: GameRules): GameMode {
+/** Build a descriptor over a mode's play logic + rules. */
+function makeMode(id: string, label: string, logic: ModeLogic, rules: GameRules): GameMode {
   return {
     id,
     label,
     rules,
+    logic,
     generate(seed) {
       return generatePuzzle(seed, { rules })
     },
     apply(state, puzzle, city) {
-      return applyGuess(state, puzzle, city, rules)
+      return applyGuess(state, puzzle, city, logic, rules)
     },
-    score(state) {
-      return scoreRound(state.guesses, state.status === 'won', rules)
+    score(state, puzzle) {
+      return logic.score(state, puzzle, rules)
     },
     share(state, puzzle, opts) {
       return buildShareText(state, puzzle, rules, opts)
@@ -48,14 +52,19 @@ function makeMode(id: string, label: string, rules: GameRules): GameMode {
 }
 
 /** The shared daily puzzle — one per UTC day, streak-tracked, date-locked. */
-export const dailyMode: GameMode = makeMode('daily', 'Daily', defaultRules)
+export const dailyMode: GameMode = makeMode('daily', 'Daily', classicLogic, defaultRules)
 
 /**
  * Free-play mode: unlimited random puzzles for practice/exploration. Same rules
  * as the daily, but each round is a fresh random puzzle and nothing is recorded
  * against the daily streak or stats (that lives in the App orchestration).
  */
-export const practiceMode: GameMode = makeMode('practice', 'Practice', defaultRules)
+export const practiceMode: GameMode = makeMode(
+  'practice',
+  'Practice',
+  classicLogic,
+  defaultRules,
+)
 
 /** Registry of available modes. Adding a mode = adding a descriptor here. */
 export const modes: Record<string, GameMode> = {

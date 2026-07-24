@@ -81,13 +81,23 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   bearing / over / win — a guess from a given previous point onto the running total),
   `scoreRound` (golf: guess count + final total), and `tempLevel` (the shared hot→cold
   level, graded by how much of the journey remains; 0 also = bust/overshoot).
-- `src/lib/engine.ts` — **pure** round state machine: `createRound`, `applyGuess`
-  (adds the next leg from the previous city; rejects finished / start-city / duplicate
-  **and — by default — an `overshoot`** without using a turn; ends the round on a win
-  or out of guesses). Because legs only ever add, an overshoot can never recover, so
-  the forgiving default (`rules.overshoot.endsRound: false`) **blocks** the busting hop
-  instead of losing on it — flip the knob to `true` for classic sudden death.
-  `guessesLeft`. Every transition returns a new serializable `RoundState`.
+- `src/lib/mode.ts` — the **mode seam**: the pure `ModeLogic` interface the engine
+  delegates to (`play` → validate+evaluate a guess into a rejection or a
+  `{result, status}`; `score`), plus `GuessError` / `ApplyResult` / `PlayOutcome`.
+  Adding a game variant = writing a `ModeLogic` (+ a descriptor in `src/modes/*`), not
+  editing the engine. See `MODES.md` for the framework + roadmap.
+- `src/lib/engine.ts` — **pure, mode-agnostic** round state machine: `createRound`,
+  `guessesLeft`, `isFinished`, and `applyGuess(state, puzzle, city, logic, rules)` — it
+  owns only the lifecycle (finished-guard + immutable append) and delegates the actual
+  play of a guess to the mode's `ModeLogic`. Re-exports the `mode.ts` types for
+  back-compat. Every transition returns a new serializable `RoundState`.
+- `src/lib/classic.ts` — **pure**: `classicLogic`, the original game as the first
+  `ModeLogic`. A guess adds the next leg from the previous city; rejects start-city /
+  duplicate **and — by default — an `overshoot`** without using a turn; ends the round
+  on a win or out of guesses. Because legs only ever add, an overshoot can never
+  recover, so the forgiving default (`rules.overshoot.endsRound: false`) **blocks** the
+  busting hop instead of losing on it — flip the knob to `true` for classic sudden
+  death. Composes the distance/band primitives from `scoring.ts`.
 - `src/lib/share.ts` — **pure** Wordle-style share string (hot/cold squares per hop +
   leg arrows, a reach-% line, no city names).
 - `src/lib/format.ts` — **pure** display helpers (`formatDistance`, `remainingPhrase`,
@@ -116,11 +126,14 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   brown highlands their surface height would otherwise colour them. Presentational
   only — no game logic reads it.
 - `src/modes/daily.ts` — the `GameMode` descriptors (`generate(seed)`/`apply`/
-  `score`/`share`) built by a shared `makeMode` factory + a `modes` registry.
-  Ships **two** modes: `dailyMode` (seed = UTC date, streak-tracked) and
-  `practiceMode` (seed = a random token, unlimited free play). `generate` is
-  deterministic in its seed; the practice randomness lives at the App boundary,
-  never in `lib/*`. Adding a mode = adding a descriptor.
+  `score`/`share`) built by a shared `makeMode` factory + a `modes` registry. Each
+  descriptor pairs a **`ModeLogic`** (the pure play strategy — Classic's is
+  `classicLogic`) with its `rules`; `apply`/`score` just delegate to it through the
+  generic engine, so the UI never sees mode-specific logic. Ships **two** descriptors
+  today: `dailyMode` (seed = UTC date, streak-tracked) and `practiceMode` (seed = a
+  random token, unlimited free play) — both Classic for now. `generate` is
+  deterministic in its seed; the practice randomness lives at the App boundary, never
+  in `lib/*`. Adding a mode = a `ModeLogic` + a descriptor (see `MODES.md`).
 - `src/store/` — persistence behind a `KeyValueStore` seam (`storage.ts`, memory +
   localStorage adapters): `statsStore.ts` (pure `updateStats` streak logic + the
   `StatsStore` wrapper: stats, streaks, guess distribution, per-day round save +

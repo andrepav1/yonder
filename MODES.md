@@ -145,9 +145,15 @@ Captured so the descriptor stays honest about what it must eventually span:
 
 ## Build phases
 
-1. **Framework + Classic port.** Introduce `ModeDefinition`, generalize `engine.ts` /
-   `scoring.ts`, express Classic as the first descriptor. All existing tests green,
-   zero gameplay change. (No new UI yet.)
+1. **Framework + Classic port.** ✅ **Done.** Introduced the mode seam in `lib/mode.ts`
+   (the pure `ModeLogic` interface — `play` + `score`), generalized `engine.ts` into a
+   mode-agnostic delegator (`applyGuess(state, puzzle, city, logic, rules)` owns only
+   the finished-guard + immutable append), and lifted the whole Classic game into
+   `lib/classic.ts` as `classicLogic` (the distance/band primitives stay shared in
+   `scoring.ts`). `makeMode` now pairs a `ModeLogic` with `rules`. Behaviour-identical,
+   all 133 tests green, no UI change. (The richer setup/goal/present descriptor slots
+   sketched above arrive with the modal + Hidden Destination, when a real second mode
+   validates the shape.)
 2. **Navigation + modal.** ⋯ menu → Daily / Modes; the Modes modal with cards; free-play
    plumbing (ephemeral round, New puzzle + Share); retire the old Practice path.
 3. **Capital data.** Add the `PPLC` capital flag to the dataset build + a `capitals()`

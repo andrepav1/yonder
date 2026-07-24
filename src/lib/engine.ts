@@ -1,18 +1,17 @@
-// Pure round state machine. No I/O, no clock. Every transition returns a new
-// RoundState (immutable), so state can be saved, replayed, or (later) synced.
+// Generic round state machine. No I/O, no clock, and — since the mode seam —
+// no game-specific rules of its own: it owns the RoundState lifecycle (create,
+// finished-guard, append) and delegates the actual play of a guess to a
+// `ModeLogic` (see `mode.ts`; Classic's lives in `classic.ts`). Every
+// transition returns a new RoundState (immutable), so state can be saved,
+// replayed, or (later) synced.
 
 import type { City, PuzzleSpec, RoundState } from './types'
 import type { GameRules } from '@/config/rules'
-import { evaluateLeg } from './scoring'
+import type { ApplyResult, ModeLogic } from './mode'
 
-/** Reasons a guess can be rejected without consuming a turn. */
-export type GuessError = 'finished' | 'start-city' | 'duplicate' | 'overshoot'
-
-export interface ApplyResult {
-  state: RoundState
-  /** Set when the guess was rejected; `state` is then returned unchanged. */
-  error?: GuessError
-}
+// Re-exported so existing importers of these from `@/lib/engine` keep working;
+// the canonical home is `mode.ts`.
+export type { GuessError, ApplyResult, PlayOutcome, ModeLogic } from './mode'
 
 /** A fresh, unplayed round for a date. */
 export function createRound(date: string): RoundState {
@@ -29,43 +28,21 @@ export function isFinished(state: RoundState): boolean {
 }
 
 /**
- * Apply a guessed city, extending the path. Rejects (without using a turn) a
- * guess made after the round is over, the start city itself, a city already on
- * the path, or — unless `rules.overshoot.endsRound` — a hop that would push the
- * running total past the target (it can never recover, so it's blocked rather
- * than counted). Otherwise the leg from the previous point to this city is
- * added to the running total, and the round transitions to won (inside the
- * band), lost (out of guesses, or an overshoot under sudden-death rules), or
- * keeps playing.
+ * Apply a guessed city by delegating to the mode's `play`. Rejects a guess made
+ * after the round is over (the one universal rule); otherwise the mode decides
+ * whether the guess is rejected (no turn spent) or appended with a new status.
  */
 export function applyGuess(
   state: RoundState,
   puzzle: PuzzleSpec,
   city: City,
+  logic: ModeLogic,
   rules: GameRules,
 ): ApplyResult {
   if (isFinished(state)) return { state, error: 'finished' }
-  if (city.id === puzzle.start.id) return { state, error: 'start-city' }
-  if (state.guesses.some((g) => g.city.id === city.id)) {
-    return { state, error: 'duplicate' }
+  const outcome = logic.play(state, puzzle, city, rules)
+  if ('error' in outcome) return { state, error: outcome.error }
+  return {
+    state: { ...state, guesses: [...state.guesses, outcome.result], status: outcome.status },
   }
-
-  const last = state.guesses[state.guesses.length - 1]
-  const from = last ? last.city : puzzle.start
-  const priorCumulativeKm = last ? last.cumulativeKm : 0
-  const result = evaluateLeg(puzzle, from, priorCumulativeKm, city, rules)
-  // Legs only add, so an overshoot is unrecoverable. Unless the rules make it
-  // sudden death, block the hop (no turn spent) so a single over-eager guess
-  // never ends the round — the player just picks somewhere closer.
-  if (result.over && !rules.overshoot.endsRound) {
-    return { state, error: 'overshoot' }
-  }
-  const guesses = [...state.guesses, result]
-  const status = result.won
-    ? 'won'
-    : result.over || guesses.length >= rules.guesses
-      ? 'lost'
-      : 'playing'
-
-  return { state: { ...state, guesses, status } }
 }
