@@ -137,6 +137,7 @@ npm run lint         # ESLint (flat config)
 npm run typecheck    # tsc, strict
 npm run build        # production build → dist/
 npm run data:build   # regenerate src/data/cities.json from ./data-src
+npm run data:capitals -- <cities15000.txt>   # refresh the national-capital flags only
 npm run data:elevation    # regenerate src/data/elevation.json from NOAA ETOPO (needs network)
 npm run preview:puzzles   # print generated puzzles for several dates
 ```

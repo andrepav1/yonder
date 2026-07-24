@@ -16,6 +16,7 @@
     "typecheck": "tsc -b --noEmit",
     "data:build": "node scripts/build-cities.mjs",
     "data:enrich": "node scripts/enrich-cities.mjs",
+    "data:capitals": "node scripts/enrich-capitals.mjs",
     "data:elevation": "node scripts/build-elevation.mjs",
     "screenshot": "node scripts/screenshot.mjs",
     "preview:puzzles": "vite-node scripts/preview-puzzles.mts"

@@ -29,6 +29,12 @@ export interface City {
    * `name`. Absent on cities with no translations. English always uses `name`.
    */
   names?: CityNames
+  /**
+   * True for national capitals (GeoNames feature code `PPLC`). Absent (falsy)
+   * for everywhere else. Powers modes that draw on a small, famous city pool
+   * (e.g. Hidden Destination). Presentational/gameplay only — not a search key.
+   */
+  capital?: boolean
 }
 
 /** A city paired with its great-circle distance from the puzzle's start city. */

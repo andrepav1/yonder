@@ -160,8 +160,11 @@ Captured so the descriptor stays honest about what it must eventually span:
    free-play round keyed by `freeModeId` (never persisted → reload lands on the daily),
    with New puzzle + Share on free rounds. The old Practice mode/toggle is retired
    (`classicMode` replaces it). Screenshot harness updated to drive the new flow.
-3. **Capital data.** Add the `PPLC` capital flag to the dataset build + a `capitals()`
-   selector, guarded by a dataset-integrity test.
+3. **Capital data.** ✅ **Done.** The build now detects the `PPLC` feature code
+   (`collectCapitalIds`) and emits a top-level `capitals` id array; `enrich-capitals.mjs`
+   (`npm run data:capitals`) refreshes it onto the committed `cities.json` without a full
+   rebuild (translations untouched). The loader hydrates `City.capital` and exposes
+   `capitals()` / `isCapital()` — ~160 national capitals — guarded by `capitals.test.ts`.
 4. **Hidden Destination.** The descriptor + capitals-only guess input + distance/bearing
    feedback + reveal, with its own determinism test. Wire its card into the modal.
 

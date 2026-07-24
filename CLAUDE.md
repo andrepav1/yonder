@@ -52,6 +52,7 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 - `src/lib/types.ts` — serializable domain types (`City`, `PuzzleSpec`, `AnswerCity`).
   `City.names` is an optional `{ locale: name }` map (`CityNames`) carrying only the
   localized names that **differ** from the canonical `name` (English is never stored).
+  `City.capital` is an optional flag (true only for national capitals — GeoNames `PPLC`).
 - `src/lib/cities.ts` — loads `src/data/cities.json`, hydrates `City[]`, and does
   accent/case-insensitive **fuzzy**, **locale-aware** autocomplete. `localizedName` /
   `cityLabel(city, locale?)` render the active language (falling back to `name`);
@@ -60,6 +61,8 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   **always** appends the country (`"Name, Country"`), promoting to `"Name, Region,
   Country"` when the name repeats within that country; the name+country pairing keys off
   the canonical name, and country/region qualifiers stay in their (English) dataset form.
+  `capitals()` returns the national-capital pool (~160, memoized) and `isCapital(city)`
+  tests the flag — a small, famous city set for modes like Hidden Destination.
 - `src/lib/puzzle.ts` — `generatePuzzle(date, {cities?, rules?})`: population-weighted
   start city + validated target so every day has ≥ `minValidAnswers` cities within
   `[target·(1−tol), target]` of the start — i.e. **single-hop wins** — guaranteeing
@@ -113,7 +116,9 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   I/O-free. Adding a language = adding a catalog + a `LOCALES` entry.
 - `src/data/cities.json` — **committed** compact dataset (array-of-arrays; see
   `fields`). Built by `scripts/build-cities.mjs`. Each tuple's optional 8th element is
-  the `{ locale: name }` translations map (present only for cities that have any).
+  the `{ locale: name }` translations map (present only for cities that have any). A
+  top-level `capitals` array lists the geonameids of national capitals (GeoNames
+  `PPLC`) — kept out of the tuple so it stays back-compatible and refreshable on its own.
 - `src/data/elevation.json` — **committed** hypsometric relief for the globe: a
   TopoJSON with two objects — `bands` (nested elevation/depth bands; each geometry's
   `properties.v` is the band's lower-bound in metres) and `ice` (the Greenland +
@@ -256,6 +261,13 @@ one — so only genuine translations are stored (~4k of the ~6.2k cities). The s
 logic lives in `selectAlternateNames` and is reused by `scripts/enrich-cities.mjs`
 (`npm run data:enrich -- <alternateNamesV2.txt>`), which attaches/refreshes translations
 onto an already-built `cities.json` **without** re-downloading the three base dumps.
+
+**Capitals.** The build also emits a top-level `capitals` array — the geonameids of
+national capitals, detected from the `PPLC` feature code in `cities15000.txt`
+(`collectCapitalIds`). Like translations, it can be refreshed onto an already-built
+`cities.json` without a full rebuild: `npm run data:capitals -- <cities15000.txt>`
+(`scripts/enrich-capitals.mjs`) intersects `PPLC` ids with the dataset (~160 capitals,
+pop ≥ 100k) and rewrites just the `capitals` list, leaving translations intact.
 
 **Globe elevation.** `src/data/elevation.json` is the other committed, bundled
 artifact — the hypsometric relief the globe paints under the coastline. Rebuild it
