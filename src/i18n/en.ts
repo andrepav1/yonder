@@ -18,11 +18,34 @@ export const en: Messages = {
 
   modes: {
     daily: 'Daily',
-    practice: 'Practice',
-    practiceLabel: 'Practice mode',
     practiceEyebrow: 'Your departure',
     newPuzzle: 'New puzzle',
     practiceNote: 'Practice puzzles don’t affect your daily streak.',
+    title: 'Modes',
+    catalog: {
+      classic: {
+        name: 'Classic',
+        blurb: 'Hop city to city to reach the target distance without overshooting.',
+      },
+      hidden: {
+        name: 'Hidden Destination',
+        blurb: 'Find the mystery capital from distance and direction clues.',
+      },
+    },
+  },
+
+  hidden: {
+    eyebrow: 'Find the hidden capital',
+    anchorLabel: 'Clue from',
+    clue: (distance) => `about ${distance} away`,
+    hint: (guesses) => `guess capitals to close in · ${guesses} tries`,
+    away: (distance) => `${distance} away`,
+    found: 'Found it!',
+    resultWin: (used, total) => `Found in ${used}/${total}`,
+    resultLose: 'Out of guesses',
+    headlineWin: 'You found it',
+    headlineLose: 'So close',
+    answer: (city) => `It was ${city}`,
   },
 
   menu: {
@@ -66,6 +89,7 @@ export const en: Messages = {
       hint: 'Tap a pin to see a city you could have reached.',
       ideal: 'Closest to target',
       completion: 'Would have finished your run',
+      hidden: 'The hidden capital',
     },
     hints: {
       label: 'Hints',
@@ -90,6 +114,7 @@ export const en: Messages = {
     duplicate: 'You already guessed that city.',
     startCity: 'That’s the start city — pick somewhere else.',
     finished: 'Today’s round is over.',
+    overshoot: 'That hop overshoots the target — try a closer city.',
   },
 
   format: {
@@ -122,7 +147,7 @@ export const en: Messages = {
     step2:
       'Keep hopping to climb toward the target. The hot / cold cue warms up as your running total nears it — watch the “to go” number shrink.',
     step3: (band, guesses) =>
-      `Land your total within ${band} below the target to win. Go over and you bust — so does running out of ${guesses} guesses. Fewer hops is a better score.`,
+      `Land your total within ${band} below the target to win. A hop that would go over is blocked — just pick a closer city. You only lose by using up all ${guesses} guesses. Fewer hops is a better score.`,
     note: (min) =>
       `Only cities with more than ${min} people are in the game — smaller towns can’t be guessed.`,
     cta: 'Let’s wander',

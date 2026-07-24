@@ -17,11 +17,36 @@ export const pt: Messages = {
 
   modes: {
     daily: 'Diário',
-    practice: 'Treino',
-    practiceLabel: 'Modo treino',
     practiceEyebrow: 'A sua partida',
     newPuzzle: 'Novo desafio',
     practiceNote: 'As partidas de treino não afetam a sua sequência diária.',
+    title: 'Modos',
+    catalog: {
+      classic: {
+        name: 'Clássico',
+        blurb:
+          'Salte de cidade em cidade para atingir a distância-alvo sem ultrapassar.',
+      },
+      hidden: {
+        name: 'Destino oculto',
+        blurb:
+          'Encontre a capital misteriosa por pistas de distância e direção.',
+      },
+    },
+  },
+
+  hidden: {
+    eyebrow: 'Encontre a capital oculta',
+    anchorLabel: 'Pista a partir de',
+    clue: (distance) => `a cerca de ${distance}`,
+    hint: (guesses) => `adivinhe capitais para se aproximar · ${guesses} tentativas`,
+    away: (distance) => `a ${distance}`,
+    found: 'Encontrou!',
+    resultWin: (used, total) => `Encontrada em ${used}/${total}`,
+    resultLose: 'Sem tentativas',
+    headlineWin: 'Você encontrou',
+    headlineLose: 'Quase',
+    answer: (city) => `Era ${city}`,
   },
 
   menu: {
@@ -65,6 +90,7 @@ export const pt: Messages = {
       hint: 'Toque num ponto para ver uma cidade que você poderia ter alcançado.',
       ideal: 'Mais perto do alvo',
       completion: 'Teria concluído seu trajeto',
+      hidden: 'A capital oculta',
     },
     hints: {
       label: 'Dicas',
@@ -89,6 +115,7 @@ export const pt: Messages = {
     duplicate: 'Você já palpitou nessa cidade.',
     startCity: 'Essa é a cidade de partida — escolha outra.',
     finished: 'A partida de hoje acabou.',
+    overshoot: 'Esse salto ultrapassa o alvo — tente uma cidade mais próxima.',
   },
 
   format: {
@@ -121,7 +148,7 @@ export const pt: Messages = {
     step2:
       'Continue saltando para se aproximar do alvo. A dica quente / frio esquenta conforme seu total se aproxima — veja o número «faltam» diminuir.',
     step3: (band, guesses) =>
-      `Pare seu total a menos de ${band} abaixo do alvo para vencer. Passe e você perde — assim como esgotar as ${guesses} tentativas. Menos saltos, melhor pontuação.`,
+      `Pare seu total a menos de ${band} abaixo do alvo para vencer. Um salto que ultrapassaria o alvo é bloqueado — basta escolher uma cidade mais próxima. Você só perde ao esgotar as ${guesses} tentativas. Menos saltos, melhor pontuação.`,
     note: (min) =>
       `Só as cidades com mais de ${min} habitantes estão no jogo — as menores não podem ser adivinhadas.`,
     cta: 'Vamos explorar',

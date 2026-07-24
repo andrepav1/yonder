@@ -17,11 +17,34 @@ export const zh: Messages = {
 
   modes: {
     daily: '每日',
-    practice: '练习',
-    practiceLabel: '练习模式',
     practiceEyebrow: '你的出发地',
     newPuzzle: '换一题',
     practiceNote: '练习题不计入你的每日连胜。',
+    title: '模式',
+    catalog: {
+      classic: {
+        name: '经典',
+        blurb: '在城市间跳跃，不超过目标距离地抵达。',
+      },
+      hidden: {
+        name: '隐藏目的地',
+        blurb: '根据距离和方向线索，找出神秘首都。',
+      },
+    },
+  },
+
+  hidden: {
+    eyebrow: '找出隐藏的首都',
+    anchorLabel: '线索起点',
+    clue: (distance) => `大约 ${distance}`,
+    hint: (guesses) => `猜首都逐步逼近 · ${guesses} 次`,
+    away: (distance) => `${distance}`,
+    found: '找到了！',
+    resultWin: (used, total) => `${used}/${total} 找到`,
+    resultLose: '次数用完',
+    headlineWin: '你找到了',
+    headlineLose: '就差一点',
+    answer: (city) => `答案是 ${city}`,
   },
 
   menu: {
@@ -63,6 +86,7 @@ export const zh: Messages = {
       hint: '点击一个标记，查看你本可以到达的城市。',
       ideal: '最接近目标',
       completion: '本可以从这里完成',
+      hidden: '隐藏的首都',
     },
     hints: {
       label: '提示',
@@ -87,6 +111,7 @@ export const zh: Messages = {
     duplicate: '你已经猜过这座城市了。',
     startCity: '这是出发城市——请另选一座。',
     finished: '今天的游戏已结束。',
+    overshoot: '这一跳会超过目标——试试更近的城市。',
   },
 
   format: {
@@ -119,7 +144,7 @@ export const zh: Messages = {
     step2:
       '不断跳跃，向目标靠近。随着累计总数接近目标，冷热提示会逐渐变热——看着「还差」的数字减小。',
     step3: (band, guesses) =>
-      `让总数落在目标下方 ${band} 以内即可获胜。超过就出局——用完 ${guesses} 次机会也一样。跳数越少，得分越好。`,
+      `让总数落在目标下方 ${band} 以内即可获胜。会超过目标的一跳会被拦下——换一个更近的城市就行。只有用完 ${guesses} 次机会才会输。跳数越少，得分越好。`,
     note: (min) =>
       `游戏中只有人口超过 ${min} 的城市——更小的城镇无法猜测。`,
     cta: '出发吧',

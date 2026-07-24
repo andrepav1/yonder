@@ -29,6 +29,12 @@ export interface City {
    * `name`. Absent on cities with no translations. English always uses `name`.
    */
   names?: CityNames
+  /**
+   * True for national capitals (GeoNames feature code `PPLC`). Absent (falsy)
+   * for everywhere else. Powers modes that draw on a small, famous city pool
+   * (e.g. Hidden Destination). Presentational/gameplay only — not a search key.
+   */
+  capital?: boolean
 }
 
 /** A city paired with its great-circle distance from the puzzle's start city. */
@@ -57,6 +63,18 @@ export interface GuessResult {
   over: boolean
   /** True when the running total lands in [target·(1−tol), target] — a win. */
   won: boolean
+  /**
+   * Hidden Destination: great-circle distance from this guess to the mystery
+   * city, km. `bearingDeg` then points from the guess *toward* that city. Absent
+   * in Classic (which uses the cumulative-path fields above).
+   */
+  toTargetKm?: number
+  /**
+   * Precomputed hot→cold level (0–4, a `TempLevel`) when the mode grades a guess
+   * itself — Hidden Destination sets it from proximity. Absent in Classic, which
+   * derives the level from the cumulative fields at render time.
+   */
+  temp?: number
 }
 
 export type RoundStatus = 'playing' | 'won' | 'lost'
@@ -93,6 +111,11 @@ export interface PuzzleSpec {
   start: City
   /** Target great-circle distance from `start`, in km (rounded). */
   targetKm: number
+  /**
+   * Hidden Destination: the mystery city to find (a capital). `targetKm` is then
+   * the start→target distance — the opening anchor clue. Absent in Classic.
+   */
+  target?: City
   /** One-sided win-band width below the target, as a fraction (mirrors rules.tolerancePct). */
   tolerancePct: number
   /** The `revealCount` cities closest to the target distance. */

@@ -1,7 +1,9 @@
 import type { PuzzleSpec, RoundState } from '@/lib/types'
 import type { GameRules, Unit } from '@/config/rules'
+import type { ModeKind } from '@/modes/daily'
 import { scoreRound } from '@/lib/scoring'
 import { formatDistance, remainingPhrase } from '@/lib/format'
+import { cityLabel } from '@/lib/cities'
 import { useI18n } from '@/i18n/context'
 import { ShareIcon, CheckIcon, ShuffleIcon } from './icons'
 import { SupportLink } from './SupportLink'
@@ -14,8 +16,9 @@ interface ResultCardProps {
   unit: Unit
   onShare: () => void
   copied: boolean
-  /** In practice mode, offered instead of sharing — start a fresh puzzle. */
+  /** In free-play, offered alongside sharing — start a fresh puzzle. */
   onNewPuzzle?: () => void
+  kind?: ModeKind
 }
 
 export function ResultCard({
@@ -26,21 +29,32 @@ export function ResultCard({
   onShare,
   copied,
   onNewPuzzle,
+  kind = 'classic',
 }: ResultCardProps) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
   const won = state.status === 'won'
+  const hidden = kind === 'hidden'
   const breakdown = scoreRound(state.guesses, won, rules)
 
-  const badge = won
-    ? t.result.solved(breakdown.guessesUsed, rules.guesses)
-    : breakdown.overshot
-      ? t.result.overshotBadge
-      : t.result.outOfGuesses
-  const headline = won
-    ? t.result.headlineWin
-    : breakdown.overshot
-      ? t.result.headlineOver
-      : t.result.headlineClose
+  // Badge + headline, grouped per mode (Hidden: found / out of guesses; Classic:
+  // solved / overshot / out of guesses).
+  const { badge, headline } = hidden
+    ? {
+        badge: won ? t.hidden.resultWin(breakdown.guessesUsed, rules.guesses) : t.hidden.resultLose,
+        headline: won ? t.hidden.headlineWin : t.hidden.headlineLose,
+      }
+    : {
+        badge: won
+          ? t.result.solved(breakdown.guessesUsed, rules.guesses)
+          : breakdown.overshot
+            ? t.result.overshotBadge
+            : t.result.outOfGuesses,
+        headline: won
+          ? t.result.headlineWin
+          : breakdown.overshot
+            ? t.result.headlineOver
+            : t.result.headlineClose,
+      }
 
   return (
     <section className="result" aria-live="polite">
@@ -48,27 +62,36 @@ export function ResultCard({
       <h2 className={`result__headline${won ? ' result__headline--win' : ''}`}>
         {headline}
       </h2>
-      <div className="result__score mono">
-        {formatDistance(breakdown.totalKm, unit, t)}
-      </div>
-      <div className="result__line">
-        {t.result.ofTarget(formatDistance(puzzle.targetKm, unit, t))} ·{' '}
-        {won ? t.result.landedInBand : remainingPhrase(breakdown.remainingKm, unit, t)}
-      </div>
 
-      <div className="result__answer-note">{t.result.answerNote}</div>
-
-      {onNewPuzzle ? (
-        <button className="btn" onClick={onNewPuzzle}>
-          <ShuffleIcon />
-          {t.modes.newPuzzle}
-        </button>
+      {hidden ? (
+        puzzle.target && (
+          <div className="result__answer">{t.hidden.answer(cityLabel(puzzle.target, locale))}</div>
+        )
       ) : (
+        <>
+          <div className="result__score mono">
+            {formatDistance(breakdown.totalKm, unit, t)}
+          </div>
+          <div className="result__line">
+            {t.result.ofTarget(formatDistance(puzzle.targetKm, unit, t))} ·{' '}
+            {won ? t.result.landedInBand : remainingPhrase(breakdown.remainingKm, unit, t)}
+          </div>
+          <div className="result__answer-note">{t.result.answerNote}</div>
+        </>
+      )}
+
+      <div className="result__actions">
         <button className="btn" onClick={onShare}>
           {copied ? <CheckIcon /> : <ShareIcon />}
           {copied ? t.result.copied : t.result.share}
         </button>
-      )}
+        {onNewPuzzle && (
+          <button className="btn btn--ghost" onClick={onNewPuzzle}>
+            <ShuffleIcon />
+            {t.modes.newPuzzle}
+          </button>
+        )}
+      </div>
 
       <div className="result__support">
         <span className="result__support-note">{t.support.note}</span>

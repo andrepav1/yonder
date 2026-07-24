@@ -89,7 +89,7 @@ const PINCH_SENSITIVITY = 1.6
 
 type LngLat = [number, number]
 
-/** The end-of-round learning reveal — two kinds of "you could have guessed…". */
+/** The end-of-round learning reveal — the cities a player could have guessed. */
 export interface RevealData {
   /** Closest single-hop wins from the start — the ideal solutions. */
   ideal: AnswerCity[]
@@ -97,9 +97,11 @@ export interface RevealData {
   completions: AnswerCity[]
   /** The point completions are measured from (last guess, or the start). */
   from: City
+  /** Hidden Destination: the single mystery city, revealed as the answer. */
+  answer?: AnswerCity
 }
 
-type RevealKind = 'ideal' | 'completion'
+type RevealKind = 'ideal' | 'completion' | 'answer'
 interface RevealPin {
   city: City
   distanceKm: number
@@ -132,6 +134,12 @@ interface GlobeProps {
   /** Learning reveal, shown once the round is over. */
   reveal?: RevealData
   finished?: boolean
+  /**
+   * Draw the journey line linking start → each guess in order. True for the
+   * cumulative-path game (Classic); false for probe modes like Hidden
+   * Destination, where guesses aren't a connected route.
+   */
+  showJourney?: boolean
 }
 
 export function Globe({
@@ -143,6 +151,7 @@ export function Globe({
   hintLevel = 0,
   reveal,
   finished,
+  showJourney = true,
 }: GlobeProps) {
   const { t, locale } = useI18n()
   const { minZoom, maxZoom } = rules.explore
@@ -255,6 +264,15 @@ export function Globe({
     if (!finished || !reveal) return []
     const pins: RevealPin[] = []
     const seen = new Set<number>()
+    if (reveal.answer) {
+      seen.add(reveal.answer.city.id)
+      pins.push({
+        city: reveal.answer.city,
+        distanceKm: reveal.answer.distanceKm,
+        kind: 'answer',
+        from: reveal.from,
+      })
+    }
     for (const a of reveal.completions) {
       if (seen.has(a.city.id)) continue
       seen.add(a.city.id)
@@ -330,13 +348,13 @@ export function Globe({
   const icePath = useMemo(() => path(iceSheets) ?? '', [path])
   // The running journey: start → each guessed city, in order.
   const journeyPath = useMemo(() => {
-    if (guesses.length === 0) return ''
+    if (!showJourney || guesses.length === 0) return ''
     const coordinates: LngLat[] = [
       [start.lng, start.lat],
       ...guesses.map((g): LngLat => [g.city.lng, g.city.lat]),
     ]
     return path({ type: 'LineString', coordinates }) ?? ''
-  }, [path, start.lng, start.lat, guesses])
+  }, [path, start.lng, start.lat, guesses, showJourney])
 
   // The explore dots actually on screen: projected, culled to the near
   // hemisphere + viewport, and capped (biggest kept — candidates are pop-sorted).
@@ -592,7 +610,9 @@ export function Globe({
             {guesses.map((g, i) => {
               const p = place(g.city.lng, g.city.lat)
               if (!p) return null
-              const level = tempLevel(g, rules)
+              // Modes that grade a guess themselves (Hidden Destination) carry
+              // the level on the result; Classic derives it from the path.
+              const level = g.temp ?? tempLevel(g, rules)
               return (
                 <circle
                   key={`g-${g.city.id}-${i}`}
@@ -673,7 +693,9 @@ export function Globe({
                 <span className={`globe__tag globe__tag--${active.pin.kind}`}>
                   {active.pin.kind === 'completion'
                     ? t.globe.reveal.completion
-                    : t.globe.reveal.ideal}
+                    : active.pin.kind === 'answer'
+                      ? t.globe.reveal.hidden
+                      : t.globe.reveal.ideal}
                 </span>
               </span>
             ) : (

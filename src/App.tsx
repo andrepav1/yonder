@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { City, RoundState } from '@/lib/types'
 import type { Unit } from '@/config/rules'
-import { dailyMode, practiceMode } from '@/modes/daily'
+import { dailyMode, modes } from '@/modes/daily'
 import { utcDateString } from '@/lib/puzzle'
 import { createRound, isFinished, guessesLeft, type GuessError } from '@/lib/engine'
 import { findCompletions } from '@/lib/reveal'
@@ -15,8 +15,9 @@ import {
   saveHintLevel,
   type HintLevel,
 } from '@/store/prefs'
-import { formatDistance, bandLabel } from '@/lib/format'
-import { cityLabel, allCities } from '@/lib/cities'
+import { formatDistance, bandLabel, formatBearing } from '@/lib/format'
+import { cityLabel, allCities, capitals } from '@/lib/cities'
+import { initialBearingDeg } from '@/lib/geo'
 import { useI18n } from '@/i18n/context'
 import { Globe } from '@/ui/Globe'
 import { GuessInput } from '@/ui/GuessInput'
@@ -27,12 +28,11 @@ import { StatsPanel } from '@/ui/StatsPanel'
 import { About } from '@/ui/About'
 import { LanguageSwitcher } from '@/ui/LanguageSwitcher'
 import { AppMenu } from '@/ui/Menu'
+import { ModesModal } from '@/ui/ModesModal'
 import { ShuffleIcon } from '@/ui/icons'
 
 // The public URL appended to shared results. Update to your Vercel domain.
 const SITE_URL = 'https://yondle.vercel.app'
-
-type Mode = 'daily' | 'practice'
 
 function humanDate(date: string, locale: string): string {
   const d = new Date(`${date}T00:00:00Z`)
@@ -45,38 +45,40 @@ function humanDate(date: string, locale: string): string {
 }
 
 /**
- * A fresh random seed for a practice puzzle. Randomness lives here at the UI
+ * A fresh random seed for a free-play round. Randomness lives here at the UI
  * boundary — never in `lib/*` — so the generator stays pure and deterministic
- * in its seed. Prefixed so a practice seed can never collide with a UTC date.
+ * in its seed. Prefixed so a free seed can never collide with a UTC date.
  */
-function makePracticeSeed(): string {
+function makeFreeSeed(): string {
   const rand = Math.random().toString(36).slice(2, 10)
-  return `practice-${Date.now().toString(36)}-${rand}`
+  return `free-${Date.now().toString(36)}-${rand}`
 }
 
 export default function App() {
   const { t, locale } = useI18n()
-  const rules = dailyMode.rules
   const date = useMemo(() => utcDateString(), [])
-  const store = useMemo(() => createStatsStore(rules), [rules])
+  // The daily is the only saved, streak-tracked board; its rules key the store.
+  const dailyRules = dailyMode.rules
+  const store = useMemo(() => createStatsStore(dailyRules), [dailyRules])
 
-  const [mode, setMode] = useState<Mode>('daily')
-  const [practiceSeed, setPracticeSeed] = useState<string>(makePracticeSeed)
+  // The active free-play mode id, or null when on the daily (the home board).
+  // Never persisted — a reload always lands back on the daily.
+  const [freeModeId, setFreeModeId] = useState<string | null>(null)
+  const [freeSeed, setFreeSeed] = useState<string>(makeFreeSeed)
+  const [showModes, setShowModes] = useState(false)
 
-  // The daily round is date-locked and persisted; the practice round is
-  // ephemeral (in memory only) and never touches the streak or stats.
+  // The daily round is date-locked and persisted; the free round is ephemeral
+  // (in memory only) and never touches the streak or stats.
   const [dailyRound, setDailyRound] = useState<RoundState>(
     () => store.loadRound(date) ?? createRound(date),
   )
-  const [practiceRound, setPracticeRound] = useState<RoundState>(() =>
-    createRound(practiceSeed),
-  )
+  const [freeRound, setFreeRound] = useState<RoundState>(() => createRound(freeSeed))
   const [stats, setStats] = useState<Stats>(() => store.loadStats())
-  const [unit, setUnit] = useState<Unit>(() => loadUnit(rules.units.default))
+  const [unit, setUnit] = useState<Unit>(() => loadUnit(dailyRules.units.default))
   // How far the hint reveal is unlocked. Daily persists (survives reloads);
-  // practice is in-memory and resets with each fresh puzzle.
+  // free-play is in-memory and resets with each fresh puzzle.
   const [dailyHint, setDailyHint] = useState<HintLevel>(() => loadHintLevel(date))
-  const [practiceHint, setPracticeHint] = useState<HintLevel>(0)
+  const [freeHint, setFreeHint] = useState<HintLevel>(0)
   const [toast, setToast] = useState('')
   const [showHowTo, setShowHowTo] = useState(() => !isOnboarded())
   const [showStats, setShowStats] = useState(false)
@@ -84,20 +86,26 @@ export default function App() {
   const [copied, setCopied] = useState(false)
   const toastTimer = useRef<number | undefined>(undefined)
 
-  const practice = mode === 'practice'
-  const activeMode = practice ? practiceMode : dailyMode
-  const seed = practice ? practiceSeed : date
+  const free = freeModeId !== null
+  const activeMode = freeModeId ? (modes[freeModeId] ?? dailyMode) : dailyMode
+  const rules = activeMode.rules
+  const seed = free ? freeSeed : date
   const puzzle = useMemo(() => activeMode.generate(seed), [activeMode, seed])
-  const round = practice ? practiceRound : dailyRound
+  const round = free ? freeRound : dailyRound
   const finished = isFinished(round)
-  const hintLevel = practice ? practiceHint : dailyHint
+  const hintLevel = free ? freeHint : dailyHint
+  const kind = activeMode.kind
+  const hidden = kind === 'hidden'
+  // Hidden Destination's opening clue: the bearing from the anchor to the target.
+  const clueBearing =
+    hidden && puzzle.target ? initialBearingDeg(puzzle.start, puzzle.target) : 0
 
   // Unlock a hint (only ever raises the level). Daily writes through to storage
-  // so the reveal survives a reload; practice stays in memory.
+  // so the reveal survives a reload; free-play stays in memory.
   const useHint = (level: number) => {
     const next = Math.min(2, Math.max(hintLevel, level)) as HintLevel
-    if (practice) {
-      setPracticeHint(next)
+    if (free) {
+      setFreeHint(next)
       return
     }
     setDailyHint(next)
@@ -111,6 +119,17 @@ export default function App() {
   // overshoot). Computed only once the round is over.
   const reveal = useMemo(() => {
     if (!finished) return undefined
+    // Hidden Destination: reveal just the mystery city (as an "ideal" pin).
+    if (hidden) {
+      const target = puzzle.target
+      if (!target) return undefined
+      return {
+        ideal: [],
+        completions: [],
+        from: puzzle.start,
+        answer: { city: target, distanceKm: puzzle.targetKm },
+      }
+    }
     const guessedIds = new Set(round.guesses.map((g) => g.city.id))
     const exclude = new Set(guessedIds)
     exclude.add(puzzle.start.id)
@@ -131,7 +150,7 @@ export default function App() {
           )
     const ideal = puzzle.exploreAnswers.filter((a) => !guessedIds.has(a.city.id))
     return { ideal, completions, from }
-  }, [finished, round, puzzle, rules])
+  }, [finished, round, puzzle, rules, hidden])
 
   useEffect(() => () => window.clearTimeout(toastTimer.current), [])
 
@@ -151,8 +170,8 @@ export default function App() {
       return
     }
     setToast('')
-    if (practice) {
-      setPracticeRound(res.state)
+    if (free) {
+      setFreeRound(res.state)
       return
     }
     setDailyRound(res.state)
@@ -162,18 +181,30 @@ export default function App() {
     }
   }
 
-  const switchMode = (next: Mode) => {
-    if (next === mode) return
+  /** Return to the daily home board (its saved round is waiting). */
+  const goDaily = () => {
     setToast('')
-    setMode(next)
+    setFreeModeId(null)
   }
 
-  const newPractice = () => {
-    const s = makePracticeSeed()
+  /** Load a mode from the Modes modal as a fresh free-play round. */
+  const selectMode = (id: string) => {
+    const s = makeFreeSeed()
     setToast('')
-    setPracticeSeed(s)
-    setPracticeRound(createRound(s))
-    setPracticeHint(0)
+    setShowModes(false)
+    setFreeModeId(id)
+    setFreeSeed(s)
+    setFreeRound(createRound(s))
+    setFreeHint(0)
+  }
+
+  /** Reshuffle the current free-play mode with a new random puzzle. */
+  const newFreePuzzle = () => {
+    const s = makeFreeSeed()
+    setToast('')
+    setFreeSeed(s)
+    setFreeRound(createRound(s))
+    setFreeHint(0)
   }
 
   const changeUnit = (u: Unit) => {
@@ -187,7 +218,7 @@ export default function App() {
   }
 
   const handleShare = async () => {
-    const text = dailyMode.share(round, puzzle, { url: SITE_URL, t })
+    const text = activeMode.share(round, puzzle, { url: SITE_URL, t })
     try {
       if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
         await navigator.share({ text })
@@ -201,6 +232,12 @@ export default function App() {
     }
   }
 
+  // Localized name for the active free mode (for the header subtitle).
+  const activeModeName = freeModeId
+    ? (t.modes.catalog[freeModeId as keyof typeof t.modes.catalog]?.name ??
+      activeMode.label)
+    : ''
+
   const left = guessesLeft(round, rules)
 
   return (
@@ -210,7 +247,7 @@ export default function App() {
           <div className="hdr__brand">
             <span className="hdr__title">{t.appName}</span>
             <span className="hdr__sub">
-              {practice ? t.modes.practiceLabel : humanDate(date, t.numberLocale)}
+              {free ? activeModeName : humanDate(date, t.numberLocale)}
             </span>
           </div>
           <div className="hdr__actions">
@@ -224,8 +261,9 @@ export default function App() {
               </button>
             </div>
             <AppMenu
-              mode={mode}
-              onSelectMode={switchMode}
+              isDaily={!free}
+              onDaily={goDaily}
+              onModes={() => setShowModes(true)}
               onHowTo={() => setShowHowTo(true)}
               onStats={() => setShowStats(true)}
               onAbout={() => setShowAbout(true)}
@@ -237,20 +275,35 @@ export default function App() {
         </header>
 
         <section className="prompt">
-          <div className="prompt__eyebrow">
-            {practice ? t.modes.practiceEyebrow : t.prompt.eyebrow}
-          </div>
-          <div className="prompt__start">{cityLabel(puzzle.start, locale)}</div>
-          <div className="prompt__target-label">{t.prompt.targetLabel}</div>
-          <div className="prompt__target mono">
-            {formatDistance(puzzle.targetKm, unit, t)}
-          </div>
-          <div className="prompt__hint">
-            {t.prompt.hint(
-              bandLabel(puzzle.targetKm, rules.tolerancePct, unit, t),
-              rules.guesses,
-            )}
-          </div>
+          {hidden ? (
+            <>
+              <div className="prompt__eyebrow">{t.hidden.eyebrow}</div>
+              <div className="prompt__target-label">{t.hidden.anchorLabel}</div>
+              <div className="prompt__start">{cityLabel(puzzle.start, locale)}</div>
+              <div className="prompt__clue">
+                {t.hidden.clue(formatDistance(puzzle.targetKm, unit, t))}
+                <span className="prompt__dir">{formatBearing(clueBearing)}</span>
+              </div>
+              <div className="prompt__hint">{t.hidden.hint(rules.guesses)}</div>
+            </>
+          ) : (
+            <>
+              <div className="prompt__eyebrow">
+                {free ? t.modes.practiceEyebrow : t.prompt.eyebrow}
+              </div>
+              <div className="prompt__start">{cityLabel(puzzle.start, locale)}</div>
+              <div className="prompt__target-label">{t.prompt.targetLabel}</div>
+              <div className="prompt__target mono">
+                {formatDistance(puzzle.targetKm, unit, t)}
+              </div>
+              <div className="prompt__hint">
+                {t.prompt.hint(
+                  bandLabel(puzzle.targetKm, rules.tolerancePct, unit, t),
+                  rules.guesses,
+                )}
+              </div>
+            </>
+          )}
           <div className="pips" aria-label={t.prompt.guessesLeft(left)}>
             {Array.from({ length: rules.guesses }).map((_, i) => {
               const g = round.guesses[i]
@@ -258,7 +311,7 @@ export default function App() {
               return <span key={i} className={cls} />
             })}
           </div>
-          {practice && <div className="prompt__note">{t.modes.practiceNote}</div>}
+          {free && <div className="prompt__note">{t.modes.practiceNote}</div>}
         </section>
 
         <Globe
@@ -270,17 +323,20 @@ export default function App() {
           hintLevel={hintLevel}
           reveal={reveal}
           finished={finished}
+          showJourney={!hidden}
         />
 
-        {!finished && <GuessInput onGuess={handleGuess} />}
+        {!finished && (
+          <GuessInput onGuess={handleGuess} pool={hidden ? capitals() : undefined} />
+        )}
         {toast && (
           <div className="toast" role="alert">
             {toast}
           </div>
         )}
 
-        {practice && !finished && (
-          <button className="btn btn--ghost btn--newpuzzle" onClick={newPractice}>
+        {free && !finished && (
+          <button className="btn btn--ghost btn--newpuzzle" onClick={newFreePuzzle}>
             <ShuffleIcon />
             {t.modes.newPuzzle}
           </button>
@@ -289,7 +345,7 @@ export default function App() {
         {round.guesses.length > 0 && (
           <div className="guesses">
             {[...round.guesses].reverse().map((g, i) => (
-              <GuessRow key={`${g.city.id}-${i}`} result={g} rules={rules} unit={unit} />
+              <GuessRow key={`${g.city.id}-${i}`} result={g} rules={rules} unit={unit} kind={kind} />
             ))}
           </div>
         )}
@@ -302,7 +358,8 @@ export default function App() {
             unit={unit}
             onShare={handleShare}
             copied={copied}
-            onNewPuzzle={practice ? newPractice : undefined}
+            onNewPuzzle={free ? newFreePuzzle : undefined}
+            kind={kind}
           />
         )}
 
@@ -315,6 +372,13 @@ export default function App() {
         </footer>
       </div>
 
+      {showModes && (
+        <ModesModal
+          activeId={freeModeId}
+          onSelect={selectMode}
+          onClose={() => setShowModes(false)}
+        />
+      )}
       {showHowTo && (
         <HowToPlay rules={rules} puzzle={puzzle} unit={unit} onClose={closeHowTo} />
       )}

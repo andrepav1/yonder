@@ -34,18 +34,46 @@ export interface Messages {
   }
 
   modes: {
-    /** Menu label / name for the shared daily puzzle. */
+    /** Menu item / name for the shared daily puzzle. */
     daily: string
-    /** Menu label / name for free-play/practice. */
-    practice: string
-    /** Header subtitle shown while in practice mode. */
-    practiceLabel: string
-    /** Prompt eyebrow shown while in practice mode (the daily one is date-specific). */
+    /** Prompt eyebrow shown in a free-play round (the daily one is date-specific). */
     practiceEyebrow: string
-    /** Button that generates a fresh practice puzzle. */
+    /** Button that generates a fresh free-play puzzle. */
     newPuzzle: string
-    /** Reassurance that practice rounds are off the record. */
+    /** Reassurance that free-play rounds are off the record (modal + in-round note). */
     practiceNote: string
+    /** Menu item + modal heading for the mode picker. */
+    title: string
+    /** Per-mode card copy in the Modes modal, keyed by mode id. */
+    catalog: {
+      classic: { name: string; blurb: string }
+      hidden: { name: string; blurb: string }
+    }
+  }
+
+  /** Hidden Destination mode — prompt, guess rows, and result copy. */
+  hidden: {
+    /** Prompt eyebrow. */
+    eyebrow: string
+    /** Label above the anchor city (the clue's reference point). */
+    anchorLabel: string
+    /** Clue line: how far the mystery capital is (distance pre-formatted). */
+    clue: (distance: string) => string
+    /** Hint under the clue. */
+    hint: (guesses: number) => string
+    /** Guess-row status: distance from a guess to the mystery city (pre-formatted). */
+    away: (distance: string) => string
+    /** Guess-row status when the guess IS the mystery city. */
+    found: string
+    /** Result badge on a win. */
+    resultWin: (used: number, total: number) => string
+    /** Result badge when out of guesses. */
+    resultLose: string
+    /** Result headline — found it / ran out. */
+    headlineWin: string
+    headlineLose: string
+    /** Reveal of the answer city (label pre-formatted). */
+    answer: (city: string) => string
   }
 
   menu: {
@@ -103,6 +131,8 @@ export interface Messages {
       ideal: string
       /** Tag on a city that would have finished the run from where they stopped. */
       completion: string
+      /** Tag for the Hidden Destination answer pin (the mystery city). */
+      hidden: string
     }
     /** In-round hint controls that progressively reveal the explorable cities. */
     hints: {
@@ -133,6 +163,7 @@ export interface Messages {
     duplicate: string
     startCity: string
     finished: string
+    overshoot: string
   }
 
   /** Word templates for `remainingPhrase` (number is pre-formatted). */

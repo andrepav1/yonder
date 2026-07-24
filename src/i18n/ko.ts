@@ -17,11 +17,34 @@ export const ko: Messages = {
 
   modes: {
     daily: '데일리',
-    practice: '연습',
-    practiceLabel: '연습 모드',
     practiceEyebrow: '출발 도시',
     newPuzzle: '새 문제',
     practiceNote: '연습 문제는 데일리 연속 기록에 영향을 주지 않습니다.',
+    title: '모드',
+    catalog: {
+      classic: {
+        name: '클래식',
+        blurb: '도시를 건너뛰며 목표 거리를 초과하지 않고 도달하세요.',
+      },
+      hidden: {
+        name: '숨겨진 목적지',
+        blurb: '거리와 방향 단서로 미스터리 수도를 찾으세요.',
+      },
+    },
+  },
+
+  hidden: {
+    eyebrow: '숨겨진 수도를 찾으세요',
+    anchorLabel: '기준 도시',
+    clue: (distance) => `약 ${distance} 거리`,
+    hint: (guesses) => `수도를 추측해 좁혀가세요 · ${guesses}번`,
+    away: (distance) => `${distance} 거리`,
+    found: '찾았어요!',
+    resultWin: (used, total) => `${used}/${total}에 발견`,
+    resultLose: '기회 소진',
+    headlineWin: '찾았습니다',
+    headlineLose: '아깝네요',
+    answer: (city) => `정답은 ${city}였어요`,
   },
 
   menu: {
@@ -65,6 +88,7 @@ export const ko: Messages = {
       hint: '핀을 탭하면 도달할 수 있었던 도시를 볼 수 있어요.',
       ideal: '목표에 가장 가까움',
       completion: '여기서 완주할 수 있었음',
+      hidden: '숨겨진 수도',
     },
     hints: {
       label: '힌트',
@@ -89,6 +113,7 @@ export const ko: Messages = {
     duplicate: '이미 추측한 도시입니다.',
     startCity: '출발 도시입니다 — 다른 곳을 선택하세요.',
     finished: '오늘의 라운드가 끝났습니다.',
+    overshoot: '그 이동은 목표를 초과합니다 — 더 가까운 도시를 선택하세요.',
   },
 
   format: {
@@ -121,7 +146,7 @@ export const ko: Messages = {
     step2:
       '계속 이동하며 목표에 다가가세요. 합계가 가까워질수록 뜨거움/차가움 신호가 따뜻해집니다 —「남음」숫자가 줄어드는 것을 지켜보세요.',
     step3: (band, guesses) =>
-      `합계를 목표보다 ${band} 이내로 맞추면 승리입니다. 초과하면 실패 — ${guesses}번의 기회를 모두 쓰면 마찬가지입니다. 구간이 적을수록 좋은 점수입니다.`,
+      `합계를 목표보다 ${band} 이내로 맞추면 승리입니다. 목표를 넘는 이동은 차단됩니다 — 더 가까운 도시를 고르면 됩니다. ${guesses}번의 기회를 모두 써야만 패배합니다. 구간이 적을수록 좋은 점수입니다.`,
     note: (min) =>
       `인구 ${min} 명이 넘는 도시만 게임에 나옵니다 — 더 작은 도시는 추측할 수 없습니다.`,
     cta: '떠나볼까요',

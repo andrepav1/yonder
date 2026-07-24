@@ -17,11 +17,36 @@ export const it: Messages = {
 
   modes: {
     daily: 'Giornaliero',
-    practice: 'Allenamento',
-    practiceLabel: 'Modalità allenamento',
     practiceEyebrow: 'La tua partenza',
     newPuzzle: 'Nuova sfida',
     practiceNote: 'Le partite di allenamento non influenzano la tua serie giornaliera.',
+    title: 'Modalità',
+    catalog: {
+      classic: {
+        name: 'Classica',
+        blurb:
+          'Salta di città in città per raggiungere la distanza obiettivo senza superarla.',
+      },
+      hidden: {
+        name: 'Destinazione nascosta',
+        blurb:
+          'Trova la capitale misteriosa dagli indizi di distanza e direzione.',
+      },
+    },
+  },
+
+  hidden: {
+    eyebrow: 'Trova la capitale nascosta',
+    anchorLabel: 'Indizio da',
+    clue: (distance) => `a circa ${distance}`,
+    hint: (guesses) => `indovina le capitali per avvicinarti · ${guesses} tentativi`,
+    away: (distance) => `a ${distance}`,
+    found: 'Trovata!',
+    resultWin: (used, total) => `Trovata in ${used}/${total}`,
+    resultLose: 'Tentativi esauriti',
+    headlineWin: 'L’hai trovata',
+    headlineLose: 'Per un soffio',
+    answer: (city) => `Era ${city}`,
   },
 
   menu: {
@@ -65,6 +90,7 @@ export const it: Messages = {
       hint: 'Tocca un punto per vedere una città che avresti potuto raggiungere.',
       ideal: 'Più vicina al bersaglio',
       completion: 'Avrebbe concluso il tuo percorso',
+      hidden: 'La capitale nascosta',
     },
     hints: {
       label: 'Aiuti',
@@ -89,6 +115,7 @@ export const it: Messages = {
     duplicate: 'Hai già proposto questa città.',
     startCity: 'È la città di partenza — scegline un’altra.',
     finished: 'La partita di oggi è finita.',
+    overshoot: 'Questo salto supera l’obiettivo — prova una città più vicina.',
   },
 
   format: {
@@ -121,7 +148,7 @@ export const it: Messages = {
     step2:
       'Continua a saltare per avvicinarti all’obiettivo. L’indizio caldo / freddo si scalda man mano che il totale si avvicina — guarda il numero « rimanenti » diminuire.',
     step3: (band, guesses) =>
-      `Fermati con il totale entro ${band} sotto l’obiettivo per vincere. Superalo e hai perso — così come esaurire i ${guesses} tentativi. Meno salti, punteggio migliore.`,
+      `Fermati con il totale entro ${band} sotto l’obiettivo per vincere. Un salto che lo supererebbe viene bloccato — scegli semplicemente una città più vicina. Perdi solo esaurendo i ${guesses} tentativi. Meno salti, punteggio migliore.`,
     note: (min) =>
       `Solo le città con più di ${min} abitanti sono nel gioco — i centri più piccoli non si possono indovinare.`,
     cta: 'Andiamo',

@@ -17,11 +17,34 @@ export const ja: Messages = {
 
   modes: {
     daily: 'デイリー',
-    practice: '練習',
-    practiceLabel: '練習モード',
     practiceEyebrow: '出発地',
     newPuzzle: '新しい問題',
     practiceNote: '練習の問題はデイリーの連続記録に影響しません。',
+    title: 'モード',
+    catalog: {
+      classic: {
+        name: 'クラシック',
+        blurb: '都市から都市へ跳んで、目標距離を超えずに到達しよう。',
+      },
+      hidden: {
+        name: '隠れた目的地',
+        blurb: '距離と方角の手がかりから、なぞの首都を見つけよう。',
+      },
+    },
+  },
+
+  hidden: {
+    eyebrow: 'なぞの首都を見つけよう',
+    anchorLabel: '手がかりの基準',
+    clue: (distance) => `約 ${distance} 先`,
+    hint: (guesses) => `首都を推測して近づこう · ${guesses} 回`,
+    away: (distance) => `${distance} 先`,
+    found: '見つけた！',
+    resultWin: (used, total) => `${used}/${total} で発見`,
+    resultLose: '回数切れ',
+    headlineWin: '見つけました',
+    headlineLose: '惜しい',
+    answer: (city) => `正解は ${city} でした`,
   },
 
   menu: {
@@ -65,6 +88,7 @@ export const ja: Messages = {
       hint: 'ピンをタップすると、到達できた都市が見られます。',
       ideal: '目標に最も近い',
       completion: 'ここからゴールできた',
+      hidden: 'なぞの首都',
     },
     hints: {
       label: 'ヒント',
@@ -89,6 +113,7 @@ export const ja: Messages = {
     duplicate: 'その都市はすでに推測しました。',
     startCity: 'それは出発都市です — 別の場所を選んでください。',
     finished: '今日のラウンドは終了しました。',
+    overshoot: 'そのホップは目標を超えます — もっと近い都市を選んでください。',
   },
 
   format: {
@@ -121,7 +146,7 @@ export const ja: Messages = {
     step2:
       '跳び続けて目標に近づきます。合計が近づくにつれてホット/コールドの合図が温かくなります —「あと」の数字が減っていくのを見ましょう。',
     step3: (band, guesses) =>
-      `合計を目標の ${band} 以内に収めれば勝ちです。超えると失敗 — ${guesses} 回を使い切っても同じです。区間が少ないほど良いスコアです。`,
+      `合計を目標の ${band} 以内に収めれば勝ちです。目標を超えるホップはブロックされる — もっと近い都市を選ぶだけです。負けるのは ${guesses} 回を使い切ったときだけ。区間が少ないほど良いスコアです。`,
     note: (min) =>
       `ゲームに登場するのは人口 ${min} 人を超える都市だけです。それより小さな町は当てられません。`,
     cta: 'さあ出発',

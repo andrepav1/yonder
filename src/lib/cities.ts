@@ -18,6 +18,8 @@ interface RawData {
   fields: string[]
   count: number
   cities: RawCity[]
+  /** Ids of national capitals (GeoNames PPLC). Absent on older builds. */
+  capitals?: number[]
 }
 
 const data = rawData as unknown as RawData
@@ -32,6 +34,7 @@ export function foldText(s: string): string {
 }
 
 let _cities: City[] | null = null
+let _capitals: City[] | null = null
 /**
  * Per-city folded search terms: the canonical name plus every localized name.
  * Matching is locale-agnostic on purpose — a player may type "London",
@@ -42,6 +45,7 @@ let _countByNameCountry: Map<string, number> | null = null
 
 function ensureLoaded(): void {
   if (_cities) return
+  const capitalIds = new Set(data.capitals ?? [])
   const cities: City[] = data.cities.map((r) => {
     const city: City = {
       id: r[0],
@@ -53,6 +57,7 @@ function ensureLoaded(): void {
       population: r[6],
     }
     if (r[7] && Object.keys(r[7]).length > 0) city.names = r[7]
+    if (capitalIds.has(r[0])) city.capital = true
     return city
   })
   const terms = cities.map((c) => {
@@ -79,6 +84,22 @@ function ensureLoaded(): void {
 export function allCities(): City[] {
   ensureLoaded()
   return _cities!
+}
+
+/** Whether a city is a national capital (GeoNames PPLC). */
+export function isCapital(city: City): boolean {
+  return city.capital === true
+}
+
+/**
+ * The national capitals in the dataset (biggest-population first), a small,
+ * famous pool (~160). Powers modes like Hidden Destination whose answer set
+ * must be reasoned over, not brute-forced. Memoized.
+ */
+export function capitals(): City[] {
+  ensureLoaded()
+  if (!_capitals) _capitals = _cities!.filter(isCapital)
+  return _capitals
 }
 
 /**
@@ -157,17 +178,25 @@ function bestDirectRank(terms: string[], q: string): number {
  * any supported language. `locale` only controls how results are *labelled*.
  * Returns at most `limit` results.
  */
-export function search(query: string, limit = 8, locale?: Locale): SearchResult[] {
+export function search(
+  query: string,
+  limit = 8,
+  locale?: Locale,
+  pool?: City[],
+): SearchResult[] {
   ensureLoaded()
   const q = foldText(query)
   if (!q) return []
 
   const cities = _cities!
   const terms = _terms!
+  // Optional pool restriction (e.g. capitals-only input) — match only these ids.
+  const allow = pool ? new Set(pool.map((c) => c.id)) : null
   type Scored = { i: number; rank: number; pop: number }
   const scored: Scored[] = []
 
   for (let i = 0; i < cities.length; i++) {
+    if (allow && !allow.has(cities[i]!.id)) continue
     const rank = bestDirectRank(terms[i]!, q)
     if (rank === Infinity) continue
     scored.push({ i, rank, pop: cities[i]!.population })
@@ -177,6 +206,7 @@ export function search(query: string, limit = 8, locale?: Locale): SearchResult[
   if (scored.length === 0 && q.length >= 3) {
     const maxDist = q.length <= 5 ? 1 : 2
     for (let i = 0; i < cities.length; i++) {
+      if (allow && !allow.has(cities[i]!.id)) continue
       let best = maxDist + 1
       for (const term of terms[i]!) {
         const d = boundedLevenshtein(q, term, maxDist)
@@ -198,7 +228,7 @@ export function search(query: string, limit = 8, locale?: Locale): SearchResult[
  * "free text + fuzzy" behaviour: whatever the player typed maps to the top
  * ranked result. Locale-agnostic — input in any supported language resolves.
  */
-export function resolveGuess(query: string): City | null {
-  const results = search(query, 1)
+export function resolveGuess(query: string, pool?: City[]): City | null {
+  const results = search(query, 1, undefined, pool)
   return results.length ? results[0]!.city : null
 }

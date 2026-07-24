@@ -47,11 +47,18 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   fully static + offline-friendly by default. Not game rules → not determinism-sacred.
   See `MONETIZATION.md` for the playbook (current values + AdSense activation steps).
 - `src/lib/prng.ts` — `hashString` (FNV-1a) + `mulberry32` seeded PRNG. Pure.
+- `src/lib/weighted.ts` — `weightedByPopulation(pool, exponent)`: builds a
+  population-weighted picker (`r ∈ [0,1)` → pool member, binary search over cumulative
+  weights). Pure; shared by both puzzle generators (`puzzle.ts`, `hidden.ts`).
 - `src/lib/geo.ts` — `haversineKm`, `initialBearingDeg`, `compass16`,
   `bearingArrow`, km/mi conversion. Pure.
 - `src/lib/types.ts` — serializable domain types (`City`, `PuzzleSpec`, `AnswerCity`).
   `City.names` is an optional `{ locale: name }` map (`CityNames`) carrying only the
   localized names that **differ** from the canonical `name` (English is never stored).
+  `City.capital` is an optional flag (true only for national capitals — GeoNames `PPLC`).
+  `PuzzleSpec.target` (optional) is the mystery city for Hidden Destination; `GuessResult`
+  carries optional `toTargetKm` + `temp` for modes that grade a guess by proximity
+  (Classic leaves both unset and derives everything from the cumulative-path fields).
 - `src/lib/cities.ts` — loads `src/data/cities.json`, hydrates `City[]`, and does
   accent/case-insensitive **fuzzy**, **locale-aware** autocomplete. `localizedName` /
   `cityLabel(city, locale?)` render the active language (falling back to `name`);
@@ -60,6 +67,8 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   **always** appends the country (`"Name, Country"`), promoting to `"Name, Region,
   Country"` when the name repeats within that country; the name+country pairing keys off
   the canonical name, and country/region qualifiers stay in their (English) dataset form.
+  `capitals()` returns the national-capital pool (~160, memoized) and `isCapital(city)`
+  tests the flag — a small, famous city set for modes like Hidden Destination.
 - `src/lib/puzzle.ts` — `generatePuzzle(date, {cities?, rules?})`: population-weighted
   start city + validated target so every day has ≥ `minValidAnswers` cities within
   `[target·(1−tol), target]` of the start — i.e. **single-hop wins** — guaranteeing
@@ -81,10 +90,31 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   bearing / over / win — a guess from a given previous point onto the running total),
   `scoreRound` (golf: guess count + final total), and `tempLevel` (the shared hot→cold
   level, graded by how much of the journey remains; 0 also = bust/overshoot).
-- `src/lib/engine.ts` — **pure** round state machine: `createRound`, `applyGuess`
-  (adds the next leg from the previous city; rejects finished / start-city / duplicate
-  without using a turn; ends the round on a win, an **overshoot**, or out of guesses),
-  `guessesLeft`. Every transition returns a new serializable `RoundState`.
+- `src/lib/mode.ts` — the **mode seam**: the pure `ModeLogic` interface the engine
+  delegates to (`play` → validate+evaluate a guess into a rejection or a
+  `{result, status}`; `score`), plus `GuessError` / `ApplyResult` / `PlayOutcome`.
+  Adding a game variant = writing a `ModeLogic` (+ a descriptor in `src/modes/*`), not
+  editing the engine. See `MODES.md` for the framework + roadmap.
+- `src/lib/engine.ts` — **pure, mode-agnostic** round state machine: `createRound`,
+  `guessesLeft`, `isFinished`, and `applyGuess(state, puzzle, city, logic, rules)` — it
+  owns only the lifecycle (finished-guard + immutable append) and delegates the actual
+  play of a guess to the mode's `ModeLogic`. Re-exports the `mode.ts` types for
+  back-compat. Every transition returns a new serializable `RoundState`.
+- `src/lib/classic.ts` — **pure**: `classicLogic`, the original game as the first
+  `ModeLogic`. A guess adds the next leg from the previous city; rejects start-city /
+  duplicate **and — by default — an `overshoot`** without using a turn; ends the round
+  on a win or out of guesses. Because legs only ever add, an overshoot can never
+  recover, so the forgiving default (`rules.overshoot.endsRound: false`) **blocks** the
+  busting hop instead of losing on it — flip the knob to `true` for classic sudden
+  death. Composes the distance/band primitives from `scoring.ts`.
+- `src/lib/hidden.ts` — **pure**: Hidden Destination, a deduction mode (find a secret
+  **capital**; no cumulative path, no overshoot). `generateHidden(seed)` picks a
+  population-weighted capital target + an anchor start ≥ `rules.hidden.minClueKm` away
+  (the opening distance+bearing clue); `hiddenLogic` (`ModeLogic`) evaluates each guess
+  as an independent probe (distance + bearing to the target, proximity `temp`), wins
+  only on the exact capital, and ends after `rules.guesses` (8) tries; `hiddenTempLevel`
+  grades hot→cold by distance; `buildHiddenShare` is its spoiler-free share. Draws the
+  answer + guess pool from `capitals()`.
 - `src/lib/share.ts` — **pure** Wordle-style share string (hot/cold squares per hop +
   leg arrows, a reach-% line, no city names).
 - `src/lib/format.ts` — **pure** display helpers (`formatDistance`, `remainingPhrase`,
@@ -100,7 +130,9 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   I/O-free. Adding a language = adding a catalog + a `LOCALES` entry.
 - `src/data/cities.json` — **committed** compact dataset (array-of-arrays; see
   `fields`). Built by `scripts/build-cities.mjs`. Each tuple's optional 8th element is
-  the `{ locale: name }` translations map (present only for cities that have any).
+  the `{ locale: name }` translations map (present only for cities that have any). A
+  top-level `capitals` array lists the geonameids of national capitals (GeoNames
+  `PPLC`) — kept out of the tuple so it stays back-compatible and refreshable on its own.
 - `src/data/elevation.json` — **committed** hypsometric relief for the globe: a
   TopoJSON with two objects — `bands` (nested elevation/depth bands; each geometry's
   `properties.v` is the band's lower-bound in metres) and `ice` (the Greenland +
@@ -113,40 +145,52 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   brown highlands their surface height would otherwise colour them. Presentational
   only — no game logic reads it.
 - `src/modes/daily.ts` — the `GameMode` descriptors (`generate(seed)`/`apply`/
-  `score`/`share`) built by a shared `makeMode` factory + a `modes` registry.
-  Ships **two** modes: `dailyMode` (seed = UTC date, streak-tracked) and
-  `practiceMode` (seed = a random token, unlimited free play). `generate` is
-  deterministic in its seed; the practice randomness lives at the App boundary,
-  never in `lib/*`. Adding a mode = adding a descriptor.
+  `score`/`share`) built by a shared `makeMode` factory + a `modes` registry. Each
+  descriptor pairs a **`ModeLogic`** (the pure play strategy — Classic's is
+  `classicLogic`) with its `rules`; `apply`/`score` just delegate to it through the
+  generic engine, so the UI never sees mode-specific logic. Ships **two** descriptors
+  today: `dailyMode` (seed = UTC date, streak-tracked) and the free-play modes
+  `classicMode` + `hiddenMode` (Hidden Destination). Each carries a `kind`
+  (`'classic' | 'hidden'`) — the UI's presentation discriminant, the only mode-specific
+  thing `src/ui/*` reads; the engine stays kind-agnostic. `freeModes` is the ordered
+  list the Modes modal renders (card copy in `t.modes.catalog[id]`, icon mapped in the
+  modal); `modes` is the id→descriptor registry. Descriptors can override `generate`
+  (Hidden uses `generateHidden`) and `share` (Hidden uses `buildHiddenShare`); both
+  default to Classic. `generate` is deterministic in its seed; the free-play randomness
+  lives at the App boundary, never in `lib/*`. Adding a mode = a `ModeLogic` + a
+  descriptor in `freeModes` (see `MODES.md`).
 - `src/store/` — persistence behind a `KeyValueStore` seam (`storage.ts`, memory +
   localStorage adapters): `statsStore.ts` (pure `updateStats` streak logic + the
   `StatsStore` wrapper: stats, streaks, guess distribution, per-day round save +
   idempotent `recordResult`) and `prefs.ts` (unit + language + onboarding flag +
   per-day `HintLevel` — how far the in-round hint reveal is unlocked, `load/saveHintLevel`).
-- `src/App.tsx` — orchestrates play: pick the active mode (daily vs practice),
-  generate the puzzle, load/restore the saved daily round (daily lock), handle
-  guesses, record the result, share. Holds both a persisted **daily** round and
-  an ephemeral in-memory **practice** round; only daily writes to the store or
-  the streak/stats, and practice never does. `makePracticeSeed()` (the sole
-  impure boundary) mints a fresh random seed per practice puzzle. On finish it
-  builds the globe **reveal** — `exploreAnswers` (Layer 1) plus `findCompletions`
-  from the stopping point (Layer 2) — and hands it to `Globe`, along with `allCities()`
-  as the globe's explorable (zoom-to-reveal) city universe. Also owns the **hint level**
-  (daily persisted via `load/saveHintLevel`, practice in-memory + reset per puzzle),
-  passing it to `Globe` (to gate the dots) and to the header `Menu` (which unlocks it
-  via an `onHint` callback).
+- `src/App.tsx` — orchestrates play. The **daily** (`freeModeId === null`) is the home
+  board — the only saved, streak-tracked round; picking a mode from the Modes modal
+  sets `freeModeId` and swaps in an ephemeral **free-play** round (a fresh random seed,
+  its own in-memory round + hint level), and `goDaily()` returns home. `freeModeId` is
+  never persisted, so a reload always lands on the daily. Only the daily writes to the
+  store or the streak/stats; free play never does. `makeFreeSeed()` (the sole impure
+  boundary) mints a fresh random seed per free puzzle; `newFreePuzzle()` reshuffles the
+  active mode. On finish it builds the globe **reveal** — `exploreAnswers` (Layer 1)
+  plus `findCompletions` from the stopping point (Layer 2) — and hands it to `Globe`,
+  along with `allCities()` as the globe's explorable (zoom-to-reveal) city universe.
+  Owns the **hint level** (daily persisted via `load/saveHintLevel`, free-play in-memory
+  + reset per puzzle) and the **Modes modal** open state, passing hints to `Globe` (to
+  gate the dots) and the nav (`onDaily` / `onModes`) + hint unlock (`onHint`) to `Menu`.
 - `src/ui/*` — React shell: `Globe` (the interactive board — see below), `GuessInput`
   (fuzzy typeahead), `GuessRow` (leg, running total, remaining, bearing, hot/cold), `ResultCard`
-  (score + share, or a **New puzzle** button in practice; the answer _reveal_ lives
+  (score + **Share**, plus a **New puzzle** button in free play; the answer _reveal_ lives
   on the globe, not a text list; also hosts the opt-in `SupportLink` + `AdSlot`),
   `SupportLink` (external donation link — renders nothing unless
   `monetization.supportUrl` is set; also shown in `About`), `AdSlot` (post-result
   AdSense unit — renders nothing, and loads no script, unless `monetization.ads`
   client + slot are configured), `HowToPlay`, `StatsPanel`, `About` (what the game
-  is + credits + support link), `Modal` (bottom-sheet), `Menu` (header overflow popover: mode
-  switch + in-round **hints** (Show cities / Reveal names, hidden once finished) +
-  How to play / Statistics / About), `LanguageSwitcher` (header language
-  picker — a native `<select>` over a globe icon), `icons.tsx` (inline SVG — no
+  is + credits + support link), `Modal` (bottom-sheet), `ModesModal` (the mode picker —
+  a `Modal` listing every `freeModes` descriptor as an icon + name + blurb card;
+  selecting one loads it as a free-play round), `Menu` (header overflow popover:
+  **Daily** / **Modes** nav + in-round **hints** (Show cities / Reveal names, hidden
+  once finished) + How to play / Statistics / About), `LanguageSwitcher` (header
+  language picker — a native `<select>` over a globe icon), `icons.tsx` (inline SVG — no
   emoji chrome). Every component pulls copy from `useI18n().t` — no hard-coded strings.
 - `src/ui/Globe.tsx` — the main guessing surface: a drag-to-spin **orthographic
   globe** (d3-geo). Its base is a **hypsometric elevation map** — the `elevation.json`
@@ -162,7 +206,8 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   `tempLevel`, and — only once `finished` — an explorable **reveal** (via the `reveal`
   prop): the ideal single-hop wins (violet `--reveal` dots) plus the completions from the
   player's stopping point (win-coloured dots) — both distinct from the smaller,
-  ramp-coloured guess pins. **Hover** (mouse) previews a pin and
+  ramp-coloured guess pins. A third reveal kind, `answer` (also violet), marks the single
+  mystery city for Hidden Destination (caption tag "The hidden capital"). **Hover** (mouse) previews a pin and
   **tap** (a press that doesn't drag) pins the selection — the engaged pin gets a halo +
   a lighter name label, a distance/kind caption below the globe, and, for a completion,
   the dashed **missed leg** from where the player stopped. Spins to face the
@@ -235,6 +280,13 @@ one — so only genuine translations are stored (~4k of the ~6.2k cities). The s
 logic lives in `selectAlternateNames` and is reused by `scripts/enrich-cities.mjs`
 (`npm run data:enrich -- <alternateNamesV2.txt>`), which attaches/refreshes translations
 onto an already-built `cities.json` **without** re-downloading the three base dumps.
+
+**Capitals.** The build also emits a top-level `capitals` array — the geonameids of
+national capitals, detected from the `PPLC` feature code in `cities15000.txt`
+(`collectCapitalIds`). Like translations, it can be refreshed onto an already-built
+`cities.json` without a full rebuild: `npm run data:capitals -- <cities15000.txt>`
+(`scripts/enrich-capitals.mjs`) intersects `PPLC` ids with the dataset (~160 capitals,
+pop ≥ 100k) and rewrites just the `capitals` list, leaving translations intact.
 
 **Globe elevation.** `src/data/elevation.json` is the other committed, bundled
 artifact — the hypsometric relief the globe paints under the coastline. Rebuild it

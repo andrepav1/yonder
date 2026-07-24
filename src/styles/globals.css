@@ -294,10 +294,32 @@ button {
   line-height: 1.1;
   margin-top: 0.1rem;
 }
+/* Hidden Destination clue: the distance + direction to the mystery capital. */
+.prompt__clue {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1.15;
+  margin-top: 0.15rem;
+}
+.prompt__dir {
+  margin-left: 0.5rem;
+  color: var(--fg-muted);
+  font-weight: 500;
+}
 .prompt__hint {
   font-size: 0.8rem;
   color: var(--fg-muted);
   margin-top: 0.5rem;
+}
+/* The revealed answer city on a finished Hidden round. */
+.result__answer {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0.3rem 0 0.2rem;
 }
 .prompt__note {
   font-size: 0.72rem;
@@ -497,7 +519,8 @@ button {
   stroke-width: 1;
   transition: r 120ms ease;
 }
-.globe__reveal--ideal {
+.globe__reveal--ideal,
+.globe__reveal--answer {
   fill: var(--reveal);
 }
 .globe__reveal--completion {
@@ -509,7 +532,8 @@ button {
 .globe__reveal-halo {
   pointer-events: none;
 }
-.globe__reveal-halo--ideal {
+.globe__reveal-halo--ideal,
+.globe__reveal-halo--answer {
   fill: color-mix(in srgb, var(--reveal) 24%, transparent);
 }
 .globe__reveal-halo--completion {
@@ -563,7 +587,8 @@ button {
   border: 1px solid currentColor;
   white-space: nowrap;
 }
-.globe__tag--ideal {
+.globe__tag--ideal,
+.globe__tag--answer {
   color: var(--reveal);
 }
 .globe__tag--completion {
@@ -1124,6 +1149,79 @@ button {
   margin: 1rem 0 0;
   font-size: 0.85rem;
   color: var(--fg-muted);
+}
+
+/* ---------- Modes modal ---------- */
+.modes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+.modecard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0.85rem;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--fg);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.modecard:hover {
+  background: var(--surface-2);
+  border-color: var(--accent);
+}
+.modecard:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+.modecard[aria-current='true'] {
+  border-color: var(--accent);
+}
+.modecard__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--accent);
+}
+.modecard__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.modecard__name {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  font-size: 0.98rem;
+}
+.modecard__check {
+  color: var(--accent);
+}
+.modecard__blurb {
+  font-size: 0.85rem;
+  color: var(--fg-muted);
+  line-height: 1.35;
+}
+
+/* Result actions — share + (in free play) a new-puzzle button, stacked. */
+.result__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
 /* ---------- Stats ---------- */

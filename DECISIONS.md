@@ -4,6 +4,35 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
+## 2026-07-24 — Overshoot is blocked, not sudden death
+
+- **Context.** The one-sided win band plus cumulative-only distance made the game
+  brutal: because every leg *adds* to the running total, the first time the total
+  passes the target it can never come back down, so the engine ended the round as a
+  **loss on the very first overshoot** — with the other five guesses wasted. In
+  practice a single over-eager guess ended the day. Real players (including the
+  author, three days running) bounced off it as "too hard and not fun."
+- **Options.** (a) **Widen the band** — eases landing, but doesn't touch the sudden
+  death that stings most. (b) **Overshoot lives** — allow N busts before losing;
+  more forgiving, but keeps a punishing "you're out" moment and needs UI to convey
+  the life count. (c) **Block the busting hop** — since an overshoot is provably
+  unrecoverable, refuse to *record* it at all: reject it like a duplicate (no turn
+  spent, running total untouched) and let the player pick a closer city. You then
+  only lose by exhausting your six guesses short of the band.
+- **Decision.** Went with **(c).** It fixes the exact complaint (no more one-guess
+  game over) while staying true to the "build a journey" spirit — you can't take a
+  hop that would bust, the same way you can't re-guess a city. Kept it **data-driven**
+  behind `rules.overshoot.endsRound` (default `false`); setting it `true` restores
+  classic sudden death, and the engine, share squares, and result copy all still
+  handle a recorded overshoot for that mode. `errors.overshoot` (all nine locales)
+  surfaces the block as a gentle "try a closer city" toast, reusing the existing
+  no-turn rejection path.
+- **Trade-off.** The daily is now easier and can only be lost by running the clock
+  out — some tension leaves the *bust* moment. Acceptable: the golf score (fewer
+  hops) still rewards precision, and a friendlier daily beats an unfun one. If it
+  ever swings too easy, the band width and guess count are the next knobs to reach
+  for, with sudden death a one-line revert.
+
 ## 2026-07-22 — Ice-sheet overlay (Greenland + Antarctica read as ice)
 
 - **Context.** With the new hypsometric relief, Greenland and Antarctica came out

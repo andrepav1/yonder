@@ -17,11 +17,36 @@ export const de: Messages = {
 
   modes: {
     daily: 'Täglich',
-    practice: 'Übung',
-    practiceLabel: 'Übungsmodus',
     practiceEyebrow: 'Dein Startpunkt',
     newPuzzle: 'Neues Rätsel',
     practiceNote: 'Übungsrunden zählen nicht für deine tägliche Serie.',
+    title: 'Modi',
+    catalog: {
+      classic: {
+        name: 'Klassisch',
+        blurb:
+          'Springe von Stadt zu Stadt, um die Zieldistanz zu erreichen, ohne sie zu überschreiten.',
+      },
+      hidden: {
+        name: 'Verstecktes Ziel',
+        blurb:
+          'Finde die geheime Hauptstadt anhand von Entfernungs- und Richtungshinweisen.',
+      },
+    },
+  },
+
+  hidden: {
+    eyebrow: 'Finde die versteckte Hauptstadt',
+    anchorLabel: 'Hinweis ab',
+    clue: (distance) => `etwa ${distance} entfernt`,
+    hint: (guesses) => `rate Hauptstädte, um näher zu kommen · ${guesses} Versuche`,
+    away: (distance) => `${distance} entfernt`,
+    found: 'Gefunden!',
+    resultWin: (used, total) => `Gefunden in ${used}/${total}`,
+    resultLose: 'Keine Versuche mehr',
+    headlineWin: 'Du hast sie gefunden',
+    headlineLose: 'Knapp daneben',
+    answer: (city) => `Es war ${city}`,
   },
 
   menu: {
@@ -65,6 +90,7 @@ export const de: Messages = {
       hint: 'Tippe auf einen Punkt, um eine erreichbare Stadt zu sehen.',
       ideal: 'Am nächsten zum Ziel',
       completion: 'Hätte deine Reise beendet',
+      hidden: 'Die versteckte Hauptstadt',
     },
     hints: {
       label: 'Hinweise',
@@ -89,6 +115,7 @@ export const de: Messages = {
     duplicate: 'Diese Stadt hast du schon geraten.',
     startCity: 'Das ist die Startstadt — wähle eine andere.',
     finished: 'Die heutige Runde ist vorbei.',
+    overshoot: 'Dieser Sprung überschreitet das Ziel — wähle eine nähere Stadt.',
   },
 
   format: {
@@ -121,7 +148,7 @@ export const de: Messages = {
     step2:
       'Springe weiter, um dem Ziel näherzukommen. Der Heiß-/Kalt-Hinweis wird wärmer, je näher deine Summe kommt — sieh zu, wie die „noch“-Zahl schrumpft.',
     step3: (band, guesses) =>
-      `Lande deine Summe bis ${band} unter dem Ziel, um zu gewinnen. Überschreite es und du verlierst — ebenso, wenn deine ${guesses} Versuche aufgebraucht sind. Weniger Sprünge sind besser.`,
+      `Lande deine Summe bis ${band} unter dem Ziel, um zu gewinnen. Ein Sprung, der darüber hinausginge, wird blockiert — wähle einfach eine nähere Stadt. Du verlierst nur, wenn deine ${guesses} Versuche aufgebraucht sind. Weniger Sprünge sind besser.`,
     note: (min) =>
       `Nur Städte mit mehr als ${min} Einwohnern sind im Spiel — kleinere Orte kannst du nicht raten.`,
     cta: 'Auf geht’s',

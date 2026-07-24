@@ -17,11 +17,36 @@ export const fr: Messages = {
 
   modes: {
     daily: 'Quotidien',
-    practice: 'Entraînement',
-    practiceLabel: 'Mode entraînement',
     practiceEyebrow: 'Votre départ',
     newPuzzle: 'Nouvelle partie',
     practiceNote: 'Les parties d’entraînement n’affectent pas votre série quotidienne.',
+    title: 'Modes',
+    catalog: {
+      classic: {
+        name: 'Classique',
+        blurb:
+          'Sautez de ville en ville pour atteindre la distance cible sans la dépasser.',
+      },
+      hidden: {
+        name: 'Destination cachée',
+        blurb:
+          'Trouvez la capitale mystère à partir d’indices de distance et de direction.',
+      },
+    },
+  },
+
+  hidden: {
+    eyebrow: 'Trouvez la capitale cachée',
+    anchorLabel: 'Indice depuis',
+    clue: (distance) => `à environ ${distance}`,
+    hint: (guesses) => `devinez des capitales pour vous rapprocher · ${guesses} essais`,
+    away: (distance) => `à ${distance}`,
+    found: 'Trouvée !',
+    resultWin: (used, total) => `Trouvée en ${used}/${total}`,
+    resultLose: 'Plus d’essais',
+    headlineWin: 'Vous l’avez trouvée',
+    headlineLose: 'Si près',
+    answer: (city) => `C’était ${city}`,
   },
 
   menu: {
@@ -65,6 +90,7 @@ export const fr: Messages = {
       hint: 'Touchez un point pour voir une ville que vous auriez pu atteindre.',
       ideal: 'Au plus près de la cible',
       completion: 'Aurait terminé votre parcours',
+      hidden: 'La capitale cachée',
     },
     hints: {
       label: 'Indices',
@@ -89,6 +115,7 @@ export const fr: Messages = {
     duplicate: 'Vous avez déjà proposé cette ville.',
     startCity: 'C’est la ville de départ — choisissez-en une autre.',
     finished: 'La partie du jour est terminée.',
+    overshoot: 'Ce saut dépasse la cible — essayez une ville plus proche.',
   },
 
   format: {
@@ -121,7 +148,7 @@ export const fr: Messages = {
     step2:
       'Continuez à sauter pour grimper vers la cible. L’indice chaud / froid se réchauffe à mesure que votre total s’en approche — regardez le nombre « restants » diminuer.',
     step3: (band, guesses) =>
-      `Terminez votre total à moins de ${band} sous la cible pour gagner. Dépassez-la et c’est perdu — tout comme épuiser vos ${guesses} essais. Moins de sauts, meilleur score.`,
+      `Terminez votre total à moins de ${band} sous la cible pour gagner. Un saut qui dépasserait la cible est bloqué — choisissez simplement une ville plus proche. Vous ne perdez qu’en épuisant vos ${guesses} essais. Moins de sauts, meilleur score.`,
     note: (min) =>
       `Seules les villes de plus de ${min} habitants sont dans le jeu — les plus petites ne sont pas devinables.`,
     cta: 'C’est parti',

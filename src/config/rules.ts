@@ -61,6 +61,31 @@ export interface GameRules {
     /** Max seeded re-draws before generation gives up (safety valve). */
     maxAttempts: number
   }
+  overshoot: {
+    /**
+     * What happens when a hop would push the running total past the target.
+     * Legs only ever *add* distance, so an overshoot can never be undone — the
+     * total can't come back down. `true` makes that sudden death (the hop lands,
+     * the round is lost). `false` (the forgiving default) instead **blocks** the
+     * hop: it's rejected without consuming a turn, the running total is left
+     * untouched, and the player simply tries a closer city — so the only way to
+     * lose is to run out of `guesses` short of the band.
+     */
+    endsRound: boolean
+  }
+  hidden: {
+    /**
+     * Hidden Destination: minimum start→target great-circle distance (km) for
+     * the anchor clue, so the mystery capital is never trivially next door.
+     */
+    minClueKm: number
+    /**
+     * Hidden Destination proximity cutoffs (km) for the hot→cold ramp toward the
+     * mystery capital: ≤[0] → 3 (hot), ≤[1] → 2, ≤[2] → 1, else 0. An exact
+     * match (you found it) is 4.
+     */
+    hotColdKm: [number, number, number]
+  }
   units: {
     /** Default display unit. Players can toggle at runtime. */
     default: Unit
@@ -117,6 +142,17 @@ export const defaultRules: GameRules = {
     // however many exist.
     exploreCount: 16,
     maxAttempts: 1000,
+  },
+  overshoot: {
+    // Forgiving by default: a hop that would bust is blocked (no turn spent, no
+    // loss), so one over-eager guess never ends the day. See DECISIONS.md.
+    endsRound: false,
+  },
+  hidden: {
+    minClueKm: 800,
+    // ≤300 km → hot, ≤1200 → warm, ≤3500 → cool, else cold. Tuned for a
+    // capitals-only pool: a neighbouring capital reads warm, a continent away cold.
+    hotColdKm: [300, 1200, 3500],
   },
   units: {
     default: 'km',

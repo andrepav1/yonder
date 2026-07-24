@@ -102,6 +102,26 @@ export async function selectAlternateNames(altPath, baseNames) {
   return out
 }
 
+/**
+ * Collect the geonameids of national capitals from `cities15000.txt` — the rows
+ * whose feature code (column 7) is `PPLC` ("capital of a political entity").
+ * Exported so `enrich-capitals.mjs` can attach the flag to an already-built
+ * dataset without a full rebuild.
+ *
+ * @param {string} citiesTxtPath  path to cities15000.txt
+ * @returns {Set<number>} geonameids of PPLC capitals
+ */
+export function collectCapitalIds(citiesTxtPath) {
+  const text = readFileSync(citiesTxtPath, 'utf8')
+  const ids = new Set()
+  for (const line of text.split('\n')) {
+    if (!line) continue
+    const c = line.split('\t')
+    if (c[7] === 'PPLC') ids.add(parseInt(c[0], 10))
+  }
+  return ids
+}
+
 function loadCountryNames() {
   const text = readFileSync(join(srcDir, 'countryInfo.txt'), 'utf8')
   const map = new Map()
@@ -134,6 +154,7 @@ async function build() {
 
   const text = readFileSync(join(srcDir, 'cities15000.txt'), 'utf8')
   const rows = []
+  const capitalIds = new Set()
   for (const line of text.split('\n')) {
     if (!line) continue
     const c = line.split('\t')
@@ -151,6 +172,7 @@ async function build() {
 
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue
     rows.push([id, name, country, admin1, lat, lng, population])
+    if (c[7] === 'PPLC') capitalIds.add(id) // national capital
   }
 
   // Deterministic, human-friendly ordering: biggest cities first.
@@ -175,6 +197,11 @@ async function build() {
     console.log(`No alternateNamesV2.txt in ${srcDir} — building English-only`)
   }
 
+  // National capitals present in the dataset — a small, famous pool a few modes
+  // draw on. A top-level id list (not a tuple field) so it stays back-compatible
+  // and enrichment can refresh it without reshaping every row.
+  const capitals = rows.map((r) => r[0]).filter((id) => capitalIds.has(id))
+
   const payload = {
     generatedAt: new Date().toISOString(),
     source: 'GeoNames cities15000 + alternateNamesV2',
@@ -183,7 +210,9 @@ async function build() {
     fields: ['id', 'name', 'country', 'admin1', 'lat', 'lng', 'pop', 'names'],
     count: rows.length,
     translatedCount: translated,
+    capitalCount: capitals.length,
     cities: rows,
+    capitals,
   }
 
   mkdirSync(dirname(outFile), { recursive: true })
