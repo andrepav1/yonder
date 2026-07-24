@@ -20,9 +20,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
 
-    "baseUrl": ".",
+    // Relative to this file — `baseUrl` is deprecated in TS 6+ and unnecessary
+    // now that `paths` resolves against the tsconfig's own directory.
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src", "scripts", "vite.config.ts"]
