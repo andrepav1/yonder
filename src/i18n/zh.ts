@@ -80,7 +80,7 @@ export const zh: Messages = {
 
   guessRow: {
     insideBand: '进入区间！',
-    overshot: '超过了！',
+    overshot: (over) => `超过 ${over}！`,
   },
 
   errors: {

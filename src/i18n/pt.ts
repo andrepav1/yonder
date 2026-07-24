@@ -82,7 +82,7 @@ export const pt: Messages = {
 
   guessRow: {
     insideBand: 'Na faixa!',
-    overshot: 'Passou!',
+    overshot: (over) => `Passou por ${over}!`,
   },
 
   errors: {

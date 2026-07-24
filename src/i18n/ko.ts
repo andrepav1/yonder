@@ -82,7 +82,7 @@ export const ko: Messages = {
 
   guessRow: {
     insideBand: '구간 안!',
-    overshot: '초과!',
+    overshot: (over) => `${over} 초과!`,
   },
 
   errors: {
