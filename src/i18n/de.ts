@@ -29,7 +29,26 @@ export const de: Messages = {
         blurb:
           'Springe von Stadt zu Stadt, um die Zieldistanz zu erreichen, ohne sie zu überschreiten.',
       },
+      hidden: {
+        name: 'Verstecktes Ziel',
+        blurb:
+          'Finde die geheime Hauptstadt anhand von Entfernungs- und Richtungshinweisen.',
+      },
     },
+  },
+
+  hidden: {
+    eyebrow: 'Finde die versteckte Hauptstadt',
+    anchorLabel: 'Hinweis ab',
+    clue: (distance) => `etwa ${distance} entfernt`,
+    hint: (guesses) => `rate Hauptstädte, um näher zu kommen · ${guesses} Versuche`,
+    away: (distance) => `${distance} entfernt`,
+    found: 'Gefunden!',
+    resultWin: (used, total) => `Gefunden in ${used}/${total}`,
+    resultLose: 'Keine Versuche mehr',
+    headlineWin: 'Du hast sie gefunden',
+    headlineLose: 'Knapp daneben',
+    answer: (city) => `Es war ${city}`,
   },
 
   menu: {

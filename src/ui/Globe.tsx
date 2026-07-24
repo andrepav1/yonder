@@ -132,6 +132,12 @@ interface GlobeProps {
   /** Learning reveal, shown once the round is over. */
   reveal?: RevealData
   finished?: boolean
+  /**
+   * Draw the journey line linking start → each guess in order. True for the
+   * cumulative-path game (Classic); false for probe modes like Hidden
+   * Destination, where guesses aren't a connected route.
+   */
+  showJourney?: boolean
 }
 
 export function Globe({
@@ -143,6 +149,7 @@ export function Globe({
   hintLevel = 0,
   reveal,
   finished,
+  showJourney = true,
 }: GlobeProps) {
   const { t, locale } = useI18n()
   const { minZoom, maxZoom } = rules.explore
@@ -330,13 +337,13 @@ export function Globe({
   const icePath = useMemo(() => path(iceSheets) ?? '', [path])
   // The running journey: start → each guessed city, in order.
   const journeyPath = useMemo(() => {
-    if (guesses.length === 0) return ''
+    if (!showJourney || guesses.length === 0) return ''
     const coordinates: LngLat[] = [
       [start.lng, start.lat],
       ...guesses.map((g): LngLat => [g.city.lng, g.city.lat]),
     ]
     return path({ type: 'LineString', coordinates }) ?? ''
-  }, [path, start.lng, start.lat, guesses])
+  }, [path, start.lng, start.lat, guesses, showJourney])
 
   // The explore dots actually on screen: projected, culled to the near
   // hemisphere + viewport, and capped (biggest kept — candidates are pop-sorted).
@@ -592,7 +599,9 @@ export function Globe({
             {guesses.map((g, i) => {
               const p = place(g.city.lng, g.city.lat)
               if (!p) return null
-              const level = tempLevel(g, rules)
+              // Modes that grade a guess themselves (Hidden Destination) carry
+              // the level on the result; Classic derives it from the path.
+              const level = g.temp ?? tempLevel(g, rules)
               return (
                 <circle
                   key={`g-${g.city.id}-${i}`}

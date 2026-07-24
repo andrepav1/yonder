@@ -29,7 +29,26 @@ export const fr: Messages = {
         blurb:
           'Sautez de ville en ville pour atteindre la distance cible sans la dépasser.',
       },
+      hidden: {
+        name: 'Destination cachée',
+        blurb:
+          'Trouvez la capitale mystère à partir d’indices de distance et de direction.',
+      },
     },
+  },
+
+  hidden: {
+    eyebrow: 'Trouvez la capitale cachée',
+    anchorLabel: 'Indice depuis',
+    clue: (distance) => `à environ ${distance}`,
+    hint: (guesses) => `devinez des capitales pour vous rapprocher · ${guesses} essais`,
+    away: (distance) => `à ${distance}`,
+    found: 'Trouvée !',
+    resultWin: (used, total) => `Trouvée en ${used}/${total}`,
+    resultLose: 'Plus d’essais',
+    headlineWin: 'Vous l’avez trouvée',
+    headlineLose: 'Si près',
+    answer: (city) => `C’était ${city}`,
   },
 
   menu: {

@@ -28,7 +28,25 @@ export const ko: Messages = {
         name: '클래식',
         blurb: '도시를 건너뛰며 목표 거리를 초과하지 않고 도달하세요.',
       },
+      hidden: {
+        name: '숨겨진 목적지',
+        blurb: '거리와 방향 단서로 미스터리 수도를 찾으세요.',
+      },
     },
+  },
+
+  hidden: {
+    eyebrow: '숨겨진 수도를 찾으세요',
+    anchorLabel: '기준 도시',
+    clue: (distance) => `약 ${distance} 거리`,
+    hint: (guesses) => `수도를 추측해 좁혀가세요 · ${guesses}번`,
+    away: (distance) => `${distance} 거리`,
+    found: '찾았어요!',
+    resultWin: (used, total) => `${used}/${total}에 발견`,
+    resultLose: '기회 소진',
+    headlineWin: '찾았습니다',
+    headlineLose: '아깝네요',
+    answer: (city) => `정답은 ${city}였어요`,
   },
 
   menu: {

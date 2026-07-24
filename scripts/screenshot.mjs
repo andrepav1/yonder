@@ -76,6 +76,8 @@ async function run() {
       menu = false,
       modesModal = false,
       free = false,
+      hidden = false,
+      hiddenGuess = '',
       tapReveal = false,
     } = {},
   ) => {
@@ -91,14 +93,19 @@ async function run() {
     await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle' })
     await page.waitForTimeout(400)
 
-    if (menu || modesModal || free) {
+    if (menu || modesModal || free || hidden) {
       // Open the header menu; optionally open the Modes modal and pick a mode.
       await page.click('.menu .iconbtn')
       await page.waitForTimeout(200)
-      if (modesModal || free) {
+      if (modesModal || free || hidden) {
         await page.getByRole('menuitem', { name: 'Modes' }).click()
         await page.waitForTimeout(300)
-        if (free) {
+        if (hidden) {
+          // Pick the Hidden Destination card → a fresh deduction round.
+          await page.locator('.modecard', { hasText: 'Hidden' }).click()
+          await page.waitForTimeout(400)
+          if (hiddenGuess) await guess(page, hiddenGuess)
+        } else if (free) {
           // Pick the first mode card (Classic) → a fresh free-play round.
           await page.locator('.modecard').first().click()
           await page.waitForTimeout(400)
@@ -131,6 +138,8 @@ async function run() {
   await shot('menu-light', { menu: true })
   await shot('modes-light', { modesModal: true })
   await shot('free-light', { free: true })
+  await shot('hidden-light', { hidden: true })
+  await shot('hidden-guess-light', { hidden: true, hiddenGuess: 'Paris' })
   await shot('play-light', { play: true })
   await shot('win-light', { win: true })
   await shot('explore-light', { win: true, tapReveal: true })

@@ -29,7 +29,25 @@ export const en: Messages = {
         name: 'Classic',
         blurb: 'Hop city to city to reach the target distance without overshooting.',
       },
+      hidden: {
+        name: 'Hidden Destination',
+        blurb: 'Find the mystery capital from distance and direction clues.',
+      },
     },
+  },
+
+  hidden: {
+    eyebrow: 'Find the hidden capital',
+    anchorLabel: 'Clue from',
+    clue: (distance) => `about ${distance} away`,
+    hint: (guesses) => `guess capitals to close in · ${guesses} tries`,
+    away: (distance) => `${distance} away`,
+    found: 'Found it!',
+    resultWin: (used, total) => `Found in ${used}/${total}`,
+    resultLose: 'Out of guesses',
+    headlineWin: 'You found it',
+    headlineLose: 'So close',
+    answer: (city) => `It was ${city}`,
   },
 
   menu: {

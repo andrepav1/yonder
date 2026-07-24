@@ -6,6 +6,8 @@ import { useI18n } from '@/i18n/context'
 interface GuessInputProps {
   disabled?: boolean
   onGuess: (city: City) => void
+  /** Restrict suggestions + resolution to this pool (e.g. capitals-only modes). */
+  pool?: City[]
 }
 
 /**
@@ -13,7 +15,7 @@ interface GuessInputProps {
  * Enter (or tap) submits — a highlighted suggestion if there is one, else the
  * best fuzzy resolution of the raw text. Keyboard: ↑/↓ to move, Enter to pick.
  */
-export function GuessInput({ disabled, onGuess }: GuessInputProps) {
+export function GuessInput({ disabled, onGuess, pool }: GuessInputProps) {
   const { t, locale } = useI18n()
   const [value, setValue] = useState('')
   const [open, setOpen] = useState(false)
@@ -21,8 +23,8 @@ export function GuessInput({ disabled, onGuess }: GuessInputProps) {
   const rootRef = useRef<HTMLDivElement>(null)
 
   const results: SearchResult[] = useMemo(
-    () => (value.trim().length >= 1 ? search(value, 6, locale) : []),
-    [value, locale],
+    () => (value.trim().length >= 1 ? search(value, 6, locale, pool) : []),
+    [value, locale, pool],
   )
 
   useEffect(() => {
@@ -46,7 +48,7 @@ export function GuessInput({ disabled, onGuess }: GuessInputProps) {
 
   const submit = () => {
     if (results.length > 0) commit(results[active]?.city ?? results[0]!.city)
-    else commit(resolveGuess(value))
+    else commit(resolveGuess(value, pool))
   }
 
   const onKeyDown = (e: React.KeyboardEvent) => {

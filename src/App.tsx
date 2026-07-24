@@ -15,8 +15,9 @@ import {
   saveHintLevel,
   type HintLevel,
 } from '@/store/prefs'
-import { formatDistance, bandLabel } from '@/lib/format'
-import { cityLabel, allCities } from '@/lib/cities'
+import { formatDistance, bandLabel, formatBearing } from '@/lib/format'
+import { cityLabel, allCities, capitals } from '@/lib/cities'
+import { initialBearingDeg } from '@/lib/geo'
 import { useI18n } from '@/i18n/context'
 import { Globe } from '@/ui/Globe'
 import { GuessInput } from '@/ui/GuessInput'
@@ -93,6 +94,11 @@ export default function App() {
   const round = free ? freeRound : dailyRound
   const finished = isFinished(round)
   const hintLevel = free ? freeHint : dailyHint
+  const kind = activeMode.kind
+  const hidden = kind === 'hidden'
+  // Hidden Destination's opening clue: the bearing from the anchor to the target.
+  const clueBearing =
+    hidden && puzzle.target ? initialBearingDeg(puzzle.start, puzzle.target) : 0
 
   // Unlock a hint (only ever raises the level). Daily writes through to storage
   // so the reveal survives a reload; free-play stays in memory.
@@ -113,6 +119,12 @@ export default function App() {
   // overshoot). Computed only once the round is over.
   const reveal = useMemo(() => {
     if (!finished) return undefined
+    // Hidden Destination: reveal just the mystery city (as an "ideal" pin).
+    if (hidden) {
+      const target = puzzle.target
+      if (!target) return undefined
+      return { ideal: [{ city: target, distanceKm: puzzle.targetKm }], completions: [], from: puzzle.start }
+    }
     const guessedIds = new Set(round.guesses.map((g) => g.city.id))
     const exclude = new Set(guessedIds)
     exclude.add(puzzle.start.id)
@@ -133,7 +145,7 @@ export default function App() {
           )
     const ideal = puzzle.exploreAnswers.filter((a) => !guessedIds.has(a.city.id))
     return { ideal, completions, from }
-  }, [finished, round, puzzle, rules])
+  }, [finished, round, puzzle, rules, hidden])
 
   useEffect(() => () => window.clearTimeout(toastTimer.current), [])
 
@@ -258,20 +270,35 @@ export default function App() {
         </header>
 
         <section className="prompt">
-          <div className="prompt__eyebrow">
-            {free ? t.modes.practiceEyebrow : t.prompt.eyebrow}
-          </div>
-          <div className="prompt__start">{cityLabel(puzzle.start, locale)}</div>
-          <div className="prompt__target-label">{t.prompt.targetLabel}</div>
-          <div className="prompt__target mono">
-            {formatDistance(puzzle.targetKm, unit, t)}
-          </div>
-          <div className="prompt__hint">
-            {t.prompt.hint(
-              bandLabel(puzzle.targetKm, rules.tolerancePct, unit, t),
-              rules.guesses,
-            )}
-          </div>
+          {hidden ? (
+            <>
+              <div className="prompt__eyebrow">{t.hidden.eyebrow}</div>
+              <div className="prompt__target-label">{t.hidden.anchorLabel}</div>
+              <div className="prompt__start">{cityLabel(puzzle.start, locale)}</div>
+              <div className="prompt__clue">
+                {t.hidden.clue(formatDistance(puzzle.targetKm, unit, t))}
+                <span className="prompt__dir">{formatBearing(clueBearing)}</span>
+              </div>
+              <div className="prompt__hint">{t.hidden.hint(rules.guesses)}</div>
+            </>
+          ) : (
+            <>
+              <div className="prompt__eyebrow">
+                {free ? t.modes.practiceEyebrow : t.prompt.eyebrow}
+              </div>
+              <div className="prompt__start">{cityLabel(puzzle.start, locale)}</div>
+              <div className="prompt__target-label">{t.prompt.targetLabel}</div>
+              <div className="prompt__target mono">
+                {formatDistance(puzzle.targetKm, unit, t)}
+              </div>
+              <div className="prompt__hint">
+                {t.prompt.hint(
+                  bandLabel(puzzle.targetKm, rules.tolerancePct, unit, t),
+                  rules.guesses,
+                )}
+              </div>
+            </>
+          )}
           <div className="pips" aria-label={t.prompt.guessesLeft(left)}>
             {Array.from({ length: rules.guesses }).map((_, i) => {
               const g = round.guesses[i]
@@ -291,9 +318,12 @@ export default function App() {
           hintLevel={hintLevel}
           reveal={reveal}
           finished={finished}
+          showJourney={!hidden}
         />
 
-        {!finished && <GuessInput onGuess={handleGuess} />}
+        {!finished && (
+          <GuessInput onGuess={handleGuess} pool={hidden ? capitals() : undefined} />
+        )}
         {toast && (
           <div className="toast" role="alert">
             {toast}
@@ -310,7 +340,7 @@ export default function App() {
         {round.guesses.length > 0 && (
           <div className="guesses">
             {[...round.guesses].reverse().map((g, i) => (
-              <GuessRow key={`${g.city.id}-${i}`} result={g} rules={rules} unit={unit} />
+              <GuessRow key={`${g.city.id}-${i}`} result={g} rules={rules} unit={unit} kind={kind} />
             ))}
           </div>
         )}
@@ -324,6 +354,7 @@ export default function App() {
             onShare={handleShare}
             copied={copied}
             onNewPuzzle={free ? newFreePuzzle : undefined}
+            kind={kind}
           />
         )}
 

@@ -28,7 +28,25 @@ export const zh: Messages = {
         name: '经典',
         blurb: '在城市间跳跃，不超过目标距离地抵达。',
       },
+      hidden: {
+        name: '隐藏目的地',
+        blurb: '根据距离和方向线索，找出神秘首都。',
+      },
     },
+  },
+
+  hidden: {
+    eyebrow: '找出隐藏的首都',
+    anchorLabel: '线索起点',
+    clue: (distance) => `大约 ${distance}`,
+    hint: (guesses) => `猜首都逐步逼近 · ${guesses} 次`,
+    away: (distance) => `${distance}`,
+    found: '找到了！',
+    resultWin: (used, total) => `${used}/${total} 找到`,
+    resultLose: '次数用完',
+    headlineWin: '你找到了',
+    headlineLose: '就差一点',
+    answer: (city) => `答案是 ${city}`,
   },
 
   menu: {

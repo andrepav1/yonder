@@ -178,17 +178,25 @@ function bestDirectRank(terms: string[], q: string): number {
  * any supported language. `locale` only controls how results are *labelled*.
  * Returns at most `limit` results.
  */
-export function search(query: string, limit = 8, locale?: Locale): SearchResult[] {
+export function search(
+  query: string,
+  limit = 8,
+  locale?: Locale,
+  pool?: City[],
+): SearchResult[] {
   ensureLoaded()
   const q = foldText(query)
   if (!q) return []
 
   const cities = _cities!
   const terms = _terms!
+  // Optional pool restriction (e.g. capitals-only input) — match only these ids.
+  const allow = pool ? new Set(pool.map((c) => c.id)) : null
   type Scored = { i: number; rank: number; pop: number }
   const scored: Scored[] = []
 
   for (let i = 0; i < cities.length; i++) {
+    if (allow && !allow.has(cities[i]!.id)) continue
     const rank = bestDirectRank(terms[i]!, q)
     if (rank === Infinity) continue
     scored.push({ i, rank, pop: cities[i]!.population })
@@ -198,6 +206,7 @@ export function search(query: string, limit = 8, locale?: Locale): SearchResult[
   if (scored.length === 0 && q.length >= 3) {
     const maxDist = q.length <= 5 ? 1 : 2
     for (let i = 0; i < cities.length; i++) {
+      if (allow && !allow.has(cities[i]!.id)) continue
       let best = maxDist + 1
       for (const term of terms[i]!) {
         const d = boundedLevenshtein(q, term, maxDist)
@@ -219,7 +228,7 @@ export function search(query: string, limit = 8, locale?: Locale): SearchResult[
  * "free text + fuzzy" behaviour: whatever the player typed maps to the top
  * ranked result. Locale-agnostic — input in any supported language resolves.
  */
-export function resolveGuess(query: string): City | null {
-  const results = search(query, 1)
+export function resolveGuess(query: string, pool?: City[]): City | null {
+  const results = search(query, 1, undefined, pool)
   return results.length ? results[0]!.city : null
 }

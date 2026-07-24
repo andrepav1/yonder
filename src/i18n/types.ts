@@ -51,7 +51,33 @@ export interface Messages {
     /** Per-mode card copy in the Modes modal, keyed by mode id. */
     catalog: {
       classic: { name: string; blurb: string }
+      hidden: { name: string; blurb: string }
     }
+  }
+
+  /** Hidden Destination mode — prompt, guess rows, and result copy. */
+  hidden: {
+    /** Prompt eyebrow. */
+    eyebrow: string
+    /** Label above the anchor city (the clue's reference point). */
+    anchorLabel: string
+    /** Clue line: how far the mystery capital is (distance pre-formatted). */
+    clue: (distance: string) => string
+    /** Hint under the clue. */
+    hint: (guesses: number) => string
+    /** Guess-row status: distance from a guess to the mystery city (pre-formatted). */
+    away: (distance: string) => string
+    /** Guess-row status when the guess IS the mystery city. */
+    found: string
+    /** Result badge on a win. */
+    resultWin: (used: number, total: number) => string
+    /** Result badge when out of guesses. */
+    resultLose: string
+    /** Result headline — found it / ran out. */
+    headlineWin: string
+    headlineLose: string
+    /** Reveal of the answer city (label pre-formatted). */
+    answer: (city: string) => string
   }
 
   menu: {

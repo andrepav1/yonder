@@ -28,7 +28,25 @@ export const ja: Messages = {
         name: 'クラシック',
         blurb: '都市から都市へ跳んで、目標距離を超えずに到達しよう。',
       },
+      hidden: {
+        name: '隠れた目的地',
+        blurb: '距離と方角の手がかりから、なぞの首都を見つけよう。',
+      },
     },
+  },
+
+  hidden: {
+    eyebrow: 'なぞの首都を見つけよう',
+    anchorLabel: '手がかりの基準',
+    clue: (distance) => `約 ${distance} 先`,
+    hint: (guesses) => `首都を推測して近づこう · ${guesses} 回`,
+    away: (distance) => `${distance} 先`,
+    found: '見つけた！',
+    resultWin: (used, total) => `${used}/${total} で発見`,
+    resultLose: '回数切れ',
+    headlineWin: '見つけました',
+    headlineLose: '惜しい',
+    answer: (city) => `正解は ${city} でした`,
   },
 
   menu: {

@@ -29,7 +29,26 @@ export const it: Messages = {
         blurb:
           'Salta di città in città per raggiungere la distanza obiettivo senza superarla.',
       },
+      hidden: {
+        name: 'Destinazione nascosta',
+        blurb:
+          'Trova la capitale misteriosa dagli indizi di distanza e direzione.',
+      },
     },
+  },
+
+  hidden: {
+    eyebrow: 'Trova la capitale nascosta',
+    anchorLabel: 'Indizio da',
+    clue: (distance) => `a circa ${distance}`,
+    hint: (guesses) => `indovina le capitali per avvicinarti · ${guesses} tentativi`,
+    away: (distance) => `a ${distance}`,
+    found: 'Trovata!',
+    resultWin: (used, total) => `Trovata in ${used}/${total}`,
+    resultLose: 'Tentativi esauriti',
+    headlineWin: 'L’hai trovata',
+    headlineLose: 'Per un soffio',
+    answer: (city) => `Era ${city}`,
   },
 
   menu: {

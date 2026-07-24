@@ -6,13 +6,13 @@ import { defaultRules } from '@/config/rules'
 
 describe('mode registry', () => {
   it('registers the daily and every free-play mode by id', () => {
-    expect(Object.keys(modes).sort()).toEqual(['classic', 'daily'])
+    expect(Object.keys(modes).sort()).toEqual(['classic', 'daily', 'hidden'])
     expect(modes.daily).toBe(dailyMode)
     expect(modes.classic).toBe(classicMode)
   })
 
   it('lists the free-play modes for the modal (Classic first)', () => {
-    expect(freeModes.map((m) => m.id)).toEqual(['classic'])
+    expect(freeModes.map((m) => m.id)).toEqual(['classic', 'hidden'])
   })
 
   it('daily generation is deterministic in its seed (same date → same puzzle)', () => {

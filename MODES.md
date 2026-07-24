@@ -165,7 +165,14 @@ Captured so the descriptor stays honest about what it must eventually span:
    (`npm run data:capitals`) refreshes it onto the committed `cities.json` without a full
    rebuild (translations untouched). The loader hydrates `City.capital` and exposes
    `capitals()` / `isCapital()` — ~160 national capitals — guarded by `capitals.test.ts`.
-4. **Hidden Destination.** The descriptor + capitals-only guess input + distance/bearing
-   feedback + reveal, with its own determinism test. Wire its card into the modal.
+4. **Hidden Destination.** ✅ **Done.** `lib/hidden.ts` — `generateHidden` (seeded
+   capital target + anchor start ≥ `rules.hidden.minClueKm` away), `hiddenLogic`
+   (`ModeLogic`: exact-match win, duplicate reject, per-guess distance+bearing to the
+   target, proximity `temp`), `hiddenTempLevel`, and `buildHiddenShare`. `PuzzleSpec`
+   grew an optional `target`; `GuessResult` grew optional `toTargetKm` + `temp` (Classic
+   ignores both). The UI branches on `GameMode.kind`: the prompt shows the anchor clue,
+   `GuessInput` takes a capitals-only `pool`, `GuessRow`/`ResultCard` render the
+   deduction layout, and the `Globe` drops the journey line and colours pins by the
+   mode-supplied `temp`. Guarded by `hidden.test.ts`. Wired as the second `freeModes` card.
 
 Each phase is independently green and commit-scoped.

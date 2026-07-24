@@ -13,7 +13,8 @@ is a better score.
 > dataset + fuzzy autocomplete, deterministic generator, scoring, engine, share, stats)
 > **and** the React UI (an interactive 3D **globe** as the board, guess loop, hot/cold
 > feedback, result, stats, onboarding, light + dark, **nine languages**), with a
-> **daily** puzzle and an unlimited **practice** mode behind a header menu.
+> **daily** puzzle plus free-play **modes** (Classic + Hidden Destination) behind a
+> header menu.
 > Fully static; deploys to Vercel. `npm run dev` to play.
 
 ## How it works
@@ -92,22 +93,24 @@ shows how many hops you took and where your total landed, and a Wordle-style sha
 summary (hot/cold squares + leg arrows, a reach-% line, no city names) copies to the
 clipboard.
 
-### Practice mode
+### Modes
 
-Tap the **menu** in the header (☰) to switch between **Daily** and **Practice**.
-Practice serves an **endless stream of random puzzles** — same rules as the daily
-(start city, target distance, 6 hops, don't overshoot), but a brand-new one every
-time, so you can learn the mechanics or just keep playing after the daily is done.
-Hit **New puzzle** any time to reshuffle. Practice rounds are **off the record** —
-they never touch your daily streak, win %, or guess distribution, and there's no
-share (the puzzle is yours alone, not the common daily one). The same menu also
-holds **How to play**, **Statistics**, and **About**.
+The **daily** is the home board — the one saved, streak-tracked puzzle everyone
+shares. Tap the **menu** (☰) → **Modes** to open a picker of **free-play** modes; each
+serves an **endless stream of random puzzles** that are **off the record** (they never
+touch your daily streak, win %, or guess distribution). Hit **New puzzle** to reshuffle,
+or **Daily** in the menu to go home. Two modes today:
 
-Under the hood this is the game's mode seam doing its job: the daily and practice
-modes are two entries in a `modes` registry over the same pure engine, differing
-only in their seed — the UTC date for the daily (same for everyone), a fresh random
-token for each practice puzzle. The generator stays pure and deterministic in that
-seed; the randomness lives at the app boundary.
+- **Classic** — the daily's rules as free play: build a journey to the target distance.
+- **Hidden Destination** — a deduction game: find a **secret capital**. You get the
+  distance + bearing from an anchor city, then guess capitals; each reports how far
+  (and which way) it is from the mystery city, hot/cold. Name it exactly within 8 tries.
+
+Under the hood this is the game's mode seam: every mode is a declarative descriptor
+(setup / play / goal / present) over one generic engine, so a new variant is a
+descriptor, not an engine rewrite. See `MODES.md` for the framework. The generator
+stays pure and deterministic in its seed — the UTC date for the daily (same for
+everyone), a fresh random token for free play; the randomness lives at the app boundary.
 
 ### Languages
 
@@ -170,7 +173,7 @@ src/
     en.ts fr.ts …     # one React-free, serializable catalog per language
     index.ts          # catalogs, LOCALES, getMessages, detectLocale
     context.tsx       # I18nProvider + useI18n()
-  modes/daily.ts      # GameMode descriptors (daily + practice) over a modes registry
+  modes/daily.ts      # GameMode descriptors (daily + free-play modes) over a registry
   store/              # persistence behind a KeyValueStore seam
     storage.ts        # memory + localStorage adapters
     statsStore.ts     # stats, streaks, distribution, daily round save

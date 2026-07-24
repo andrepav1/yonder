@@ -53,6 +53,9 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   `City.names` is an optional `{ locale: name }` map (`CityNames`) carrying only the
   localized names that **differ** from the canonical `name` (English is never stored).
   `City.capital` is an optional flag (true only for national capitals — GeoNames `PPLC`).
+  `PuzzleSpec.target` (optional) is the mystery city for Hidden Destination; `GuessResult`
+  carries optional `toTargetKm` + `temp` for modes that grade a guess by proximity
+  (Classic leaves both unset and derives everything from the cumulative-path fields).
 - `src/lib/cities.ts` — loads `src/data/cities.json`, hydrates `City[]`, and does
   accent/case-insensitive **fuzzy**, **locale-aware** autocomplete. `localizedName` /
   `cityLabel(city, locale?)` render the active language (falling back to `name`);
@@ -101,6 +104,14 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   recover, so the forgiving default (`rules.overshoot.endsRound: false`) **blocks** the
   busting hop instead of losing on it — flip the knob to `true` for classic sudden
   death. Composes the distance/band primitives from `scoring.ts`.
+- `src/lib/hidden.ts` — **pure**: Hidden Destination, a deduction mode (find a secret
+  **capital**; no cumulative path, no overshoot). `generateHidden(seed)` picks a
+  population-weighted capital target + an anchor start ≥ `rules.hidden.minClueKm` away
+  (the opening distance+bearing clue); `hiddenLogic` (`ModeLogic`) evaluates each guess
+  as an independent probe (distance + bearing to the target, proximity `temp`), wins
+  only on the exact capital, and ends after `rules.guesses` (8) tries; `hiddenTempLevel`
+  grades hot→cold by distance; `buildHiddenShare` is its spoiler-free share. Draws the
+  answer + guess pool from `capitals()`.
 - `src/lib/share.ts` — **pure** Wordle-style share string (hot/cold squares per hop +
   leg arrows, a reach-% line, no city names).
 - `src/lib/format.ts` — **pure** display helpers (`formatDistance`, `remainingPhrase`,
@@ -135,12 +146,16 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   descriptor pairs a **`ModeLogic`** (the pure play strategy — Classic's is
   `classicLogic`) with its `rules`; `apply`/`score` just delegate to it through the
   generic engine, so the UI never sees mode-specific logic. Ships **two** descriptors
-  today: `dailyMode` (seed = UTC date, streak-tracked) and `classicMode` (seed = a
-  random token, free play) — both Classic for now. `freeModes` is the ordered list the
-  Modes modal renders (card copy in `t.modes.catalog[id]`, icon mapped in the modal);
-  `modes` is the id→descriptor registry (daily + every free mode). `generate` is
-  deterministic in its seed; the free-play randomness lives at the App boundary, never
-  in `lib/*`. Adding a mode = a `ModeLogic` + a descriptor in `freeModes` (see `MODES.md`).
+  today: `dailyMode` (seed = UTC date, streak-tracked) and the free-play modes
+  `classicMode` + `hiddenMode` (Hidden Destination). Each carries a `kind`
+  (`'classic' | 'hidden'`) — the UI's presentation discriminant, the only mode-specific
+  thing `src/ui/*` reads; the engine stays kind-agnostic. `freeModes` is the ordered
+  list the Modes modal renders (card copy in `t.modes.catalog[id]`, icon mapped in the
+  modal); `modes` is the id→descriptor registry. Descriptors can override `generate`
+  (Hidden uses `generateHidden`) and `share` (Hidden uses `buildHiddenShare`); both
+  default to Classic. `generate` is deterministic in its seed; the free-play randomness
+  lives at the App boundary, never in `lib/*`. Adding a mode = a `ModeLogic` + a
+  descriptor in `freeModes` (see `MODES.md`).
 - `src/store/` — persistence behind a `KeyValueStore` seam (`storage.ts`, memory +
   localStorage adapters): `statsStore.ts` (pure `updateStats` streak logic + the
   `StatsStore` wrapper: stats, streaks, guess distribution, per-day round save +
