@@ -131,6 +131,8 @@ export interface Messages {
       ideal: string
       /** Tag on a city that would have finished the run from where they stopped. */
       completion: string
+      /** Tag for the Hidden Destination answer pin (the mystery city). */
+      hidden: string
     }
     /** In-round hint controls that progressively reveal the explorable cities. */
     hints: {

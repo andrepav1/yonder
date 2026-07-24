@@ -88,6 +88,7 @@ export const ko: Messages = {
       hint: '핀을 탭하면 도달할 수 있었던 도시를 볼 수 있어요.',
       ideal: '목표에 가장 가까움',
       completion: '여기서 완주할 수 있었음',
+      hidden: '숨겨진 수도',
     },
     hints: {
       label: '힌트',

@@ -89,7 +89,7 @@ const PINCH_SENSITIVITY = 1.6
 
 type LngLat = [number, number]
 
-/** The end-of-round learning reveal — two kinds of "you could have guessed…". */
+/** The end-of-round learning reveal — the cities a player could have guessed. */
 export interface RevealData {
   /** Closest single-hop wins from the start — the ideal solutions. */
   ideal: AnswerCity[]
@@ -97,9 +97,11 @@ export interface RevealData {
   completions: AnswerCity[]
   /** The point completions are measured from (last guess, or the start). */
   from: City
+  /** Hidden Destination: the single mystery city, revealed as the answer. */
+  answer?: AnswerCity
 }
 
-type RevealKind = 'ideal' | 'completion'
+type RevealKind = 'ideal' | 'completion' | 'answer'
 interface RevealPin {
   city: City
   distanceKm: number
@@ -262,6 +264,15 @@ export function Globe({
     if (!finished || !reveal) return []
     const pins: RevealPin[] = []
     const seen = new Set<number>()
+    if (reveal.answer) {
+      seen.add(reveal.answer.city.id)
+      pins.push({
+        city: reveal.answer.city,
+        distanceKm: reveal.answer.distanceKm,
+        kind: 'answer',
+        from: reveal.from,
+      })
+    }
     for (const a of reveal.completions) {
       if (seen.has(a.city.id)) continue
       seen.add(a.city.id)
@@ -682,7 +693,9 @@ export function Globe({
                 <span className={`globe__tag globe__tag--${active.pin.kind}`}>
                   {active.pin.kind === 'completion'
                     ? t.globe.reveal.completion
-                    : t.globe.reveal.ideal}
+                    : active.pin.kind === 'answer'
+                      ? t.globe.reveal.hidden
+                      : t.globe.reveal.ideal}
                 </span>
               </span>
             ) : (

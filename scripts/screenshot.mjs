@@ -78,6 +78,7 @@ async function run() {
       free = false,
       hidden = false,
       hiddenGuess = '',
+      hiddenGuesses = [],
       tapReveal = false,
     } = {},
   ) => {
@@ -105,6 +106,9 @@ async function run() {
           await page.locator('.modecard', { hasText: 'Hidden' }).click()
           await page.waitForTimeout(400)
           if (hiddenGuess) await guess(page, hiddenGuess)
+          // A run of capital guesses to end the round (win if one is the target,
+          // else a loss after the allowance) so the answer reveal appears.
+          for (const g of hiddenGuesses) await guess(page, g)
         } else if (free) {
           // Pick the first mode card (Classic) → a fresh free-play round.
           await page.locator('.modecard').first().click()
@@ -140,6 +144,11 @@ async function run() {
   await shot('free-light', { free: true })
   await shot('hidden-light', { hidden: true })
   await shot('hidden-guess-light', { hidden: true, hiddenGuess: 'Paris' })
+  await shot('hidden-reveal-light', {
+    hidden: true,
+    hiddenGuesses: ['Tokyo', 'Cairo', 'Lima', 'Ottawa', 'Canberra', 'Oslo', 'Hanoi', 'Quito'],
+    tapReveal: true,
+  })
   await shot('play-light', { play: true })
   await shot('win-light', { win: true })
   await shot('explore-light', { win: true, tapReveal: true })

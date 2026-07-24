@@ -86,6 +86,7 @@ export const zh: Messages = {
       hint: '点击一个标记，查看你本可以到达的城市。',
       ideal: '最接近目标',
       completion: '本可以从这里完成',
+      hidden: '隐藏的首都',
     },
     hints: {
       label: '提示',

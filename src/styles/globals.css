@@ -519,7 +519,8 @@ button {
   stroke-width: 1;
   transition: r 120ms ease;
 }
-.globe__reveal--ideal {
+.globe__reveal--ideal,
+.globe__reveal--answer {
   fill: var(--reveal);
 }
 .globe__reveal--completion {
@@ -531,7 +532,8 @@ button {
 .globe__reveal-halo {
   pointer-events: none;
 }
-.globe__reveal-halo--ideal {
+.globe__reveal-halo--ideal,
+.globe__reveal-halo--answer {
   fill: color-mix(in srgb, var(--reveal) 24%, transparent);
 }
 .globe__reveal-halo--completion {
@@ -585,7 +587,8 @@ button {
   border: 1px solid currentColor;
   white-space: nowrap;
 }
-.globe__tag--ideal {
+.globe__tag--ideal,
+.globe__tag--answer {
   color: var(--reveal);
 }
 .globe__tag--completion {

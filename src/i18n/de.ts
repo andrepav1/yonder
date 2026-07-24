@@ -90,6 +90,7 @@ export const de: Messages = {
       hint: 'Tippe auf einen Punkt, um eine erreichbare Stadt zu sehen.',
       ideal: 'Am nächsten zum Ziel',
       completion: 'Hätte deine Reise beendet',
+      hidden: 'Die versteckte Hauptstadt',
     },
     hints: {
       label: 'Hinweise',

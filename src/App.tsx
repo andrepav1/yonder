@@ -123,7 +123,12 @@ export default function App() {
     if (hidden) {
       const target = puzzle.target
       if (!target) return undefined
-      return { ideal: [{ city: target, distanceKm: puzzle.targetKm }], completions: [], from: puzzle.start }
+      return {
+        ideal: [],
+        completions: [],
+        from: puzzle.start,
+        answer: { city: target, distanceKm: puzzle.targetKm },
+      }
     }
     const guessedIds = new Set(round.guesses.map((g) => g.city.id))
     const exclude = new Set(guessedIds)

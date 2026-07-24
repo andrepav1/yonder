@@ -88,6 +88,7 @@ export const ja: Messages = {
       hint: 'ピンをタップすると、到達できた都市が見られます。',
       ideal: '目標に最も近い',
       completion: 'ここからゴールできた',
+      hidden: 'なぞの首都',
     },
     hints: {
       label: 'ヒント',

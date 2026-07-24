@@ -90,6 +90,7 @@ export const it: Messages = {
       hint: 'Tocca un punto per vedere una città che avresti potuto raggiungere.',
       ideal: 'Più vicina al bersaglio',
       completion: 'Avrebbe concluso il tuo percorso',
+      hidden: 'La capitale nascosta',
     },
     hints: {
       label: 'Aiuti',

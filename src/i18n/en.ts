@@ -89,6 +89,7 @@ export const en: Messages = {
       hint: 'Tap a pin to see a city you could have reached.',
       ideal: 'Closest to target',
       completion: 'Would have finished your run',
+      hidden: 'The hidden capital',
     },
     hints: {
       label: 'Hints',
