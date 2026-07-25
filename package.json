@@ -17,6 +17,7 @@
     "data:build": "node scripts/build-cities.mjs",
     "data:enrich": "node scripts/enrich-cities.mjs",
     "data:capitals": "node scripts/enrich-capitals.mjs",
+    "data:outline": "node scripts/build-outline.mjs",
     "data:elevation": "node scripts/build-elevation.mjs",
     "screenshot": "node scripts/screenshot.mjs",
     "preview:puzzles": "vite-node scripts/preview-puzzles.mts"

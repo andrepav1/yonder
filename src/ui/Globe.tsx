@@ -27,55 +27,99 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { geoOrthographic, geoPath, geoGraticule10, geoDistance } from 'd3-geo'
-import { feature } from 'topojson-client'
-import type { Feature, FeatureCollection } from 'geojson'
-import landTopo from 'world-atlas/land-110m.json'
+import { feature, mesh } from 'topojson-client'
+import type { FeatureCollection } from 'geojson'
+import worldTopo from 'world-atlas/countries-110m.json'
+import fineTopo from '@/data/outline.json'
 import elevationTopo from '@/data/elevation.json'
 import type { AnswerCity, City, GuessResult } from '@/lib/types'
 import type { GameRules, Unit } from '@/config/rules'
 import { tempLevel } from '@/lib/scoring'
 import { cityLabel, localizedName } from '@/lib/cities'
 import { exploreMinPopulation } from '@/lib/explore'
+import { toLayer, visible, visibleRadiusDeg, type Layer } from '@/lib/cull'
+import { wrapLonDeg } from '@/lib/geo'
 import { formatDistance } from '@/lib/format'
 import { useI18n } from '@/i18n/context'
 
-// world-atlas ships TopoJSON; hydrate the land outline once, at module load.
-const land = feature(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  landTopo as any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (landTopo as any).objects.land,
-) as unknown as FeatureCollection
+/** A coastline + border pair at one level of detail, ready to cull. */
+interface OutlineLayers {
+  land: Layer
+  borders: Layer
+}
 
-// Hypsometric elevation bands (ocean depth + land height), likewise hydrated
-// once. Sorted by threshold ascending so painting them in order stacks deepest
-// → highest into a nested brown/blue relief; the array index is the band's tint
-// (globe__hypso--N), matching THRESHOLDS in scripts/build-elevation.mjs.
-const elevationBands: Feature[] = (() => {
-  const fc = feature(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    elevationTopo as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (elevationTopo as any).objects.bands,
-  ) as unknown as FeatureCollection
-  return [...fc.features].sort(
-    (a, b) => Number(a.properties?.v ?? 0) - Number(b.properties?.v ?? 0),
-  )
-})()
+// Hydrate a topology into the outline pair the globe draws. world-atlas ships
+// whole countries, so the interior boundaries are meshed out here — the
+// (a, b) => a !== b filter keeps only arcs shared by two different countries, so
+// every boundary is one line and the coastline, which `.globe__coast` already
+// strokes, isn't painted over a second time. Our own artifact stores that mesh
+// ready-made, already thinned at its own weight (borders and coastlines simplify
+// at very different rates — see build-outline.mjs).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toOutline(topo: any): OutlineLayers {
+  return {
+    land: toLayer(feature(topo, topo.objects.land) as unknown as FeatureCollection),
+    borders: toLayer(
+      topo.objects.borders
+        ? (feature(topo, topo.objects.borders) as unknown as FeatureCollection)
+        : mesh(topo, topo.objects.countries, (a, b) => a !== b),
+    ),
+  }
+}
 
-// The ice-sheet overlay (Greenland + Antarctica), painted over the bands so the
-// two great ice caps read as ice, not the brown highlands their surface height
-// would otherwise colour them.
-const iceSheets: FeatureCollection = feature(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  elevationTopo as any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (elevationTopo as any).objects.ice,
-) as unknown as FeatureCollection
+/** The relief as the globe draws it: one layer per band, plus the ice sheets. */
+interface Relief {
+  bands: Layer[]
+  ice: Layer
+}
+
+// Hydrate a relief topology, bands sorted by threshold ascending — the array
+// index *is* the tint (globe__hypso--N), so the order is load-bearing.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toRelief(topo: any): Relief {
+  const fc = feature(topo, topo.objects.bands) as unknown as FeatureCollection
+  return {
+    bands: [...fc.features]
+      .sort((a, b) => Number(a.properties?.v ?? 0) - Number(b.properties?.v ?? 0))
+      .map((f) => toLayer(f)),
+    ice: toLayer(feature(topo, topo.objects.ice) as unknown as FeatureCollection),
+  }
+}
+
+// Two outline tiers, both bundled. The 110m outline carries the whole-globe
+// view; `outline.json` (world-atlas 50m, thinned by scripts/build-outline.mjs)
+// takes over past DETAIL_ZOOM, where 110m starts reading as polygons and its
+// missing island chains are conspicuous. Zoomed out we stay on the coarse one —
+// nothing is gained by re-projecting several times the vertices for a globe the
+// size of a coin. The fine tier is hydrated on first use, not at module load: a
+// round that never zooms in shouldn't pay for it.
+const coarseWorld: OutlineLayers = toOutline(worldTopo)
+let fineCache: OutlineLayers | null = null
+const fineWorld = (): OutlineLayers => (fineCache ??= toOutline(fineTopo))
+
+const bundledRelief: Relief = toRelief(elevationTopo)
+// How many tints the `--hypso-*` CSS ramp defines. A fetched tier with a
+// different band count would be mis-coloured, so it is refused instead.
+const RAMP_BANDS = bundledRelief.bands.length
+
+// The graticule never changes, so build it once rather than per frame.
+const graticule = geoGraticule10()
 
 const SIZE = 320 // internal SVG units; CSS scales it to the column width
 const MARGIN = 3
 const RADIUS = SIZE / 2 - MARGIN
+
+/**
+ * The globe's projection at a given zoom + rotation. One definition, so the
+ * frame that gets drawn and the anchor maths in `zoomAbout` can never disagree
+ * about scale, centre or clip.
+ */
+const orthographic = (zoom: number, [λ, φ]: LngLat) =>
+  geoOrthographic()
+    .scale(RADIUS * zoom)
+    .translate([SIZE / 2, SIZE / 2])
+    .rotate([λ, φ, 0])
+    .clipAngle(90)
 // How close (in SVG units) a tap must land to a pin to select it.
 const TAP_HIT_RADIUS = 12
 // How far a pointer may travel (client px) and still count as a tap, not a drag.
@@ -84,6 +128,21 @@ const TAP_MOVE_TOLERANCE = 6
 const CULL_PAD = 8
 // Multiplier per press of the +/− zoom buttons.
 const ZOOM_STEP = 1.4
+// How long the globe takes to spin to a new centre (ms).
+const SPIN_DURATION = 600
+// How long a button-press zoom takes to ease in (ms). Wheel and pinch are
+// already continuous — only the buttons would otherwise cut straight to the new
+// scale, which reads as a jump rather than as moving closer.
+const ZOOM_DURATION = 320
+// Zoom past this and the globe swaps its 110m outline for the finer one (see
+// `fineWorld`). Chosen a little above the first button press, so the swap lands
+// when a player is clearly going in for a look rather than nudging the scale.
+const DETAIL_ZOOM = 2.2
+// Zoom past this and the *relief* gets its own finer tier. Unlike the outline,
+// that one is too big to bundle (~1.2 MB), so it is fetched on demand the first
+// time a player goes in far enough to see 0.2° cells as blocks — and the globe
+// carries on with the bundled bands if the fetch never lands.
+const FINE_RELIEF_ZOOM = 3.2
 // Pinch sensitivity: the change in finger separation is raised to this power
 // before it scales the zoom, so a small spread magnifies more (>1 = faster,
 // snappier pinch). 1 would track the fingers exactly.
@@ -205,10 +264,16 @@ export function Globe({
   const rotationRef = useRef<LngLat>(rotation)
   const zoomRef = useRef(zoom)
   const animRef = useRef<number | null>(null)
+  const zoomAnimRef = useRef<number | null>(null)
   // Active (pressed) pointers, for pinch-zoom. A plain mouse hover never lands
   // here — only pointers that went down on the globe.
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map())
   const pinchDist = useRef<number | null>(null)
+
+  // The deep-zoom relief, once fetched. Null until someone zooms in far enough
+  // to want it — and if the fetch fails, permanently (the bundled bands stay).
+  const [fineRelief, setFineRelief] = useState<Relief | null>(null)
+  const wantFineRelief = zoom >= FINE_RELIEF_ZOOM
 
   const clampZoom = (z: number) => Math.max(minZoom, Math.min(maxZoom, z))
 
@@ -221,37 +286,99 @@ export function Globe({
     zoomRef.current = zoom
   }, [zoom])
 
-  const stopAnim = () => {
-    if (animRef.current !== null) {
-      cancelAnimationFrame(animRef.current)
-      animRef.current = null
+  const stopAt = (ref: React.MutableRefObject<number | null>) => {
+    if (ref.current !== null) {
+      cancelAnimationFrame(ref.current)
+      ref.current = null
     }
+  }
+  const stopAnim = () => stopAt(animRef)
+  const stopZoomAnim = () => stopAt(zoomAnimRef)
+
+  /**
+   * Drive `apply` with an eased 0→1 over `duration`, tracking the frame in
+   * `ref` so it can be cancelled. Returns false when motion is unwanted, so the
+   * caller can jump straight to the end state instead.
+   */
+  const runEase = (
+    ref: React.MutableRefObject<number | null>,
+    duration: number,
+    apply: (eased: number) => void,
+  ): boolean => {
+    stopAt(ref)
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return false
+    const startTime = performance.now()
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - startTime) / duration)
+      // easeInOutQuad
+      apply(p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2)
+      ref.current = p < 1 ? requestAnimationFrame(tick) : null
+    }
+    ref.current = requestAnimationFrame(tick)
+    return true
+  }
+
+  // Ease the zoom to a target rather than cutting to it, so a button press reads
+  // as moving closer. Interpolates *geometrically* — equal ratios per frame —
+  // because equal increments of scale visibly decelerate as the globe grows.
+  const animateZoom = (target: number) => {
+    const from = zoomRef.current
+    const to = clampZoom(target)
+    if (Math.abs(to - from) < 1e-3) {
+      setZoom(to)
+      return
+    }
+    // Interpolate *geometrically* — equal ratios per frame — because equal
+    // increments of scale visibly decelerate as the globe grows.
+    const eased = runEase(zoomAnimRef, ZOOM_DURATION, (e) =>
+      setZoom(from * Math.pow(to / from, e)),
+    )
+    if (!eased) setZoom(to)
+  }
+
+  // Zoom about a point on screen, keeping whatever sits under the pointer (or
+  // under the middle of a pinch) *under* it — the thing that makes a zoom feel
+  // like moving in rather than like the picture growing.
+  //
+  // Scaling alone happens about the globe's centre, which slides the anchor
+  // outward. An orthographic rotation is not a translation, so we can't cancel
+  // that exactly; instead we measure the drift — where the anchor points before
+  // versus after the scale change — and spin by the difference. That's exact at
+  // the anchor itself, and the small-angle error away from it is invisible.
+  const zoomAbout = (target: number, clientX: number, clientY: number) => {
+    const next = clampZoom(target)
+    const rect = svgRef.current?.getBoundingClientRect()
+    setZoom(next)
+    if (!rect || rect.width === 0) return
+    const toSvg = SIZE / rect.width
+    const p: [number, number] = [
+      (clientX - rect.left) * toSvg,
+      (clientY - rect.top) * toSvg,
+    ]
+    const rotation = rotationRef.current
+    const before = orthographic(zoomRef.current, rotation).invert?.(p)
+    const after = orthographic(next, rotation).invert?.(p)
+    if (!before || !after) return
+    const dλ = wrapLonDeg(after[0] - before[0])
+    const dφ = after[1] - before[1]
+    // Outside the disc the inverse is meaningless and can swing wildly; a sane
+    // anchor only ever drifts a few degrees per step.
+    if (!Number.isFinite(dλ) || !Number.isFinite(dφ)) return
+    if (Math.abs(dλ) > 45 || Math.abs(dφ) > 45) return
+    setRotation(([rλ, rφ]) => [rλ + dλ, Math.max(-90, Math.min(90, rφ + dφ))])
   }
 
   // Smoothly spin the globe so [lng, lat] comes to the centre, taking the
   // shortest way round in longitude. Cancels any spin already in flight.
   const animateTo = (lng: number, lat: number) => {
-    stopAnim()
     const from = rotationRef.current
-    const to: LngLat = [-lng, -lat]
-    const dλ = ((((to[0] - from[0] + 180) % 360) + 360) % 360) - 180
-    const dφ = to[1] - from[1]
-    // Respect reduced-motion: re-centre instantly instead of spinning.
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    if (reduce) {
-      setRotation([from[0] + dλ, from[1] + dφ])
-      return
-    }
-    const startTime = performance.now()
-    const DURATION = 600
-    const tick = (now: number) => {
-      const p = Math.min(1, (now - startTime) / DURATION)
-      // easeInOutQuad
-      const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2
-      setRotation([from[0] + dλ * e, from[1] + dφ * e])
-      animRef.current = p < 1 ? requestAnimationFrame(tick) : null
-    }
-    animRef.current = requestAnimationFrame(tick)
+    const dλ = wrapLonDeg(-lng - from[0])
+    const dφ = -lat - from[1]
+    const eased = runEase(animRef, SPIN_DURATION, (e) =>
+      setRotation([from[0] + dλ * e, from[1] + dφ * e]),
+    )
+    // Reduced motion: re-centre instantly instead of spinning.
+    if (!eased) setRotation([from[0] + dλ, from[1] + dφ])
   }
 
   // Re-centre + reset zoom whenever the day (and thus start) changes.
@@ -259,6 +386,7 @@ export function Globe({
   const startLat = start?.lat
   useEffect(() => {
     stopAnim()
+    stopZoomAnim()
     setRotation(
       startLng !== undefined && startLat !== undefined
         ? [-startLng, -startLat]
@@ -275,8 +403,45 @@ export function Globe({
     if (lastLng !== undefined && lastLat !== undefined) animateTo(lastLng, lastLat)
   }, [lastLng, lastLat])
 
-  // Stop any in-flight spin on unmount.
-  useEffect(() => stopAnim, [])
+  // Stop any in-flight spin or zoom on unmount.
+  useEffect(
+    () => () => {
+      stopAnim()
+      stopZoomAnim()
+    },
+    [],
+  )
+
+  // Fetch the finer relief the first time the player zooms past FINE_RELIEF_ZOOM.
+  // It rides in its own chunk, so a round that never goes in close never pays for
+  // it. A failure is not something the player needs told: the bundled bands are
+  // already on screen and stay there.
+  //
+  // Depending on the *threshold* rather than on `zoom` matters: `zoom` changes
+  // every frame of a drag or an eased press, which would tear this effect down
+  // and re-run it constantly — and the cleanup would then cancel the very fetch
+  // it had just started. As a boolean that flips once, the ordinary cancel flag
+  // is correct again.
+  useEffect(() => {
+    // Once hydrated, keep it: crossing the threshold again must not re-do the
+    // (substantial) work of cutting the tier into pieces.
+    if (!wantFineRelief || fineRelief) return
+    let cancelled = false
+    import('@/data/elevation-fine.json')
+      .then((mod) => {
+        if (cancelled) return
+        const relief = toRelief(mod.default ?? mod)
+        // A tier that doesn't match the CSS ramp would be mis-coloured; the
+        // bundled bands are already on screen and are the safer fallback.
+        if (relief.bands.length === RAMP_BANDS) setFineRelief(relief)
+      })
+      .catch(() => {
+        // Keep the bundled relief.
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [wantFineRelief, fineRelief])
 
   // Wheel to zoom. A native, non-passive listener so we can preventDefault and
   // stop the page scrolling under the gesture.
@@ -285,10 +450,13 @@ export function Globe({
     if (!el) return
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
+      stopZoomAnim()
       const factor = Math.exp(-e.deltaY * 0.0015)
-      setZoom((z) => Math.max(minZoom, Math.min(maxZoom, z * factor)))
+      zoomAbout(zoomRef.current * factor, e.clientX, e.clientY)
     }
     el.addEventListener('wheel', onWheel, { passive: false })
+    // zoomAbout reads rotation + zoom through refs, so this listener never needs
+    // re-subscribing as they change.
     return () => el.removeEventListener('wheel', onWheel)
   }, [minZoom, maxZoom])
 
@@ -362,15 +530,7 @@ export function Globe({
     )
   }, [exploreCandidates])
 
-  const projection = useMemo(
-    () =>
-      geoOrthographic()
-        .scale(RADIUS * zoom)
-        .translate([SIZE / 2, SIZE / 2])
-        .rotate([rotation[0], rotation[1], 0])
-        .clipAngle(90),
-    [rotation, zoom],
-  )
+  const projection = useMemo(() => orthographic(zoom, rotation), [rotation, zoom])
 
   const path = useMemo(() => geoPath(projection), [projection])
 
@@ -383,13 +543,26 @@ export function Globe({
   const place = (lng: number, lat: number): [number, number] | null =>
     isVisible(lng, lat) ? (projection([lng, lat]) ?? null) : null
 
-  const landPath = useMemo(() => path(land) ?? '', [path])
-  const graticulePath = useMemo(() => path(geoGraticule10()) ?? '', [path])
+  // Which detail tier is on screen (see the tier note by `fineWorld`).
+  const outline = zoom >= DETAIL_ZOOM ? fineWorld() : coarseWorld
+  // Everything below is drawn from the pieces that fall inside the view, so a
+  // zoomed-in frame costs what it shows rather than what the planet holds.
+  // Reach the board's corner, not its edge — the diagonal is what stays visible.
+  const cullRadius = visibleRadiusDeg(RADIUS * zoom, Math.SQRT2 * (SIZE / 2) + CULL_PAD)
+  // Deliberately not memoised, and deliberately not a dependency below: `near`
+  // is a pure function of the rotation and zoom that `path` is built from, so
+  // `path` changing is exactly when these need recomputing.
+  const near = (layer: Layer) => visible(layer, viewCenter, cullRadius)
+
+  const landPath = useMemo(() => path(near(outline.land)) ?? '', [path, outline])
+  const bordersPath = useMemo(() => path(near(outline.borders)) ?? '', [path, outline])
+  const graticulePath = useMemo(() => path(graticule) ?? '', [path])
   // The hypsometric bands, projected at the current rotation/zoom. One path per
   // elevation band; d3-geo clips each to the near hemisphere for us.
-  const bandPaths = useMemo(() => elevationBands.map((f) => path(f) ?? ''), [path])
+  const relief = fineRelief && wantFineRelief ? fineRelief : bundledRelief
+  const bandPaths = useMemo(() => relief.bands.map((layer) => path(near(layer)) ?? ''), [path, relief])
   // The ice sheets, projected the same way (a single combined path).
-  const icePath = useMemo(() => path(iceSheets) ?? '', [path])
+  const icePath = useMemo(() => path(near(relief.ice)) ?? '', [path, relief])
   // The running journey: start → each guessed city, in order.
   const journeyPath = useMemo(() => {
     if (!showJourney || !start || guesses.length === 0) return ''
@@ -443,8 +616,10 @@ export function Globe({
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
     e.currentTarget.setPointerCapture(e.pointerId)
     if (pointers.current.size >= 2) {
-      // Enter pinch: abandon any single-finger spin/tap in progress.
+      // Enter pinch: abandon any single-finger spin/tap in progress, and any
+      // button zoom still easing — the fingers own the scale now.
       stopAnim()
+      stopZoomAnim()
       drag.current = null
       press.current = null
       const [a, b] = [...pointers.current.values()]
@@ -452,6 +627,7 @@ export function Globe({
       return
     }
     stopAnim() // hand control to the drag mid-spin
+    stopZoomAnim()
     drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId }
     press.current = { x: e.clientX, y: e.clientY, moved: false }
   }
@@ -470,7 +646,9 @@ export function Globe({
         pinchDist.current = dist
         if (prev && prev > 0) {
           const ratio = Math.pow(dist / prev, PINCH_SENSITIVITY)
-          setZoom((z) => clampZoom(z * ratio))
+          // Anchor on the middle of the pinch, so the globe grows around the
+          // fingers rather than around its own centre.
+          zoomAbout(zoomRef.current * ratio, (a.x + b.x) / 2, (a.y + b.y) / 2)
         }
       }
       return
@@ -601,6 +779,8 @@ export function Globe({
             <path className="globe__graticule" d={graticulePath} />
             {/* Crisp coastline over the bands */}
             <path className="globe__coast" d={landPath} />
+            {/* Political borders, inland only (the coast is stroked above) */}
+            <path className="globe__border" d={bordersPath} />
 
             {/* Explorable cities: biggest first, more as you zoom in */}
             {exploreDots.map((dot) => {
@@ -710,7 +890,7 @@ export function Globe({
             type="button"
             className="globe__zoom-btn"
             aria-label={t.globe.zoomIn}
-            onClick={() => setZoom((z) => clampZoom(z * ZOOM_STEP))}
+            onClick={() => animateZoom(zoomRef.current * ZOOM_STEP)}
             disabled={zoom >= maxZoom - 1e-3}
           >
             +
@@ -719,7 +899,7 @@ export function Globe({
             type="button"
             className="globe__zoom-btn"
             aria-label={t.globe.zoomOut}
-            onClick={() => setZoom((z) => clampZoom(z / ZOOM_STEP))}
+            onClick={() => animateZoom(zoomRef.current / ZOOM_STEP)}
             disabled={zoom <= minZoom + 1e-3}
           >
             −

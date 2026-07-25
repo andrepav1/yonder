@@ -88,6 +88,24 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   `rules.dataset.minPopulation` (zoomed in). The Globe uses it to decide *which* real
   cities to draw as its explorable dot layer; the projection-dependent culling stays in
   the component.
+- `src/lib/cull.ts` — **pure** view-culling geometry for the globe's map layers.
+  `toLayer` prepares a layer (coastline, borders, a relief band), cutting it into
+  **pieces** — one ring or line each, with its lon/lat bbox — on first use, since
+  culling only engages above ~1.5× zoom and a round that never zooms in shouldn't
+  pay for them; `visibleRadiusDeg` gives the angular cap the square board can show
+  at a given scale (**corner**, not edge — the diagonal is what stays visible);
+  `visible` collects the pieces that can reach it in one pass, or hands back the
+  layer whole when nothing can be culled. The per-piece test is deliberately
+  hand-rolled trigonometry rather than d3's `geoDistance` — same maths, but routed
+  through d3's stream machinery it measured ~50× slower per call, which across
+  thousands of pieces a frame cost more than culling saved (5.7 → 0.4 ms/frame). Without it a zoomed
+  frame re-projects the entire planet to paint a ~10° sliver. Culling generously is
+  the point: a piece wrongly kept costs its vertices, one wrongly dropped is a hole
+  in the map, so `cull.test.ts` asserts the **superset property** — anything that
+  draws on the board, or that contains the view centre, survives — swept over many
+  centres × zooms × layers. That test caught both bugs in the first draft (an
+  inverted `lonDelta`, and boxes spanning >180° of longitude snapping to the wrong
+  edge); keep it green if you touch the maths.
 - `src/lib/scoring.ts` — **pure**: `evaluateLeg` (leg / running total / remaining /
   bearing / over / win — a guess from a given previous point onto the running total),
   `scoreRound` (golf: guess count + final total), and `tempLevel` (the shared hot→cold
@@ -149,6 +167,17 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   contoured at a small threshold — so the two great ice caps read as ice, not the
   brown highlands their surface height would otherwise colour them. Presentational
   only — no game logic reads it.
+- `src/data/elevation-fine.json` — the **deep-zoom relief tier** (0.1°, twice the linear
+  resolution of `elevation.json`). Emitted by the same `scripts/build-elevation.mjs` run.
+  **Not bundled**: the Globe `import()`s it the first time a player zooms past
+  `FINE_RELIEF_ZOOM`, so it rides in its own chunk (~200 KB gz) that most rounds never
+  fetch. Same shape as `elevation.json`, and the hydrator refuses a tier whose band
+  count doesn't match the `--hypso-*` ramp rather than mis-colour the map.
+- `src/data/outline.json` — **committed** fine coastline + country borders (world-atlas
+  50m, thinned by `scripts/build-outline.mjs`), the detail tier the globe swaps in when
+  zoomed past `DETAIL_ZOOM`. Objects are `land` + **`borders`** (the interior mesh, cut at
+  build time) rather than world-atlas's `land` + `countries`; `toOutline` handles both
+  shapes. Presentational only.
 - `src/modes/daily.ts` — the `GameMode` descriptors (`generate(seed)`/`apply`/
   `score`/`share`) built by a shared `makeMode` factory + a `modes` registry. Each
   descriptor pairs a **`ModeLogic`** (the pure play strategy — Classic's is
@@ -206,7 +235,26 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   bands (hydrated once with `topojson-client`) painted deepest→highest as nested
   brown/blue relief (ocean depth → land height), then the `ice` sheets
   (Greenland/Antarctica) as `--globe-ice` on top, with a crisp coastline
-  (`world-atlas` land-110m TopoJSON) stroked over the top. The band tints are the
+  (`world-atlas` countries-110m TopoJSON) stroked over the top and **country
+  borders** (`--globe-border`) inland of it. One `world-atlas` file feeds both:
+  its `land` object is the coastline, and `topojson-client`'s `mesh(…, (a, b) =>
+  a !== b)` over its `countries` object yields the interior boundaries only — each
+  border drawn once, coastlines not double-stroked.
+  The **relief** has tiers too: past `FINE_RELIEF_ZOOM` (3.2) the globe fetches
+  `elevation-fine.json` (0.1°) and swaps it in, because 0.2° cells read as 20 px blocks
+  at 6× however good the coastline is. One-shot and fire-and-forget — a failed fetch
+  just leaves the bundled bands on screen. The fetch effect keys on the *threshold*
+  (`zoom >= FINE_RELIEF_ZOOM`), not on `zoom`: keyed on `zoom` it was torn down and
+  re-run every frame of a drag, so its cleanup cancelled the very import it had just
+  started and the tier silently never arrived.
+  **Two outline tiers**, both bundled: 110m carries the whole-globe view, and past
+  `DETAIL_ZOOM` (2.2) the finer `@/data/outline.json` takes over, so zooming *reveals*
+  island chains, inlets and the real wiggle of country borders (the Balkans, Benelux,
+  the Nepal/Bangladesh borders) instead of magnifying polygons. The fine tier is hydrated
+  on **first use**, not at module load — a round that never zooms in shouldn't pay for
+  it. Every map layer is then drawn through `lib/cull.ts`: only the pieces the board
+  can reach get re-projected, which is what pays for the extra detail (a zoomed drag
+  measured **36.7 → 49.2 fps** with the finer coastline, A/B against the same build). The band tints are the
   `--hypso-*` CSS ramp (theme-aware); the deepest ocean is the sphere's
   `--globe-ocean` base.
   Purely presentational — all geometry comes
@@ -226,6 +274,15 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   the dashed **missed leg** from where the player stopped. Spins to face the
   start on load and smoothly **re-centres on the latest guess** (rAF-animated; drag
   interrupts). Far-hemisphere points are hidden via a `geoDistance` great-circle test.
+  **Zoom** feels like moving in rather than the picture growing: the `+`/`−` buttons
+  **ease** to their target (`ZOOM_DURATION`, interpolated *geometrically* — equal
+  ratios per frame, since equal increments visibly decelerate as the globe grows), and
+  wheel + pinch are **anchored**, keeping whatever is under the pointer (or the middle
+  of the pinch) under it. Scaling alone happens about the globe's centre, which slides
+  the anchor outward; `zoomAbout` measures where the anchor points before versus after
+  the scale change and spins by the difference — exact at the anchor, invisible error
+  away from it (measured drift 37 px → 2.5 px). A drag, a pinch or a wheel cancels an
+  easing zoom.
   **Zoom** (pinch / wheel / `+`−` buttons) magnifies the globe via `projection.scale`
   and draws an **explorable city layer** from the `cities` prop: quiet dots for real
   cities, filtered by `exploreMinPopulation(zoom, rules)` (biggest first, more as you
@@ -250,7 +307,9 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   paint order (panels after it paint on top; the two panels above it — `.prompt` and the
   `.hdr` header — are each lifted with `position: relative; z-index: 1` so the growing
   sphere recedes behind them instead of covering the logo + settings). Presentational as ever — geometry from
-  props, no runtime network; land is bundled.
+  props. Everything needed to *play* is bundled; the single runtime fetch is the
+  deep-zoom relief tier, and the globe carries on with the bundled bands if it
+  never arrives.
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it
@@ -264,6 +323,7 @@ npm run typecheck    # tsc -b --noEmit
 npm run build        # production build → dist/ (static, Vercel)
 npm run data:build   # rebuild src/data/cities.json from ./data-src (see below)
 npm run data:elevation    # rebuild src/data/elevation.json from NOAA ETOPO (needs network)
+npm run data:outline      # rebuild src/data/outline.json (fine coastline; no network)
 npm run preview:puzzles   # eyeball generated puzzles for several dates
 npm run build && npm run screenshot   # phone-sized screenshots of the real UI
 ```
@@ -305,15 +365,52 @@ national capitals, detected from the `PPLC` feature code in `cities15000.txt`
 (`scripts/enrich-capitals.mjs`) intersects `PPLC` ids with the dataset (~160 capitals,
 pop ≥ 100k) and rewrites just the `capitals` list, leaving translations intact.
 
+**Globe outline.** `src/data/outline.json` is the globe's *fine* coastline + borders —
+the tier that appears when you zoom in. Rebuild with `npm run data:outline`
+(`scripts/build-outline.mjs`, no network): it takes world-atlas's 50m outline, thins it
+with `topojson-simplify` and rebuilds the topology, keeping **every ring** (the small
+islands are the whole point) while dropping the sub-pixel wiggle — 739 KB → ~250 KB,
+small enough to bundle, so the detail costs no runtime fetch and the globe still works
+offline.
+
+**Land and borders are thinned separately, and must be.** Simplification scores a
+vertex by the triangle it forms with its neighbours, so it strips *straight* lines
+hardest — and country borders are long straight or gently curved runs where coastlines
+are convoluted. A single shared weight left the coast at 3.4× the 110m detail and the
+borders at **1.4×**, i.e. zooming visibly sharpened the coast while the borders stayed
+exactly as blocky as before. `LAND_SIMPLIFY` (0.02) and `BORDER_SIMPLIFY` (0.0005) are
+therefore separate knobs; borders are cheap (~19k points at 50m) so they keep nearly
+everything. Re-measure a drag if you raise either.
+
 **Globe elevation.** `src/data/elevation.json` is the other committed, bundled
 artifact — the hypsometric relief the globe paints under the coastline. Rebuild it
-with `npm run data:elevation` (`scripts/build-elevation.mjs`, needs network): it
-streams a coarse (0.5°, block-averaged) subset of the **NOAA ETOPO 2022** global
+with `npm run data:elevation` (`scripts/build-elevation.mjs`, needs network). One run
+emits **two tiers** from one download: the bundled `elevation.json` (0.2°) and the
+deep-zoom `elevation-fine.json` (0.1°, fetched on demand — see above). The fine tier
+keeps finer land detail (`FINE_LAND_SIMPLIFY`) but **drops speck-sized land rings**
+(`FINE_LAND_MIN_RING`): at 0.1° a single warm cell contours to a ~6-point triangle and
+there are ~23,000 of them, carrying three quarters of the bytes and most of the frame
+cost, since culling tests every ring every frame. Dropping them took the tier from
+1,263 KB to 660 KB and a deep-zoom drag from 27 to 47 fps, and costs elevation speckle
+rather than islands — the coastline comes from `outline.json`, not from here. The build
+streams a coarse (0.2°, block-averaged) subset of the **NOAA ETOPO 2022** global
 relief grid via OPeNDAP — so no giant download — contours it into fixed
 depth/height bands with **d3-contour**, reprojects the contours from grid space to
-lon/lat, and writes a quantized + simplified TopoJSON (~215 KB). The `THRESHOLDS`
-array (5 ocean + 6 land bands) must stay in lockstep with the `--hypso-*` colour
-ramp in `globals.css` — same count, same order. It also fetches ETOPO's *bedrock*
+lon/lat, and writes a quantized + simplified TopoJSON (~390 KB, ~25 s end to end).
+The `THRESHOLDS` array (5 ocean + 6 land bands) must stay in lockstep with the
+`--hypso-*` colour ramp in `globals.css` — same count, same order.
+
+Two things in that reprojection are easy to get wrong and show up as relief that
+sits *beside* its coastline (most visible on island chains, against the country
+borders): d3-contour's coordinates are offset **+0.5 cell** from the data indices,
+and a block-averaged cell stands for its members' **centroid**, not its first
+sample. `projector()` applies both — leave them in, or the map drifts ~0.125° NE.
+Simplification is split by band: land keeps its detail (`LAND_SIMPLIFY`), while the
+ocean bands are thinned harder and have their smallest rings dropped
+(`OCEAN_SIMPLIFY` / `OCEAN_MIN_RING`) — invisible at globe scale, and it roughly
+halves the file. `LAND_SIMPLIFY` is the **frame-rate knob**: the Globe re-projects
+every band on every drag frame, and dropping it to 0.05 costs ~10 fps mid-drag for
+detail you can't see. Re-measure a drag if you change it. It also fetches ETOPO's *bedrock*
 grid and contours (surface − bedrock) at `ICE_THICKNESS_MIN` to emit the `ice`
 object — Greenland + Antarctica — since ETOPO models thick ice only under those two
 sheets, so nothing else is falsely flagged.

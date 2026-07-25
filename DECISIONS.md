@@ -674,3 +674,175 @@ at and read as a leftover from the single-shot game.
 - **Not determinism-sacred.** Changing these never affects puzzle generation, scoring,
   or the shared result, so they carry no invariant tests — the `render-nothing` default
   is the safety property that matters.
+
+## 2026-07-25 — Country borders on the globe
+
+- **Context.** The globe already reads as a physical map (hypsometric relief + a
+  coastline). For a geography game, the *political* layer is the missing half: the
+  countries a journey crosses are most of what a player is actually learning.
+- **Decision — draw borders as a TopoJSON `mesh`, not per-country outlines.**
+  `mesh(worldTopo, objects.countries, (a, b) => a !== b)` keeps only arcs shared by
+  two different countries, so every boundary is one line drawn once and the coast —
+  which `.globe__coast` already strokes — isn't painted a second time underneath.
+  Per-country `feature()` outlines would double-stroke every shared border and every
+  coastline, and cost ~177 projected paths per frame instead of one.
+- **One source file, not two.** `world-atlas`'s `countries-110m.json` carries a `land`
+  object built from the same arcs as the standalone `land-110m.json` (verified
+  identical to float noise), so the countries file now feeds *both* the coastline and
+  the borders and the separate land import is gone. Net bundle +52 KB raw.
+- **110m, not 50m.** At full zoom the borders are visibly polygonal, but so is the
+  elevation relief beneath them — the coarseness is consistent with the map's
+  existing style, and the 50m file is several times larger for a detail level the
+  default view can't show. Not worth swapping resolutions at zoom.
+  **Superseded in part the same day:** the relief was rebuilt at 0.2° (see the
+  registration entry below), so at max zoom the 110m coastline + borders are now the
+  *coarser* layer, not the matched one. Still 110m — the argument that survives is
+  the size one, not the consistency one — but the 50m upgrade is the open option if
+  the mismatch ever reads as a defect.
+- **Styled quieter than the coastline** (`--globe-border`, 0.3 width, 55% opacity).
+  The globe is a *guessing surface* first: borders must give the eye somewhere to
+  land without competing with the guess pins, journey line, or reveal dots. The dark
+  theme needs a *lighter* stroke than the land tints, the light theme a darker one,
+  so the token flips relationship rather than just lightness across themes.
+- **Disputed boundaries: defer to the source.** Natural Earth (via `world-atlas`)
+  makes its own calls on Kashmir, Crimea, Western Sahara and others. We render them
+  as given and take no position; a geography game shouldn't be adjudicating borders,
+  and hand-editing the topology would mean owning every such call forever.
+- **Purely presentational.** No game logic reads the border geometry — nothing in
+  `lib/*` changes, so there's nothing new to test beyond the existing suites.
+
+## 2026-07-25 — The relief sat beside its coastline: a registration bug, not a resolution one
+
+- **Symptom.** With country borders drawn, the hypsometric relief was visibly
+  offset from the coastline and borders — worst on island chains, where the
+  Philippines' fill sat up and to the right of the islands it was meant to be.
+  The obvious reading is "the grid is too coarse"; it wasn't, or not only.
+- **Cause — two half-cell errors in the grid → lon/lat mapping.** d3-contour's
+  coordinate space is offset **+0.5 cell** from the data indices (probed directly:
+  a lone hot cell at index (2, 2) contours to a ring centred on (2.5, 2.5)), and a
+  block-averaged cell stands for the **centroid** of the samples it averaged, which
+  is (DOWNSAMPLE − 1)/2 subsamples past the first. The old code treated contour
+  coordinates as raw data indices and ignored both, landing every band ~0.125°
+  (~14 km) north-east of the truth. Verified before rebuilding by shifting the
+  committed TopoJSON's quantization transform and re-rendering against the coast.
+- **Resolution was a real, separate problem.** At 0.5° with a 0.4 simplify weight,
+  small islands weren't offset so much as *absent* — Palawan, Mindoro and Panay had
+  no relief at all. Both had to change; only one of them was the offset.
+- **0.2°, not finer.** A sweep at 0.1° cost 3× the bytes for no visible gain — past
+  a point the simplify weight, not the grid step, is what shapes the output. Note
+  the old 0.4 weight *breaks* at finer grids: rings degenerate and the bands paint
+  as one solid blob.
+- **Simplify per band group.** Land keeps its detail; ocean bands are thinned harder
+  and have their smallest rings dropped. The −4000 m band alone had been a third of
+  the file — abyssal ridge wiggle and seamount speckle nobody can see at globe
+  scale. That halves the cost of the finer land: 894 KB → 461 KB at equal land
+  fidelity. Ring *count*, not vertex density, was the thing to attack.
+- **`LAND_SIMPLIFY` is a frame-rate knob, and that decided its value.** The Globe
+  re-projects every band on every drag frame. At 0.05 a scripted drag ran 46 fps
+  with p95 frames doubling; at 0.1 it was 57.5 fps, pinned to vsync, at 389 KB —
+  and the two are visually indistinguishable in the regions that motivated the
+  change. Shipped 0.1.
+- **Rejected: contouring the ocean at a coarser grid than the land.** Plausible on
+  paper, and it's what the frame-cost story predicted. Measured: 5 KB smaller, 0 fps
+  different — the ocean bands were already cheap once their small rings were gone.
+  Reverted rather than carry two grid resolutions for nothing. The land bands were
+  the cost all along.
+- **Cost.** 214 KB → 389 KB (67 → ~120 KB gzipped). Paid knowingly: the globe is the
+  game's main surface, and the borders make any misalignment obvious.
+
+## 2026-07-25 — Making zoom feel like zooming: detail tiers, culling, and motion
+
+- **Context.** Zooming magnified the map without ever revealing anything: the same
+  110m outline, just bigger, so it read as scaling a picture rather than moving in.
+  Two problems hid behind one complaint — no detail, and no sense of motion.
+- **Detail: two tiers, both bundled.** 110m keeps the whole-globe view; past
+  `DETAIL_ZOOM` a finer outline takes over, and the Aegean, the Danish archipelago
+  and the Visayas appear as you go in. world-atlas's own 50m file is 739 KB and ten
+  times the vertices — most of it finer than a 320 px sphere can ever show — so
+  `scripts/build-outline.mjs` thins it once at build time, keeping **every ring**
+  while dropping sub-pixel wiggle: ~2.7× the vertices of 110m, 205 KB. Small enough
+  to bundle, which beat the lazy-chunk alternative on every axis except first-load
+  bytes and kept the globe working offline. Hydrated on first use, not at import.
+- **Culling is what paid for the detail.** d3-geo walks every vertex it is handed,
+  so a 6× view was re-projecting the whole planet to paint a ~10° cap. Each layer is
+  now cut once into pieces with bounding boxes (`lib/cull.ts`) and only the pieces
+  that can reach the view are drawn. Measured A/B, interleaved, median of three: a
+  zoomed drag went **36.7 → 49.2 fps** *while carrying 2.7× the coastline*, and the
+  zoomed-out view was unchanged. Without culling the same detail measured 32 fps.
+- **The superset property, and why it is tested.** Culling generously is free;
+  culling too much punches a hole in the map. `cull.test.ts` therefore asserts that
+  anything drawing on the board — or containing the view centre, since a polygon can
+  fill it without any vertex inside — survives, swept over centres × zooms × layers.
+  It caught both bugs in the first draft: an inverted `lonDelta` (180° for identical
+  meridians) and boxes spanning more than 180° of longitude snapping to an edge on
+  the far side of the planet. It also caught a wrong *radius*: the board is square,
+  so its corners bound the visible cap, not its half-width.
+- **Motion: ease the buttons, anchor the gestures.** Button zoom eases to its target
+  and interpolates geometrically — equal ratios per frame, because equal increments
+  of scale visibly decelerate as the globe grows. Wheel and pinch keep whatever is
+  under the pointer under it: scaling happens about the centre, so `zoomAbout`
+  measures the anchor's drift across the scale change and spins by the difference.
+  Approximate off-anchor, exact where it matters; measured drift fell 37 px → 2.5 px.
+- **Rejected: rendering the raw 50m outline.** It is the obvious "more detail" move
+  and it measured 39 fps on a zoomed drag before culling, 32 after the tier landed —
+  worse than the coarse map it replaced. Thinning it first was strictly better.
+- **Measurement note.** This sandbox drifts: identical code measured 57.5 fps early
+  in the session and 46.8 fps an hour later. Only interleaved A/B numbers from the
+  same run are quoted above; a single-build reading proves nothing here.
+
+## 2026-07-25 (later) — A deep-zoom relief tier, fetched rather than bundled
+
+- **Context.** With the outline tiered and culling in place, zooming still didn't
+  read as *going in*: the drawn vertex count stayed ~3,300 at every zoom, because
+  culling dropped pieces at about the rate the finer tier added them. At maximum
+  zoom what remained blocky was the **relief**, not the coastline — one 0.2° tier
+  at every scale, so 22 km cells become 20 px blocks at 6×.
+- **Decision — a 0.1° relief tier, loaded on demand past `FINE_RELIEF_ZOOM`.** It is
+  too big to bundle, and most rounds never zoom that far, so it rides in its own
+  chunk (~200 KB gz) and the globe keeps the bundled bands if the fetch never lands.
+  That deliberately gives up "everything is bundled" for this one layer; the trade
+  was the user's call, and the failure mode is invisible — you get the old relief.
+- **Ring count, not vertex count, was the cost.** The first cut of the tier ran a
+  zoomed drag at 27 fps against 48 without it, though it drew only ~55% more
+  vertices. The reason: 25,039 pieces versus 5,155, and culling tests every piece
+  every frame. At 0.1° a single warm cell contours to a ~6-point triangle, and there
+  were ~23,000 of them — three quarters of the bytes and most of the frame time.
+  Dropping them (`FINE_LAND_MIN_RING`) gave back 660 KB instead of 1,263 KB and
+  **46.8 fps instead of 27**, while the terrain still reads far richer than the
+  bundled tier. What's lost is elevation speckle, not islands: the coastline comes
+  from `outline.json`. Culling also now rejects on latitude alone before touching
+  trigonometry, which is pure arithmetic and discards most of the planet.
+- **A bug worth remembering.** The fetch effect depends on `zoom`, so React tears it
+  down and re-runs it on every zoom change — including every frame of an eased
+  button press. The idiomatic `let cancelled = false` cleanup therefore cancelled the
+  import it had just started: the chunk downloaded with a 200, and the result was
+  thrown away every time. The tier silently never appeared while looking, from the
+  network panel, like it had loaded fine. The guard has to be a `mounted` ref.
+- **Measurement note.** The first "it isn't working" reading came from a stale
+  `dist/` — built while the changes were stashed for an A/B. Rebuild before believing
+  a null result.
+
+## 2026-07-25 (later still) — Borders and coastlines can't share a simplify weight
+
+- **Report.** "I don't see the difference between no zoom and big zoom" — looking at
+  the **country borders**, which is where the eye goes on a political map.
+- **Cause.** The detail tier was thinned with one weight for the whole topology.
+  Simplification scores a vertex by the area of the triangle it forms with its
+  neighbours, so it strips *straight* lines hardest. Coastlines are convoluted and
+  survive; borders are long straight or gently curved runs and get flattened to
+  almost nothing. Measured against 110m, one shared weight of 0.02 left the
+  coastline at **3.4×** its detail and the borders at **1.4×** — so zooming in
+  sharpened the coast while the borders stayed exactly as they were. The tier was
+  doing half its job, and the half nobody was looking at.
+- **Decision.** Thin the two layers separately: `LAND_SIMPLIFY` 0.02,
+  `BORDER_SIMPLIFY` 0.0005. Borders are cheap — ~19k points at 50m even untouched —
+  so they now keep 5.2× the 110m detail for +44 KB (+9 KB gzipped) and no measurable
+  frame cost, since culling bounds what is drawn. The Balkans, Benelux and the
+  Nepal/Bhutan/Bangladesh borders now gain their real shape on zoom.
+- **The artifact changed shape.** It stores the interior `borders` mesh directly
+  instead of whole `countries`, since the mesh has to exist before it can be thinned
+  on its own. That also drops the country names and spares the app the meshing at
+  load; `toOutline` still accepts world-atlas's shape for the 110m tier.
+- **Lesson worth keeping.** "2.7× the vertices" was an average over two layers that
+  behave nothing alike, and it hid a layer that had barely improved. Measure the
+  thing the user is actually looking at, per layer, not the aggregate.
