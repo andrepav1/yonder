@@ -206,7 +206,11 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   bands (hydrated once with `topojson-client`) painted deepest→highest as nested
   brown/blue relief (ocean depth → land height), then the `ice` sheets
   (Greenland/Antarctica) as `--globe-ice` on top, with a crisp coastline
-  (`world-atlas` land-110m TopoJSON) stroked over the top. The band tints are the
+  (`world-atlas` countries-110m TopoJSON) stroked over the top and **country
+  borders** (`--globe-border`) inland of it. One `world-atlas` file feeds both:
+  its `land` object is the coastline, and `topojson-client`'s `mesh(…, (a, b) =>
+  a !== b)` over its `countries` object yields the interior boundaries only — each
+  border drawn once, coastlines not double-stroked. The band tints are the
   `--hypso-*` CSS ramp (theme-aware); the deepest ocean is the sphere's
   `--globe-ocean` base.
   Purely presentational — all geometry comes

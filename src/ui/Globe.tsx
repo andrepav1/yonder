@@ -27,9 +27,9 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { geoOrthographic, geoPath, geoGraticule10, geoDistance } from 'd3-geo'
-import { feature } from 'topojson-client'
-import type { Feature, FeatureCollection } from 'geojson'
-import landTopo from 'world-atlas/land-110m.json'
+import { feature, mesh } from 'topojson-client'
+import type { Feature, FeatureCollection, MultiLineString } from 'geojson'
+import worldTopo from 'world-atlas/countries-110m.json'
 import elevationTopo from '@/data/elevation.json'
 import type { AnswerCity, City, GuessResult } from '@/lib/types'
 import type { GameRules, Unit } from '@/config/rules'
@@ -40,12 +40,26 @@ import { formatDistance } from '@/lib/format'
 import { useI18n } from '@/i18n/context'
 
 // world-atlas ships TopoJSON; hydrate the land outline once, at module load.
+// The countries topology carries a `land` object built from the same arcs, so
+// one file feeds both the coastline and the borders below.
 const land = feature(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  landTopo as any,
+  worldTopo as any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (landTopo as any).objects.land,
+  (worldTopo as any).objects.land,
 ) as unknown as FeatureCollection
+
+// Country borders as a *mesh* rather than per-country outlines: the (a, b) =>
+// a !== b filter keeps only arcs shared by two different countries, so every
+// boundary is one line drawn once and the coastline — which `.globe__coast`
+// already strokes — isn't painted over a second time.
+const borders: MultiLineString = mesh(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  worldTopo as any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (worldTopo as any).objects.countries,
+  (a, b) => a !== b,
+)
 
 // Hypsometric elevation bands (ocean depth + land height), likewise hydrated
 // once. Sorted by threshold ascending so painting them in order stacks deepest
@@ -384,6 +398,7 @@ export function Globe({
     isVisible(lng, lat) ? (projection([lng, lat]) ?? null) : null
 
   const landPath = useMemo(() => path(land) ?? '', [path])
+  const bordersPath = useMemo(() => path(borders) ?? '', [path])
   const graticulePath = useMemo(() => path(geoGraticule10()) ?? '', [path])
   // The hypsometric bands, projected at the current rotation/zoom. One path per
   // elevation band; d3-geo clips each to the near hemisphere for us.
@@ -601,6 +616,8 @@ export function Globe({
             <path className="globe__graticule" d={graticulePath} />
             {/* Crisp coastline over the bands */}
             <path className="globe__coast" d={landPath} />
+            {/* Political borders, inland only (the coast is stroked above) */}
+            <path className="globe__border" d={bordersPath} />
 
             {/* Explorable cities: biggest first, more as you zoom in */}
             {exploreDots.map((dot) => {

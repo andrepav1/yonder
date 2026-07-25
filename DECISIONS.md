@@ -674,3 +674,34 @@ at and read as a leftover from the single-shot game.
 - **Not determinism-sacred.** Changing these never affects puzzle generation, scoring,
   or the shared result, so they carry no invariant tests — the `render-nothing` default
   is the safety property that matters.
+
+## 2026-07-25 — Country borders on the globe
+
+- **Context.** The globe already reads as a physical map (hypsometric relief + a
+  coastline). For a geography game, the *political* layer is the missing half: the
+  countries a journey crosses are most of what a player is actually learning.
+- **Decision — draw borders as a TopoJSON `mesh`, not per-country outlines.**
+  `mesh(worldTopo, objects.countries, (a, b) => a !== b)` keeps only arcs shared by
+  two different countries, so every boundary is one line drawn once and the coast —
+  which `.globe__coast` already strokes — isn't painted a second time underneath.
+  Per-country `feature()` outlines would double-stroke every shared border and every
+  coastline, and cost ~177 projected paths per frame instead of one.
+- **One source file, not two.** `world-atlas`'s `countries-110m.json` carries a `land`
+  object built from the same arcs as the standalone `land-110m.json` (verified
+  identical to float noise), so the countries file now feeds *both* the coastline and
+  the borders and the separate land import is gone. Net bundle +52 KB raw.
+- **110m, not 50m.** At full zoom the borders are visibly polygonal, but so is the
+  elevation relief beneath them (a 0.5° contour grid) — the coarseness is consistent
+  with the map's existing style, and the 50m file is several times larger for a
+  detail level the default view can't show. Not worth swapping resolutions at zoom.
+- **Styled quieter than the coastline** (`--globe-border`, 0.3 width, 55% opacity).
+  The globe is a *guessing surface* first: borders must give the eye somewhere to
+  land without competing with the guess pins, journey line, or reveal dots. The dark
+  theme needs a *lighter* stroke than the land tints, the light theme a darker one,
+  so the token flips relationship rather than just lightness across themes.
+- **Disputed boundaries: defer to the source.** Natural Earth (via `world-atlas`)
+  makes its own calls on Kashmir, Crimea, Western Sahara and others. We render them
+  as given and take no position; a geography game shouldn't be adjudicating borders,
+  and hand-editing the topology would mean owning every such call forever.
+- **Purely presentational.** No game logic reads the border geometry — nothing in
+  `lib/*` changes, so there's nothing new to test beyond the existing suites.

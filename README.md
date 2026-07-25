@@ -231,6 +231,6 @@ rendered with **d3-geo** (orthographic projection + geodesic circle). Its base i
 **hypsometric elevation map** — brown/blue relief bands (ocean depth → land height)
 contoured from **NOAA ETOPO 2022** with **d3-contour** and bundled as TopoJSON, plus
 an ice-sheet overlay so Greenland and Antarctica read as ice caps rather than brown
-highlands — with a crisp coastline (**world-atlas** TopoJSON) stroked over the top,
-all hydrated with **topojson-client**. Every tint is a theme-aware CSS token, so the
+highlands — with a crisp coastline and country borders (**world-atlas** TopoJSON)
+stroked over the top, all hydrated with **topojson-client**. Every tint is a theme-aware CSS token, so the
 relief adapts to light/dark mode. All client-side, no runtime network.
