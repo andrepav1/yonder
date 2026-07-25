@@ -162,6 +162,12 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   contoured at a small threshold — so the two great ice caps read as ice, not the
   brown highlands their surface height would otherwise colour them. Presentational
   only — no game logic reads it.
+- `src/data/elevation-fine.json` — the **deep-zoom relief tier** (0.1°, twice the linear
+  resolution of `elevation.json`). Emitted by the same `scripts/build-elevation.mjs` run.
+  **Not bundled**: the Globe `import()`s it the first time a player zooms past
+  `FINE_RELIEF_ZOOM`, so it rides in its own chunk (~200 KB gz) that most rounds never
+  fetch. Same shape as `elevation.json`, and the hydrator refuses a tier whose band
+  count doesn't match the `--hypso-*` ramp rather than mis-colour the map.
 - `src/data/outline.json` — **committed** fine coastline + country borders (world-atlas
   50m, thinned by `scripts/build-outline.mjs`), the detail tier the globe swaps in when
   zoomed past `DETAIL_ZOOM`. Same shape as world-atlas (`objects.land` + `objects.countries`)
@@ -228,7 +234,14 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   its `land` object is the coastline, and `topojson-client`'s `mesh(…, (a, b) =>
   a !== b)` over its `countries` object yields the interior boundaries only — each
   border drawn once, coastlines not double-stroked.
-  **Two detail tiers**, both bundled: 110m carries the whole-globe view, and past
+  The **relief** has tiers too: past `FINE_RELIEF_ZOOM` (3.2) the globe fetches
+  `elevation-fine.json` (0.1°) and swaps it in, because 0.2° cells read as 20 px blocks
+  at 6× however good the coastline is. One-shot and fire-and-forget — a failed fetch
+  just leaves the bundled bands on screen. Note the fetch effect depends on `zoom`, so
+  it is torn down and re-run constantly; the in-flight import must **not** be cancelled
+  by that teardown (it was, and the tier silently never arrived) — the guard is a
+  `mounted` ref, not a per-run flag.
+  **Two outline tiers**, both bundled: 110m carries the whole-globe view, and past
   `DETAIL_ZOOM` (2.2) the finer `@/data/outline.json` takes over, so zooming *reveals*
   island chains and inlets instead of magnifying polygons. The fine tier is hydrated
   on **first use**, not at module load — a round that never zooms in shouldn't pay for
@@ -287,7 +300,9 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   paint order (panels after it paint on top; the two panels above it — `.prompt` and the
   `.hdr` header — are each lifted with `position: relative; z-index: 1` so the growing
   sphere recedes behind them instead of covering the logo + settings). Presentational as ever — geometry from
-  props, no runtime network; land is bundled.
+  props. Everything needed to *play* is bundled; the single runtime fetch is the
+  deep-zoom relief tier, and the globe carries on with the bundled bands if it
+  never arrives.
 - `src/styles/globals.css` — the "Terra" design system tokens (see `DESIGN.md`).
 
 ## Run it
@@ -354,7 +369,15 @@ coastline richness against drag frame rate; re-measure a drag if you change it.
 
 **Globe elevation.** `src/data/elevation.json` is the other committed, bundled
 artifact — the hypsometric relief the globe paints under the coastline. Rebuild it
-with `npm run data:elevation` (`scripts/build-elevation.mjs`, needs network): it
+with `npm run data:elevation` (`scripts/build-elevation.mjs`, needs network). One run
+emits **two tiers** from one download: the bundled `elevation.json` (0.2°) and the
+deep-zoom `elevation-fine.json` (0.1°, fetched on demand — see above). The fine tier
+keeps finer land detail (`FINE_LAND_SIMPLIFY`) but **drops speck-sized land rings**
+(`FINE_LAND_MIN_RING`): at 0.1° a single warm cell contours to a ~6-point triangle and
+there are ~23,000 of them, carrying three quarters of the bytes and most of the frame
+cost, since culling tests every ring every frame. Dropping them took the tier from
+1,263 KB to 660 KB and a deep-zoom drag from 27 to 47 fps, and costs elevation speckle
+rather than islands — the coastline comes from `outline.json`, not from here. The build
 streams a coarse (0.2°, block-averaged) subset of the **NOAA ETOPO 2022** global
 relief grid via OPeNDAP — so no giant download — contours it into fixed
 depth/height bands with **d3-contour**, reprojects the contours from grid space to

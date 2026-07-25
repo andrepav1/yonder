@@ -120,6 +120,11 @@ export function cull(pieces: Piece[], center: [number, number], radiusDeg: numbe
     const [minLon, minLat, maxLon, maxLat] = bbox
     // Nearest point of the box to the centre, each axis clamped on its own.
     const lat = Math.max(minLat, Math.min(maxLat, cLat))
+    // Latitude alone is a lower bound on the great-circle distance, and it costs
+    // one subtraction. Most of the planet is at some other latitude, so this
+    // rejects the bulk of the pieces before any trigonometry — which matters:
+    // this runs over every piece of every layer, every frame.
+    if (Math.abs(lat - cLat) > radiusDeg) return false
     let lon = cLon
     // Boxes are built from raw coordinates, so anything crossing ±180° comes out
     // spanning nearly the whole range. Half the globe or wider, treat longitude

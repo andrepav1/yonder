@@ -789,3 +789,35 @@ at and read as a leftover from the single-shot game.
 - **Measurement note.** This sandbox drifts: identical code measured 57.5 fps early
   in the session and 46.8 fps an hour later. Only interleaved A/B numbers from the
   same run are quoted above; a single-build reading proves nothing here.
+
+## 2026-07-25 (later) — A deep-zoom relief tier, fetched rather than bundled
+
+- **Context.** With the outline tiered and culling in place, zooming still didn't
+  read as *going in*: the drawn vertex count stayed ~3,300 at every zoom, because
+  culling dropped pieces at about the rate the finer tier added them. At maximum
+  zoom what remained blocky was the **relief**, not the coastline — one 0.2° tier
+  at every scale, so 22 km cells become 20 px blocks at 6×.
+- **Decision — a 0.1° relief tier, loaded on demand past `FINE_RELIEF_ZOOM`.** It is
+  too big to bundle, and most rounds never zoom that far, so it rides in its own
+  chunk (~200 KB gz) and the globe keeps the bundled bands if the fetch never lands.
+  That deliberately gives up "everything is bundled" for this one layer; the trade
+  was the user's call, and the failure mode is invisible — you get the old relief.
+- **Ring count, not vertex count, was the cost.** The first cut of the tier ran a
+  zoomed drag at 27 fps against 48 without it, though it drew only ~55% more
+  vertices. The reason: 25,039 pieces versus 5,155, and culling tests every piece
+  every frame. At 0.1° a single warm cell contours to a ~6-point triangle, and there
+  were ~23,000 of them — three quarters of the bytes and most of the frame time.
+  Dropping them (`FINE_LAND_MIN_RING`) gave back 660 KB instead of 1,263 KB and
+  **46.8 fps instead of 27**, while the terrain still reads far richer than the
+  bundled tier. What's lost is elevation speckle, not islands: the coastline comes
+  from `outline.json`. Culling also now rejects on latitude alone before touching
+  trigonometry, which is pure arithmetic and discards most of the planet.
+- **A bug worth remembering.** The fetch effect depends on `zoom`, so React tears it
+  down and re-runs it on every zoom change — including every frame of an eased
+  button press. The idiomatic `let cancelled = false` cleanup therefore cancelled the
+  import it had just started: the chunk downloaded with a 200, and the result was
+  thrown away every time. The tier silently never appeared while looking, from the
+  network panel, like it had loaded fine. The guard has to be a `mounted` ref.
+- **Measurement note.** The first "it isn't working" reading came from a stale
+  `dist/` — built while the changes were stashed for an A/B. Rebuild before believing
+  a null result.

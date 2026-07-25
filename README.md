@@ -187,6 +187,7 @@ src/
   data/cities.json    # committed compact dataset (built artifact)
   data/elevation.json # committed globe relief bands (built artifact)
   data/outline.json   # committed fine coastline + borders, for zoomed-in views (built artifact)
+  data/elevation-fine.json # deep-zoom relief, fetched on demand rather than bundled (built artifact)
 scripts/
   build-cities.mjs    # GeoNames -> cities.json (incl. localized names)
   enrich-cities.mjs   # attach/refresh translations on an existing cities.json
@@ -236,6 +237,9 @@ contoured from **NOAA ETOPO 2022** with **d3-contour** and bundled as TopoJSON, 
 an ice-sheet overlay so Greenland and Antarctica read as ice caps rather than brown
 highlands — with a crisp coastline and country borders (**world-atlas** TopoJSON)
 stroked over the top, all hydrated with **topojson-client**. Zoom in and the
-outline swaps to a finer one, so islands and inlets appear as you go; only the
-part of each layer that the board can actually show is re-projected per frame. Every tint is a theme-aware CSS token, so the
-relief adapts to light/dark mode. All client-side, no runtime network.
+outline swaps to a finer one, so islands and inlets appear as you go, and past a
+deeper threshold the relief itself is replaced by a finer tier fetched on demand.
+Only the part of each layer the board can actually show is re-projected per frame. Every tint is a theme-aware CSS token, so the
+relief adapts to light/dark mode. All client-side; everything needed to play is
+bundled, and the one thing fetched at runtime is the deep-zoom relief — loaded
+only if you zoom right in, and skipped silently if it can't be reached.

@@ -115,8 +115,29 @@ const elevationBands: Feature[] = (() => {
   )
 })()
 
+/** The relief as the globe draws it: one layer per band, plus the ice sheets. */
+interface Relief {
+  bands: Layer[]
+  ice: Layer
+}
+
 // One cullable layer per band, so a band keeps its own tint.
 const elevationLayers: Layer[] = elevationBands.map((f) => toLayer(f))
+
+// Hydrate a fetched relief topology the same way the bundled one is prepared:
+// bands sorted by threshold ascending, because the array index *is* the tint
+// (globe__hypso--N). Returns null if the tier doesn't line up with the ramp the
+// CSS defines — better the coarse relief than a mis-coloured map.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toRelief(topo: any, bandCount: number): Relief | null {
+  const fc = feature(topo, topo.objects.bands) as unknown as FeatureCollection
+  if (fc.features.length !== bandCount) return null
+  const bands = [...fc.features]
+    .sort((a, b) => Number(a.properties?.v ?? 0) - Number(b.properties?.v ?? 0))
+    .map((f) => toLayer(f))
+  const ice = toLayer(feature(topo, topo.objects.ice) as unknown as FeatureCollection)
+  return { bands, ice }
+}
 
 // The ice-sheet overlay (Greenland + Antarctica), painted over the bands so the
 // two great ice caps read as ice, not the brown highlands their surface height
@@ -129,6 +150,7 @@ const iceSheets: FeatureCollection = feature(
 ) as unknown as FeatureCollection
 
 const iceLayer: Layer = toLayer(iceSheets)
+const bundledRelief: Relief = { bands: elevationLayers, ice: iceLayer }
 
 const SIZE = 320 // internal SVG units; CSS scales it to the column width
 const MARGIN = 3
@@ -149,6 +171,11 @@ const ZOOM_DURATION = 320
 // `fineWorld`). Chosen a little above the first button press, so the swap lands
 // when a player is clearly going in for a look rather than nudging the scale.
 const DETAIL_ZOOM = 2.2
+// Zoom past this and the *relief* gets its own finer tier. Unlike the outline,
+// that one is too big to bundle (~1.2 MB), so it is fetched on demand the first
+// time a player goes in far enough to see 0.2° cells as blocks — and the globe
+// carries on with the bundled bands if the fetch never lands.
+const FINE_RELIEF_ZOOM = 3.2
 // Pinch sensitivity: the change in finger separation is raised to this power
 // before it scales the zoom, so a small spread magnifies more (>1 = faster,
 // snappier pinch). 1 would track the fingers exactly.
@@ -275,6 +302,15 @@ export function Globe({
   // here — only pointers that went down on the globe.
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map())
   const pinchDist = useRef<number | null>(null)
+
+  // The deep-zoom relief, once fetched. Null until someone zooms in far enough
+  // to want it — and if the fetch fails, permanently (the bundled bands stay).
+  const [fineRelief, setFineRelief] = useState<Relief | null>(null)
+  const fineReliefRequested = useRef(false)
+  // Live for as long as the globe is on screen. Set on (re)mount, not just at
+  // declaration, so StrictMode's mount/unmount/mount dry run doesn't leave it
+  // stuck false and silently drop every later fetch.
+  const mounted = useRef(true)
 
   const clampZoom = (z: number) => Math.max(minZoom, Math.min(maxZoom, z))
 
@@ -410,14 +446,39 @@ export function Globe({
     if (lastLng !== undefined && lastLat !== undefined) animateTo(lastLng, lastLat)
   }, [lastLng, lastLat])
 
-  // Stop any in-flight spin or zoom on unmount.
-  useEffect(
-    () => () => {
+  // Stop any in-flight spin or zoom on unmount, and stop accepting fetches.
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
       stopAnim()
       stopZoomAnim()
-    },
-    [],
-  )
+    }
+  }, [])
+
+  // Fetch the finer relief the first time the player zooms past FINE_RELIEF_ZOOM.
+  // It rides in its own chunk, so a round that never goes in close never pays for
+  // it. A failure is not something the player needs told: the bundled bands are
+  // already on screen and stay there.
+  //
+  // The request outlives this effect run: `zoom` is in the deps, so the effect is
+  // torn down and re-run on every zoom change — including every frame of an eased
+  // button press. A cancellation flag scoped to the run would therefore abort the
+  // fetch it just started, which is exactly what it did. `mounted` is the honest
+  // guard: drop the result only if the globe is gone.
+  useEffect(() => {
+    if (zoom < FINE_RELIEF_ZOOM || fineReliefRequested.current) return
+    fineReliefRequested.current = true
+    import('@/data/elevation-fine.json')
+      .then((mod) => {
+        if (!mounted.current) return
+        const relief = toRelief(mod.default ?? mod, bundledRelief.bands.length)
+        if (relief) setFineRelief(relief)
+      })
+      .catch(() => {
+        // Keep the bundled relief.
+      })
+  }, [zoom])
 
   // Wheel to zoom. A native, non-passive listener so we can preventDefault and
   // stop the page scrolling under the gesture.
@@ -544,12 +605,13 @@ export function Globe({
   const graticulePath = useMemo(() => path(geoGraticule10()) ?? '', [path])
   // The hypsometric bands, projected at the current rotation/zoom. One path per
   // elevation band; d3-geo clips each to the near hemisphere for us.
+  const relief = fineRelief && zoom >= FINE_RELIEF_ZOOM ? fineRelief : bundledRelief
   const bandPaths = useMemo(
-    () => elevationLayers.map((layer) => path(near(layer)) ?? ''),
-    [path, near],
+    () => relief.bands.map((layer) => path(near(layer)) ?? ''),
+    [path, near, relief],
   )
   // The ice sheets, projected the same way (a single combined path).
-  const icePath = useMemo(() => path(near(iceLayer)) ?? '', [path, near])
+  const icePath = useMemo(() => path(near(relief.ice)) ?? '', [path, near, relief])
   // The running journey: start → each guessed city, in order.
   const journeyPath = useMemo(() => {
     if (!showJourney || !start || guesses.length === 0) return ''

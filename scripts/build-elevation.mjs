@@ -38,6 +38,8 @@ const { presimplify, simplify, filter, filterWeight } = topojsonSimplify
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUT = resolve(__dirname, '../src/data/elevation.json')
+// The deep-zoom tier, fetched on demand by the Globe rather than bundled.
+const OUT_FINE = resolve(__dirname, '../src/data/elevation-fine.json')
 
 // OPeNDAP endpoints for the ETOPO 2022 60 arc-second grids: the ice/land surface,
 // and the bedrock beneath the ice. Their difference is the ice thickness.
@@ -55,6 +57,11 @@ const FULL_LON = 21600
 // noise; ×2 gives an effective 0.2° grid — fine enough to keep island chains
 // (the Philippines, the Caribbean, the Aegean) as islands rather than blobs.
 const DOWNSAMPLE = 2
+// The deep-zoom tier keeps the fetched grid at full 0.1°. At 6× the board shows
+// a cap ~10° across, where 0.2° cells are 20 px blocks and the relief reads as
+// polygons however good the coastline is. This tier is *not* bundled — the Globe
+// fetches it the first time a player zooms far enough in to see the difference.
+const FINE_DOWNSAMPLE = 1
 // Grid-cell centres (degrees). Row 0 is the southernmost sample, column 0 the
 // westernmost; both run in increasing index order (S→N, W→E).
 const LON0 = -179.99166666666667
@@ -78,6 +85,17 @@ const ICE_THICKNESS_MIN = 250
 // Simplifying those harder, and dropping their smallest rings outright, pays for
 // the finer grid: same land fidelity at roughly half the bytes.
 const LAND_SIMPLIFY = 0.1
+// The deep-zoom tier is only ever looked at close up, so it keeps finer detail
+// than the bundled tier's frame-rate-driven weight. View culling means only the
+// visible cap is ever re-projected, so the extra vertices cost download, not fps.
+const FINE_LAND_SIMPLIFY = 0.05
+// …but it drops speck-sized land rings, which the bundled tier keeps. At 0.1° a
+// single warm cell contours to a ~6-point triangle, and there are ~23,000 of
+// them: they carry three quarters of the tier's bytes, and — because culling
+// tests every ring every frame — most of its frame cost. The coastline comes
+// from outline.json, not from here, so what's lost is elevation speckle rather
+// than islands: the terrain still reads far richer than the bundled tier.
+const FINE_LAND_MIN_RING = 0.01
 const OCEAN_SIMPLIFY = 0.5
 // Minimum ring weight (deg²) kept in the ocean bands — drops speckle below about
 // 1.4° across. Land bands keep every ring: small islands are the point.
@@ -202,11 +220,12 @@ function thin(features, weight, minRing = 0) {
   return feature(topo, topo.objects.g).features
 }
 
-async function main() {
-  const surface = downsample(await fetchGrid(SURFACE_DODS, 'surface'), DOWNSAMPLE)
-  const bed = downsample(await fetchGrid(BED_DODS, 'bedrock'), DOWNSAMPLE)
-  process.stderr.write(`Grid ${surface.width}×${surface.height}. Contouring…\n`)
-  const project = projector(DOWNSAMPLE)
+// Contour one whole tier — ocean bands, land bands and the ice sheets — at the
+// given block-average factor, and pack it into a quantized topology.
+function buildTier(rawSurface, rawBed, factor, landSimplify, landMinRing = 0) {
+  const surface = downsample(rawSurface, factor)
+  const bed = downsample(rawBed, factor)
+  const project = projector(factor)
   const bands = {
     type: 'FeatureCollection',
     features: [
@@ -225,24 +244,39 @@ async function main() {
           THRESHOLDS.filter((t) => t >= 0),
           project,
         ),
-        LAND_SIMPLIFY,
+        landSimplify,
+        landMinRing,
       ),
     ],
   }
   const ice = {
     type: 'FeatureCollection',
-    features: thin(buildIce(surface, bed, project), LAND_SIMPLIFY),
+    features: thin(buildIce(surface, bed, project), landSimplify),
   }
+  // Quantize into the final artifact. Each group is already thinned, so this
+  // only snaps coordinates to a 1e4 grid and builds the shared arc table.
+  return { topo: topology({ bands, ice }, 1e4), bands, ice, grid: surface }
+}
 
-  // Quantize into the final bundle. Each group is already thinned, so this only
-  // snaps coordinates to a 1e4 grid and builds the shared arc table.
-  const topo = topology({ bands, ice }, 1e4)
-
-  const json = JSON.stringify(topo)
-  writeFileSync(OUT, json)
-  const kb = (Buffer.byteLength(json) / 1024).toFixed(0)
+function emit(out, tier, label) {
+  const json = JSON.stringify(tier.topo)
+  writeFileSync(out, json)
   process.stderr.write(
-    `Wrote ${OUT} (${kb} KB, ${bands.features.length} bands + ${ice.features.length} ice)\n`,
+    `Wrote ${out} — ${label}: ${(Buffer.byteLength(json) / 1024).toFixed(0)} KB, ` +
+      `${tier.grid.width}×${tier.grid.height} grid, ` +
+      `${tier.bands.features.length} bands + ${tier.ice.features.length} ice\n`,
+  )
+}
+
+async function main() {
+  const rawSurface = await fetchGrid(SURFACE_DODS, 'surface')
+  const rawBed = await fetchGrid(BED_DODS, 'bedrock')
+  process.stderr.write('Contouring…\n')
+  emit(OUT, buildTier(rawSurface, rawBed, DOWNSAMPLE, LAND_SIMPLIFY), 'bundled tier')
+  emit(
+    OUT_FINE,
+    buildTier(rawSurface, rawBed, FINE_DOWNSAMPLE, FINE_LAND_SIMPLIFY, FINE_LAND_MIN_RING),
+    'deep-zoom tier',
   )
 }
 
