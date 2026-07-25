@@ -69,12 +69,17 @@ interface WorldOutline {
   borders: MultiLineString
 }
 
-// Hydrate a world-atlas-shaped topology into the outline pair the globe draws.
+// Hydrate a topology into the outline pair the globe draws. world-atlas ships
+// whole countries, so the interior boundaries have to be meshed out here; our own
+// artifact stores that mesh directly, already thinned at its own weight (borders
+// and coastlines simplify at very different rates — see build-outline.mjs).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toOutline(topo: any): WorldOutline {
   return {
     land: feature(topo, topo.objects.land) as unknown as FeatureCollection,
-    borders: mesh(topo, topo.objects.countries, (a, b) => a !== b),
+    borders: topo.objects.borders
+      ? (feature(topo, topo.objects.borders) as unknown as Feature).geometry as MultiLineString
+      : mesh(topo, topo.objects.countries, (a, b) => a !== b),
   }
 }
 

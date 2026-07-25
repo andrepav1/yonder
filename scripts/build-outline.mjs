@@ -25,7 +25,7 @@ import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { topology } from 'topojson-server'
-import { feature } from 'topojson-client'
+import { feature, mesh } from 'topojson-client'
 import topojsonSimplify from 'topojson-simplify'
 
 const { presimplify, simplify } = topojsonSimplify
@@ -34,36 +34,50 @@ const require = createRequire(import.meta.url)
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUT = resolve(__dirname, '../src/data/outline.json')
 
-// Weight (deg²) below which a vertex is dropped. 0.02 lands at ~2.7× the 110m
-// vertex count: visibly richer coastlines and every island kept, while a drag at
-// full zoom still holds its frame rate. Raising it thins the coast; lowering it
-// costs frames — re-measure a drag if you change it.
-const SIMPLIFY = 0.02
+// Weights (deg²) below which a vertex is dropped — one per layer, because the
+// two thin at wildly different rates under the same number.
+//
+// Simplification scores a vertex by the area of the triangle it forms with its
+// neighbours, so it strips *straight* lines hardest. Coastlines are convoluted
+// and keep their shape; country borders are long straight or gently curved runs
+// and get flattened to almost nothing. One shared weight of 0.02 left the coast
+// at 3.4× the 110m detail but the borders at 1.4× — so zooming visibly sharpened
+// the coast while the borders stayed exactly as blocky as before, which is the
+// bug this split fixes. Borders are cheap (~19k points at 50m, all of them), so
+// they keep nearly everything.
+const LAND_SIMPLIFY = 0.02
+const BORDER_SIMPLIFY = 0.0005
 
 const source = require('world-atlas/countries-50m.json')
 
-function main() {
-  const simplified = simplify(presimplify(source), SIMPLIFY)
-  // Round-trip through GeoJSON: presimplify stores a weight as a third ordinate
-  // on every position, and rebuilding the topology from plain coordinates is
-  // what drops them. Country names go too — the globe draws borders, never
-  // labels them.
-  const land = feature(simplified, simplified.objects.land)
-  const countries = feature(simplified, simplified.objects.countries)
-  for (const f of countries.features) delete f.properties
+// Simplify one layer on its own, at its own weight, and hand back plain GeoJSON.
+// The round-trip matters: presimplify stores a weight as a third ordinate on
+// every position, and rebuilding from plain coordinates is what drops them.
+function thin(build, weight) {
+  const simplified = simplify(presimplify(source), weight)
+  return build(simplified)
+}
 
-  const topo = topology({ land, countries }, 1e4)
+function main() {
+  const land = thin((t) => feature(t, t.objects.land), LAND_SIMPLIFY)
+  // The interior boundaries only — arcs shared by two different countries — so
+  // each border is one line and the coastline isn't stroked twice. Meshing here
+  // rather than in the app also drops the country names, which the globe never
+  // draws, and spares it the work at load.
+  const borders = thin(
+    (t) => mesh(t, t.objects.countries, (a, b) => a !== b),
+    BORDER_SIMPLIFY,
+  )
+
+  const topo = topology({ land, borders }, 1e4)
   const json = JSON.stringify(topo)
   writeFileSync(OUT, json)
 
-  const count = (o) => {
-    let n = 0
-    for (const arc of o.arcs) n += arc.length
-    return n
-  }
+  const points = (g) => (g.coordinates ?? []).reduce((n, l) => n + l.length, 0)
   process.stderr.write(
-    `Wrote ${OUT} (${(Buffer.byteLength(json) / 1024).toFixed(0)} KB, ` +
-      `${count(topo)} arc points, simplify ${SIMPLIFY})\n`,
+    `Wrote ${OUT} (${(Buffer.byteLength(json) / 1024).toFixed(0)} KB; ` +
+      `land simplify ${LAND_SIMPLIFY}, borders ${BORDER_SIMPLIFY} → ` +
+      `${points(borders)} border points)\n`,
   )
 }
 

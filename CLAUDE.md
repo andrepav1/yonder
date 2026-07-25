@@ -170,8 +170,9 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   count doesn't match the `--hypso-*` ramp rather than mis-colour the map.
 - `src/data/outline.json` — **committed** fine coastline + country borders (world-atlas
   50m, thinned by `scripts/build-outline.mjs`), the detail tier the globe swaps in when
-  zoomed past `DETAIL_ZOOM`. Same shape as world-atlas (`objects.land` + `objects.countries`)
-  so both tiers hydrate through one code path. Presentational only.
+  zoomed past `DETAIL_ZOOM`. Objects are `land` + **`borders`** (the interior mesh, cut at
+  build time) rather than world-atlas's `land` + `countries`; `toOutline` handles both
+  shapes. Presentational only.
 - `src/modes/daily.ts` — the `GameMode` descriptors (`generate(seed)`/`apply`/
   `score`/`share`) built by a shared `makeMode` factory + a `modes` registry. Each
   descriptor pairs a **`ModeLogic`** (the pure play strategy — Classic's is
@@ -243,7 +244,8 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   `mounted` ref, not a per-run flag.
   **Two outline tiers**, both bundled: 110m carries the whole-globe view, and past
   `DETAIL_ZOOM` (2.2) the finer `@/data/outline.json` takes over, so zooming *reveals*
-  island chains and inlets instead of magnifying polygons. The fine tier is hydrated
+  island chains, inlets and the real wiggle of country borders (the Balkans, Benelux,
+  the Nepal/Bangladesh borders) instead of magnifying polygons. The fine tier is hydrated
   on **first use**, not at module load — a round that never zooms in shouldn't pay for
   it. Every map layer is then drawn through `lib/cull.ts`: only the pieces the board
   can reach get re-projected, which is what pays for the extra detail (a zoomed drag
@@ -362,10 +364,18 @@ pop ≥ 100k) and rewrites just the `capitals` list, leaving translations intact
 the tier that appears when you zoom in. Rebuild with `npm run data:outline`
 (`scripts/build-outline.mjs`, no network): it takes world-atlas's 50m outline, thins it
 with `topojson-simplify` and rebuilds the topology, keeping **every ring** (the small
-islands are the whole point) while dropping the sub-pixel wiggle. That's ~2.7× the
-vertices of 110m instead of 10×, and 739 KB → ~205 KB — small enough to bundle, so the
-detail costs no runtime fetch and the globe still works offline. `SIMPLIFY` trades
-coastline richness against drag frame rate; re-measure a drag if you change it.
+islands are the whole point) while dropping the sub-pixel wiggle — 739 KB → ~250 KB,
+small enough to bundle, so the detail costs no runtime fetch and the globe still works
+offline.
+
+**Land and borders are thinned separately, and must be.** Simplification scores a
+vertex by the triangle it forms with its neighbours, so it strips *straight* lines
+hardest — and country borders are long straight or gently curved runs where coastlines
+are convoluted. A single shared weight left the coast at 3.4× the 110m detail and the
+borders at **1.4×**, i.e. zooming visibly sharpened the coast while the borders stayed
+exactly as blocky as before. `LAND_SIMPLIFY` (0.02) and `BORDER_SIMPLIFY` (0.0005) are
+therefore separate knobs; borders are cheap (~19k points at 50m) so they keep nearly
+everything. Re-measure a drag if you raise either.
 
 **Globe elevation.** `src/data/elevation.json` is the other committed, bundled
 artifact — the hypsometric relief the globe paints under the coastline. Rebuild it

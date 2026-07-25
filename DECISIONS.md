@@ -821,3 +821,28 @@ at and read as a leftover from the single-shot game.
 - **Measurement note.** The first "it isn't working" reading came from a stale
   `dist/` — built while the changes were stashed for an A/B. Rebuild before believing
   a null result.
+
+## 2026-07-25 (later still) — Borders and coastlines can't share a simplify weight
+
+- **Report.** "I don't see the difference between no zoom and big zoom" — looking at
+  the **country borders**, which is where the eye goes on a political map.
+- **Cause.** The detail tier was thinned with one weight for the whole topology.
+  Simplification scores a vertex by the area of the triangle it forms with its
+  neighbours, so it strips *straight* lines hardest. Coastlines are convoluted and
+  survive; borders are long straight or gently curved runs and get flattened to
+  almost nothing. Measured against 110m, one shared weight of 0.02 left the
+  coastline at **3.4×** its detail and the borders at **1.4×** — so zooming in
+  sharpened the coast while the borders stayed exactly as they were. The tier was
+  doing half its job, and the half nobody was looking at.
+- **Decision.** Thin the two layers separately: `LAND_SIMPLIFY` 0.02,
+  `BORDER_SIMPLIFY` 0.0005. Borders are cheap — ~19k points at 50m even untouched —
+  so they now keep 5.2× the 110m detail for +44 KB (+9 KB gzipped) and no measurable
+  frame cost, since culling bounds what is drawn. The Balkans, Benelux and the
+  Nepal/Bhutan/Bangladesh borders now gain their real shape on zoom.
+- **The artifact changed shape.** It stores the interior `borders` mesh directly
+  instead of whole `countries`, since the mesh has to exist before it can be thinned
+  on its own. That also drops the country names and spares the app the meshing at
+  load; `toOutline` still accepts world-atlas's shape for the 110m tier.
+- **Lesson worth keeping.** "2.7× the vertices" was an average over two layers that
+  behave nothing alike, and it hid a layer that had barely improved. Measure the
+  thing the user is actually looking at, per layer, not the aggregate.
