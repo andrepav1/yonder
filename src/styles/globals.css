@@ -47,7 +47,6 @@
   --globe-graticule: #bacdd3;
   --globe-edge: #a7b9c1;
   --globe-coast: #9aa891;
-  --globe-border: #8d7a5e; /* country borders: a warm hairline over the land tans */
   --globe-ice: #eef3f6; /* Greenland/Antarctica ice sheets (over the bands) */
   /* Hypsometric ramp — 5 ocean-depth blues (shelf→deep) then 6 land tans/browns
      (lowland→peak). Order + count mirror THRESHOLDS in scripts/build-elevation.mjs;
@@ -120,7 +119,6 @@
     --globe-graticule: #25343b;
     --globe-edge: #35464d;
     --globe-coast: #46586044;
-    --globe-border: #a48d64; /* lighter than the land tints so borders read in the dark */
     --globe-ice: #93a7b0; /* muted cool grey so ice reads without glaring */
     --hypso-0: #142833;
     --hypso-1: #1b3540;
@@ -499,15 +497,6 @@ button {
   fill: none;
   stroke: var(--globe-coast);
   stroke-width: 0.4;
-}
-/* Country borders (inland arcs only — the coastline is stroked separately).
-   Deliberately fainter and thinner than the coast so the political layer reads
-   as context under the pins rather than competing with them. */
-.globe__border {
-  fill: none;
-  stroke: var(--globe-border);
-  stroke-width: 0.3;
-  opacity: 0.55;
 }
 .globe__edge {
   fill: none;

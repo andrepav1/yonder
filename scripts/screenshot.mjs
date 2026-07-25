@@ -55,20 +55,11 @@ function serve() {
   })
 }
 
-// Play one guess, if the round is still taking them. A finished round unmounts
-// the input — and a round can finish *early*, since the free-play modes are
-// randomly seeded: a scripted list of capitals may hit Hidden Destination's
-// target on any try. Returns whether the guess was played so callers looping
-// over a list can stop at the end of the round instead of timing out on a
-// vanished input.
 async function guess(page, name) {
-  const input = page.locator('.guess__input')
-  if ((await input.count()) === 0) return false
-  await input.fill(name)
+  await page.fill('.guess__input', name)
   await page.waitForTimeout(120)
-  await input.press('Enter')
+  await page.press('.guess__input', 'Enter')
   await page.waitForTimeout(350)
-  return true
 }
 
 async function run() {
@@ -120,9 +111,8 @@ async function run() {
           await page.waitForTimeout(400)
           if (hiddenGuess) await guess(page, hiddenGuess)
           // A run of capital guesses to end the round (win if one is the target,
-          // else a loss after the allowance) so the answer reveal appears. Stops
-          // as soon as the round ends — either way the reveal is on screen.
-          for (const g of hiddenGuesses) if (!(await guess(page, g))) break
+          // else a loss after the allowance) so the answer reveal appears.
+          for (const g of hiddenGuesses) await guess(page, g)
         } else if (free) {
           // Pick the first mode card (Classic) → a fresh free-play round.
           await page.locator('.modecard').first().click()

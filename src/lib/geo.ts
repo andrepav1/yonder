@@ -8,13 +8,6 @@ export const EARTH_RADIUS_KM = 6371.0088
 const KM_PER_MILE = 1.609344
 
 const toRad = (deg: number): number => (deg * Math.PI) / 180
-
-/**
- * Normalize a longitude difference to (-180, 180] — the short way round the
- * sphere, so a step from 179° to -179° reads as +2°, not -358°.
- */
-export const wrapLonDeg = (deltaDeg: number): number =>
-  ((((deltaDeg % 360) + 540) % 360) - 180)
 const toDeg = (rad: number): number => (rad * 180) / Math.PI
 
 export interface LatLng {
