@@ -691,9 +691,14 @@ at and read as a leftover from the single-shot game.
   identical to float noise), so the countries file now feeds *both* the coastline and
   the borders and the separate land import is gone. Net bundle +52 KB raw.
 - **110m, not 50m.** At full zoom the borders are visibly polygonal, but so is the
-  elevation relief beneath them (a 0.5° contour grid) — the coarseness is consistent
-  with the map's existing style, and the 50m file is several times larger for a
-  detail level the default view can't show. Not worth swapping resolutions at zoom.
+  elevation relief beneath them — the coarseness is consistent with the map's
+  existing style, and the 50m file is several times larger for a detail level the
+  default view can't show. Not worth swapping resolutions at zoom.
+  **Superseded in part the same day:** the relief was rebuilt at 0.2° (see the
+  registration entry below), so at max zoom the 110m coastline + borders are now the
+  *coarser* layer, not the matched one. Still 110m — the argument that survives is
+  the size one, not the consistency one — but the 50m upgrade is the open option if
+  the mismatch ever reads as a defect.
 - **Styled quieter than the coastline** (`--globe-border`, 0.3 width, 55% opacity).
   The globe is a *guessing surface* first: borders must give the eye somewhere to
   land without competing with the guess pins, journey line, or reveal dots. The dark
