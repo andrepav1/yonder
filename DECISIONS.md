@@ -705,3 +705,42 @@ at and read as a leftover from the single-shot game.
   and hand-editing the topology would mean owning every such call forever.
 - **Purely presentational.** No game logic reads the border geometry — nothing in
   `lib/*` changes, so there's nothing new to test beyond the existing suites.
+
+## 2026-07-25 — The relief sat beside its coastline: a registration bug, not a resolution one
+
+- **Symptom.** With country borders drawn, the hypsometric relief was visibly
+  offset from the coastline and borders — worst on island chains, where the
+  Philippines' fill sat up and to the right of the islands it was meant to be.
+  The obvious reading is "the grid is too coarse"; it wasn't, or not only.
+- **Cause — two half-cell errors in the grid → lon/lat mapping.** d3-contour's
+  coordinate space is offset **+0.5 cell** from the data indices (probed directly:
+  a lone hot cell at index (2, 2) contours to a ring centred on (2.5, 2.5)), and a
+  block-averaged cell stands for the **centroid** of the samples it averaged, which
+  is (DOWNSAMPLE − 1)/2 subsamples past the first. The old code treated contour
+  coordinates as raw data indices and ignored both, landing every band ~0.125°
+  (~14 km) north-east of the truth. Verified before rebuilding by shifting the
+  committed TopoJSON's quantization transform and re-rendering against the coast.
+- **Resolution was a real, separate problem.** At 0.5° with a 0.4 simplify weight,
+  small islands weren't offset so much as *absent* — Palawan, Mindoro and Panay had
+  no relief at all. Both had to change; only one of them was the offset.
+- **0.2°, not finer.** A sweep at 0.1° cost 3× the bytes for no visible gain — past
+  a point the simplify weight, not the grid step, is what shapes the output. Note
+  the old 0.4 weight *breaks* at finer grids: rings degenerate and the bands paint
+  as one solid blob.
+- **Simplify per band group.** Land keeps its detail; ocean bands are thinned harder
+  and have their smallest rings dropped. The −4000 m band alone had been a third of
+  the file — abyssal ridge wiggle and seamount speckle nobody can see at globe
+  scale. That halves the cost of the finer land: 894 KB → 461 KB at equal land
+  fidelity. Ring *count*, not vertex density, was the thing to attack.
+- **`LAND_SIMPLIFY` is a frame-rate knob, and that decided its value.** The Globe
+  re-projects every band on every drag frame. At 0.05 a scripted drag ran 46 fps
+  with p95 frames doubling; at 0.1 it was 57.5 fps, pinned to vsync, at 389 KB —
+  and the two are visually indistinguishable in the regions that motivated the
+  change. Shipped 0.1.
+- **Rejected: contouring the ocean at a coarser grid than the land.** Plausible on
+  paper, and it's what the frame-cost story predicted. Measured: 5 KB smaller, 0 fps
+  different — the ocean bands were already cheap once their small rings were gone.
+  Reverted rather than carry two grid resolutions for nothing. The land bands were
+  the cost all along.
+- **Cost.** 214 KB → 389 KB (67 → ~120 KB gzipped). Paid knowingly: the globe is the
+  game's main surface, and the borders make any misalignment obvious.

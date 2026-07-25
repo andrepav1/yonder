@@ -31,10 +31,10 @@ import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
 import { contours } from 'd3-contour'
 import { topology } from 'topojson-server'
-import { quantize } from 'topojson-client'
+import { feature } from 'topojson-client'
 import topojsonSimplify from 'topojson-simplify'
 
-const { presimplify, simplify } = topojsonSimplify
+const { presimplify, simplify, filter, filterWeight } = topojsonSimplify
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUT = resolve(__dirname, '../src/data/elevation.json')
@@ -45,22 +45,20 @@ const SURFACE_DODS =
   'https://www.ngdc.noaa.gov/thredds/dodsC/global/ETOPO2022/60s/60s_surface_elev_netcdf/ETOPO_2022_v1_60s_N90W180_surface.nc'
 const BED_DODS =
   'https://www.ngdc.noaa.gov/thredds/dodsC/global/ETOPO2022/60s/60s_bed_elev_netcdf/ETOPO_2022_v1_60s_N90W180_bed.nc'
-// Full grid is 10800 (lat) × 21600 (lon). Sample every STRIDE cells: 15 → a
-// 720 × 1440 grid (0.25°), plenty for a 320 px orthographic globe once the
-// contours are simplified, and a small enough OPeNDAP payload to stream.
-const STRIDE = 15
+// Full grid is 10800 (lat) × 21600 (lon). Sample every STRIDE cells: 6 → a
+// 1800 × 3600 grid (0.1°), streamed from OPeNDAP in ~15 s per grid.
+const STRIDE = 6
 const FULL_LAT = 10800
 const FULL_LON = 21600
 // Block-average the fetched grid down by this factor before contouring. Averaging
 // (rather than plain subsampling) smooths the contours and kills single-cell
-// noise; ×2 gives an effective 0.5° grid — smooth and compact at globe scale.
+// noise; ×2 gives an effective 0.2° grid — fine enough to keep island chains
+// (the Philippines, the Caribbean, the Aegean) as islands rather than blobs.
 const DOWNSAMPLE = 2
 // Grid-cell centres (degrees). Row 0 is the southernmost sample, column 0 the
 // westernmost; both run in increasing index order (S→N, W→E).
 const LON0 = -179.99166666666667
 const LAT0 = -89.99166666666666
-// Degrees per contour-grid step, after downsampling (1 arc-min × STRIDE × factor).
-const DEG_PER_STEP = (STRIDE * DOWNSAMPLE) / 60
 
 // Band lower-bounds (metres). 5 ocean-depth bands (negative) + 6 land bands.
 // Values below the first threshold fall through to the sphere's base colour.
@@ -71,6 +69,19 @@ const THRESHOLDS = [-6000, -4000, -2000, -500, 0, 250, 750, 1500, 3000, 5000]
 // ETOPO's bedrock diverges from its surface only under Greenland + Antarctica, so
 // anything from ~50–500 m isolates them cleanly; 250 m is a safe midpoint.
 const ICE_THICKNESS_MIN = 250
+
+// Simplification is split by what the band is *for*. Coastlines and islands are
+// what the eye checks against the country borders, so land bands keep their
+// detail; the ocean bands are broad tints whose boundaries nobody reads, and
+// left alone they dominate the file — the −4000 m band alone was a third of it,
+// almost all abyssal ridge wiggle and seamount speckle invisible at globe scale.
+// Simplifying those harder, and dropping their smallest rings outright, pays for
+// the finer grid: same land fidelity at roughly half the bytes.
+const LAND_SIMPLIFY = 0.1
+const OCEAN_SIMPLIFY = 0.5
+// Minimum ring weight (deg²) kept in the ocean bands — drops speckle below about
+// 1.4° across. Land bands keep every ring: small islands are the point.
+const OCEAN_MIN_RING = 2
 
 async function fetchGrid(dods, label) {
   const latStop = FULL_LAT - 1
@@ -125,20 +136,36 @@ function downsample({ values, width, height }, factor) {
 
 // Contour grid coordinate → geographic lon/lat. Row 0 is the south edge, so lat
 // increases with y; column 0 is the west edge, so lon increases with x.
-const toLon = (x) => LON0 + x * DEG_PER_STEP
-const toLat = (y) => LAT0 + y * DEG_PER_STEP
+//
+// Two half-cell corrections put the relief where it actually belongs — without
+// them the whole map lands ~0.125° north-east of the coastline, which reads as a
+// visible offset against the country borders wherever the coast is intricate:
+//
+//   • d3-contour's coordinate space is offset +0.5 cell from the data indices —
+//     a lone hot cell at index (2, 2) contours to a ring centred on (2.5, 2.5) —
+//     so a vertex at x describes the data position x − 0.5.
+//   • a block-averaged cell speaks for the *centroid* of the members it averaged.
+//     Those sit STRIDE/60° apart starting at the block's first sample, putting
+//     the centroid (DOWNSAMPLE − 1)/2 subsamples past it.
 const clampLon = (v) => Math.max(-180, Math.min(180, v))
 const clampLat = (v) => Math.max(-90, Math.min(90, v))
 
-function project(ring) {
-  return ring.map(([x, y]) => [
-    Number(clampLon(toLon(x)).toFixed(4)),
-    Number(clampLat(toLat(y)).toFixed(4)),
-  ])
+// Build the grid → lon/lat mapping for a given block-average factor, so groups
+// contoured at different factors each land in the right place.
+function projector(factor) {
+  const step = (STRIDE * factor) / 60
+  const centroidOffset = ((STRIDE / 60) * (factor - 1)) / 2
+  const toLon = (x) => LON0 + (x - 0.5) * step + centroidOffset
+  const toLat = (y) => LAT0 + (y - 0.5) * step + centroidOffset
+  return (ring) =>
+    ring.map(([x, y]) => [
+      Number(clampLon(toLon(x)).toFixed(4)),
+      Number(clampLat(toLat(y)).toFixed(4)),
+    ])
 }
 
 // Turn one contour band into a projected GeoJSON Feature.
-const bandFeature = (band, props) => ({
+const bandFeature = (band, props, project) => ({
   type: 'Feature',
   properties: props,
   geometry: {
@@ -147,37 +174,69 @@ const bandFeature = (band, props) => ({
   },
 })
 
-function buildBands({ values, width, height }) {
-  const gen = contours().size([width, height]).thresholds(THRESHOLDS)
-  // d3-contour returns one MultiPolygon per threshold (regions where value ≥
-  // threshold), already in ascending-threshold order.
-  return gen(values).map((band) => bandFeature(band, { v: band.value }))
+// Contour a grid at the given thresholds. d3-contour returns one MultiPolygon
+// per threshold (the region where value ≥ threshold), in ascending order.
+function buildBands({ values, width, height }, thresholds, project) {
+  const gen = contours().size([width, height]).thresholds(thresholds)
+  return gen(values).map((band) => bandFeature(band, { v: band.value }, project))
 }
 
 // The ice sheets: contour (surface − bedrock) at the ice-thickness threshold.
-function buildIce(surface, bed) {
+function buildIce(surface, bed, project) {
   const { width, height } = surface
   const thickness = new Float64Array(width * height)
   for (let i = 0; i < thickness.length; i++) thickness[i] = surface.values[i] - bed.values[i]
   const gen = contours().size([width, height]).thresholds([ICE_THICKNESS_MIN])
-  return gen(thickness).map((band) => bandFeature(band, { ice: true }))
+  return gen(thickness).map((band) => bandFeature(band, { ice: true }, project))
+}
+
+// Simplify one group of features on its own — its own topology, thinned at its
+// own weight — and hand back plain GeoJSON for the final, combined topology.
+// The bands are nested "value ≥ threshold" regions, so no two share an arc and
+// thinning them apart can't open cracks between them.
+function thin(features, weight, minRing = 0) {
+  if (features.length === 0) return []
+  let topo = presimplify(topology({ g: { type: 'FeatureCollection', features } }, 1e5))
+  if (minRing > 0) topo = filter(topo, filterWeight(topo, minRing))
+  topo = simplify(topo, weight)
+  return feature(topo, topo.objects.g).features
 }
 
 async function main() {
   const surface = downsample(await fetchGrid(SURFACE_DODS, 'surface'), DOWNSAMPLE)
   const bed = downsample(await fetchGrid(BED_DODS, 'bedrock'), DOWNSAMPLE)
   process.stderr.write(`Grid ${surface.width}×${surface.height}. Contouring…\n`)
-  const bands = { type: 'FeatureCollection', features: buildBands(surface) }
-  const ice = { type: 'FeatureCollection', features: buildIce(surface, bed) }
+  const project = projector(DOWNSAMPLE)
+  const bands = {
+    type: 'FeatureCollection',
+    features: [
+      ...thin(
+        buildBands(
+          surface,
+          THRESHOLDS.filter((t) => t < 0),
+          project,
+        ),
+        OCEAN_SIMPLIFY,
+        OCEAN_MIN_RING,
+      ),
+      ...thin(
+        buildBands(
+          surface,
+          THRESHOLDS.filter((t) => t >= 0),
+          project,
+        ),
+        LAND_SIMPLIFY,
+      ),
+    ],
+  }
+  const ice = {
+    type: 'FeatureCollection',
+    features: thin(buildIce(surface, bed, project), LAND_SIMPLIFY),
+  }
 
-  // Quantize + simplify to shrink the bundle: even a 0.5° grid carries far more
-  // detail than a small orthographic globe needs.
-  let topo = topology({ bands, ice }, 1e4)
-  topo = presimplify(topo)
-  // Drop the smallest triangles (area in deg², visibly sub-pixel at globe
-  // scale) — raise to trade detail for size.
-  topo = simplify(topo, 0.4)
-  topo = quantize(topo, 1e4)
+  // Quantize into the final bundle. Each group is already thinned, so this only
+  // snaps coordinates to a 1e4 grid and builds the shared arc table.
+  const topo = topology({ bands, ice }, 1e4)
 
   const json = JSON.stringify(topo)
   writeFileSync(OUT, json)

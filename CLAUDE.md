@@ -312,12 +312,24 @@ pop ≥ 100k) and rewrites just the `capitals` list, leaving translations intact
 **Globe elevation.** `src/data/elevation.json` is the other committed, bundled
 artifact — the hypsometric relief the globe paints under the coastline. Rebuild it
 with `npm run data:elevation` (`scripts/build-elevation.mjs`, needs network): it
-streams a coarse (0.5°, block-averaged) subset of the **NOAA ETOPO 2022** global
+streams a coarse (0.2°, block-averaged) subset of the **NOAA ETOPO 2022** global
 relief grid via OPeNDAP — so no giant download — contours it into fixed
 depth/height bands with **d3-contour**, reprojects the contours from grid space to
-lon/lat, and writes a quantized + simplified TopoJSON (~215 KB). The `THRESHOLDS`
-array (5 ocean + 6 land bands) must stay in lockstep with the `--hypso-*` colour
-ramp in `globals.css` — same count, same order. It also fetches ETOPO's *bedrock*
+lon/lat, and writes a quantized + simplified TopoJSON (~390 KB, ~25 s end to end).
+The `THRESHOLDS` array (5 ocean + 6 land bands) must stay in lockstep with the
+`--hypso-*` colour ramp in `globals.css` — same count, same order.
+
+Two things in that reprojection are easy to get wrong and show up as relief that
+sits *beside* its coastline (most visible on island chains, against the country
+borders): d3-contour's coordinates are offset **+0.5 cell** from the data indices,
+and a block-averaged cell stands for its members' **centroid**, not its first
+sample. `projector()` applies both — leave them in, or the map drifts ~0.125° NE.
+Simplification is split by band: land keeps its detail (`LAND_SIMPLIFY`), while the
+ocean bands are thinned harder and have their smallest rings dropped
+(`OCEAN_SIMPLIFY` / `OCEAN_MIN_RING`) — invisible at globe scale, and it roughly
+halves the file. `LAND_SIMPLIFY` is the **frame-rate knob**: the Globe re-projects
+every band on every drag frame, and dropping it to 0.05 costs ~10 fps mid-drag for
+detail you can't see. Re-measure a drag if you change it. It also fetches ETOPO's *bedrock*
 grid and contours (surface − bedrock) at `ICE_THICKNESS_MIN` to emit the `ice`
 object — Greenland + Antarctica — since ETOPO models thick ice only under those two
 sheets, so nothing else is falsely flagged.
