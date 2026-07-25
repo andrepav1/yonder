@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Yondle \u2014 a daily geography guessing game. Name a city as close as possible to a target distance from the day's start city.",
+  "description": "Yondle — a daily geography guessing game. Name a city as close as possible to a target distance from the day's start city.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
