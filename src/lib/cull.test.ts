@@ -23,14 +23,16 @@ describe('bboxOf', () => {
   it('bounds a ring', () => {
     expect(
       bboxOf([
-        [-10, -5],
-        [20, 5],
-        [0, 30],
+        [
+          [-10, -5],
+          [20, 5],
+          [0, 30],
+        ],
       ]),
     ).toEqual([-10, -5, 20, 30])
   })
 
-  it('walks nested rings (polygon with a hole)', () => {
+  it('spans every ring of a polygon, holes included', () => {
     expect(
       bboxOf([
         [
@@ -214,7 +216,17 @@ describe('cull keeps everything the board can show', () => {
 
 describe('asGeometry', () => {
   it('wraps pieces into one drawable GeometryCollection', () => {
-    const g = asGeometry(toPieces({ type: 'MultiLineString', coordinates: [[[0, 0], [1, 1]]] }))
+    const g = asGeometry(
+      toPieces({
+        type: 'MultiLineString',
+        coordinates: [
+          [
+            [0, 0],
+            [1, 1],
+          ],
+        ],
+      }),
+    )
     expect(g.type).toBe('GeometryCollection')
     expect(g.geometries).toHaveLength(1)
   })

@@ -14,8 +14,9 @@
 // 739 KB to ~215 KB, small enough to bundle — so the fine tier costs no runtime
 // fetch and the globe keeps working offline.
 //
-// Output shape deliberately mirrors world-atlas (`objects.land` +
-// `objects.countries`), so the Globe hydrates either tier through one code path.
+// Output is `objects.land` + `objects.borders` — the interior boundary mesh, cut
+// here rather than in the browser, because each layer has to be thinned at its
+// own weight (see below) and that means meshing first.
 //
 // Re-run with `npm run data:outline`. No network needed — the source is the
 // world-atlas package.
@@ -50,24 +51,22 @@ const BORDER_SIMPLIFY = 0.0005
 
 const source = require('world-atlas/countries-50m.json')
 
-// Simplify one layer on its own, at its own weight, and hand back plain GeoJSON.
-// The round-trip matters: presimplify stores a weight as a third ordinate on
-// every position, and rebuilding from plain coordinates is what drops them.
-function thin(build, weight) {
-  const simplified = simplify(presimplify(source), weight)
-  return build(simplified)
-}
+// Scoring every vertex is the expensive pass (~70 ms) and it doesn't depend on
+// the weight, so do it once; `simplify` returns fresh arcs and leaves its input
+// alone, so both layers can be cut from the same scored topology.
+const scored = presimplify(source)
 
 function main() {
-  const land = thin((t) => feature(t, t.objects.land), LAND_SIMPLIFY)
+  // Hydrating back to plain GeoJSON is what drops the weight `presimplify`
+  // stores as a third ordinate on every position.
+  const thinned = simplify(scored, LAND_SIMPLIFY)
+  const land = feature(thinned, thinned.objects.land)
   // The interior boundaries only — arcs shared by two different countries — so
   // each border is one line and the coastline isn't stroked twice. Meshing here
   // rather than in the app also drops the country names, which the globe never
   // draws, and spares it the work at load.
-  const borders = thin(
-    (t) => mesh(t, t.objects.countries, (a, b) => a !== b),
-    BORDER_SIMPLIFY,
-  )
+  const bordersTopo = simplify(scored, BORDER_SIMPLIFY)
+  const borders = mesh(bordersTopo, bordersTopo.objects.countries, (a, b) => a !== b)
 
   const topo = topology({ land, borders }, 1e4)
   const json = JSON.stringify(topo)

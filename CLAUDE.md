@@ -89,11 +89,16 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   cities to draw as its explorable dot layer; the projection-dependent culling stays in
   the component.
 - `src/lib/cull.ts` — **pure** view-culling geometry for the globe's map layers.
-  `toLayer` cuts a layer (coastline, borders, a relief band) into **pieces** — one
-  ring or line each, with its lon/lat bbox — once; `visibleRadiusDeg` gives the
-  angular cap the square board can show at a given scale (**corner**, not edge —
-  the diagonal is what stays visible); `visible` returns just the pieces that can
-  reach it, or the prebuilt whole when nothing can be culled. Without it a zoomed
+  `toLayer` prepares a layer (coastline, borders, a relief band), cutting it into
+  **pieces** — one ring or line each, with its lon/lat bbox — on first use, since
+  culling only engages above ~1.5× zoom and a round that never zooms in shouldn't
+  pay for them; `visibleRadiusDeg` gives the angular cap the square board can show
+  at a given scale (**corner**, not edge — the diagonal is what stays visible);
+  `visible` collects the pieces that can reach it in one pass, or hands back the
+  layer whole when nothing can be culled. The per-piece test is deliberately
+  hand-rolled trigonometry rather than d3's `geoDistance` — same maths, but routed
+  through d3's stream machinery it measured ~50× slower per call, which across
+  thousands of pieces a frame cost more than culling saved (5.7 → 0.4 ms/frame). Without it a zoomed
   frame re-projects the entire planet to paint a ~10° sliver. Culling generously is
   the point: a piece wrongly kept costs its vertices, one wrongly dropped is a hole
   in the map, so `cull.test.ts` asserts the **superset property** — anything that
@@ -238,10 +243,10 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   The **relief** has tiers too: past `FINE_RELIEF_ZOOM` (3.2) the globe fetches
   `elevation-fine.json` (0.1°) and swaps it in, because 0.2° cells read as 20 px blocks
   at 6× however good the coastline is. One-shot and fire-and-forget — a failed fetch
-  just leaves the bundled bands on screen. Note the fetch effect depends on `zoom`, so
-  it is torn down and re-run constantly; the in-flight import must **not** be cancelled
-  by that teardown (it was, and the tier silently never arrived) — the guard is a
-  `mounted` ref, not a per-run flag.
+  just leaves the bundled bands on screen. The fetch effect keys on the *threshold*
+  (`zoom >= FINE_RELIEF_ZOOM`), not on `zoom`: keyed on `zoom` it was torn down and
+  re-run every frame of a drag, so its cleanup cancelled the very import it had just
+  started and the tier silently never arrived.
   **Two outline tiers**, both bundled: 110m carries the whole-globe view, and past
   `DETAIL_ZOOM` (2.2) the finer `@/data/outline.json` takes over, so zooming *reveals*
   island chains, inlets and the real wiggle of country borders (the Balkans, Benelux,

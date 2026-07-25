@@ -269,8 +269,11 @@ function emit(out, tier, label) {
 }
 
 async function main() {
-  const rawSurface = await fetchGrid(SURFACE_DODS, 'surface')
-  const rawBed = await fetchGrid(BED_DODS, 'bedrock')
+  // Two independent OPeNDAP streams of ~15 s each — fetch them together.
+  const [rawSurface, rawBed] = await Promise.all([
+    fetchGrid(SURFACE_DODS, 'surface'),
+    fetchGrid(BED_DODS, 'bedrock'),
+  ])
   process.stderr.write('Contouring…\n')
   emit(OUT, buildTier(rawSurface, rawBed, DOWNSAMPLE, LAND_SIMPLIFY), 'bundled tier')
   emit(
