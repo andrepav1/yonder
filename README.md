@@ -144,6 +144,7 @@ npm run build        # production build → dist/
 npm run data:build   # regenerate src/data/cities.json from ./data-src
 npm run data:capitals -- <cities15000.txt>   # refresh the national-capital flags only
 npm run data:elevation    # regenerate src/data/elevation.json from NOAA ETOPO (needs network)
+npm run data:outline      # regenerate src/data/outline.json (fine coastline for zoomed-in views)
 npm run preview:puzzles   # print generated puzzles for several dates
 ```
 
@@ -185,10 +186,12 @@ src/
   App.tsx  main.tsx   # app shell + entry
   data/cities.json    # committed compact dataset (built artifact)
   data/elevation.json # committed globe relief bands (built artifact)
+  data/outline.json   # committed fine coastline + borders, for zoomed-in views (built artifact)
 scripts/
   build-cities.mjs    # GeoNames -> cities.json (incl. localized names)
   enrich-cities.mjs   # attach/refresh translations on an existing cities.json
   build-elevation.mjs # NOAA ETOPO -> elevation.json (globe hypsometric bands)
+  build-outline.mjs   # world-atlas 50m -> outline.json (thinned coastline + borders)
   preview-puzzles.mts # dev: print sample puzzles
   screenshot.mjs      # dev: phone-sized screenshots of the real UI
 ```
@@ -232,5 +235,7 @@ rendered with **d3-geo** (orthographic projection + geodesic circle). Its base i
 contoured from **NOAA ETOPO 2022** with **d3-contour** and bundled as TopoJSON, plus
 an ice-sheet overlay so Greenland and Antarctica read as ice caps rather than brown
 highlands — with a crisp coastline and country borders (**world-atlas** TopoJSON)
-stroked over the top, all hydrated with **topojson-client**. Every tint is a theme-aware CSS token, so the
+stroked over the top, all hydrated with **topojson-client**. Zoom in and the
+outline swaps to a finer one, so islands and inlets appear as you go; only the
+part of each layer that the board can actually show is re-projected per frame. Every tint is a theme-aware CSS token, so the
 relief adapts to light/dark mode. All client-side, no runtime network.

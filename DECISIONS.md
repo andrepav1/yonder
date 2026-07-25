@@ -749,3 +749,43 @@ at and read as a leftover from the single-shot game.
   the cost all along.
 - **Cost.** 214 KB → 389 KB (67 → ~120 KB gzipped). Paid knowingly: the globe is the
   game's main surface, and the borders make any misalignment obvious.
+
+## 2026-07-25 — Making zoom feel like zooming: detail tiers, culling, and motion
+
+- **Context.** Zooming magnified the map without ever revealing anything: the same
+  110m outline, just bigger, so it read as scaling a picture rather than moving in.
+  Two problems hid behind one complaint — no detail, and no sense of motion.
+- **Detail: two tiers, both bundled.** 110m keeps the whole-globe view; past
+  `DETAIL_ZOOM` a finer outline takes over, and the Aegean, the Danish archipelago
+  and the Visayas appear as you go in. world-atlas's own 50m file is 739 KB and ten
+  times the vertices — most of it finer than a 320 px sphere can ever show — so
+  `scripts/build-outline.mjs` thins it once at build time, keeping **every ring**
+  while dropping sub-pixel wiggle: ~2.7× the vertices of 110m, 205 KB. Small enough
+  to bundle, which beat the lazy-chunk alternative on every axis except first-load
+  bytes and kept the globe working offline. Hydrated on first use, not at import.
+- **Culling is what paid for the detail.** d3-geo walks every vertex it is handed,
+  so a 6× view was re-projecting the whole planet to paint a ~10° cap. Each layer is
+  now cut once into pieces with bounding boxes (`lib/cull.ts`) and only the pieces
+  that can reach the view are drawn. Measured A/B, interleaved, median of three: a
+  zoomed drag went **36.7 → 49.2 fps** *while carrying 2.7× the coastline*, and the
+  zoomed-out view was unchanged. Without culling the same detail measured 32 fps.
+- **The superset property, and why it is tested.** Culling generously is free;
+  culling too much punches a hole in the map. `cull.test.ts` therefore asserts that
+  anything drawing on the board — or containing the view centre, since a polygon can
+  fill it without any vertex inside — survives, swept over centres × zooms × layers.
+  It caught both bugs in the first draft: an inverted `lonDelta` (180° for identical
+  meridians) and boxes spanning more than 180° of longitude snapping to an edge on
+  the far side of the planet. It also caught a wrong *radius*: the board is square,
+  so its corners bound the visible cap, not its half-width.
+- **Motion: ease the buttons, anchor the gestures.** Button zoom eases to its target
+  and interpolates geometrically — equal ratios per frame, because equal increments
+  of scale visibly decelerate as the globe grows. Wheel and pinch keep whatever is
+  under the pointer under it: scaling happens about the centre, so `zoomAbout`
+  measures the anchor's drift across the scale change and spins by the difference.
+  Approximate off-anchor, exact where it matters; measured drift fell 37 px → 2.5 px.
+- **Rejected: rendering the raw 50m outline.** It is the obvious "more detail" move
+  and it measured 39 fps on a zoomed drag before culling, 32 after the tier landed —
+  worse than the coarse map it replaced. Thinning it first was strictly better.
+- **Measurement note.** This sandbox drifts: identical code measured 57.5 fps early
+  in the session and 46.8 fps an hour later. Only interleaved A/B numbers from the
+  same run are quoted above; a single-build reading proves nothing here.

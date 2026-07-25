@@ -88,6 +88,19 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   `rules.dataset.minPopulation` (zoomed in). The Globe uses it to decide *which* real
   cities to draw as its explorable dot layer; the projection-dependent culling stays in
   the component.
+- `src/lib/cull.ts` — **pure** view-culling geometry for the globe's map layers.
+  `toLayer` cuts a layer (coastline, borders, a relief band) into **pieces** — one
+  ring or line each, with its lon/lat bbox — once; `visibleRadiusDeg` gives the
+  angular cap the square board can show at a given scale (**corner**, not edge —
+  the diagonal is what stays visible); `visible` returns just the pieces that can
+  reach it, or the prebuilt whole when nothing can be culled. Without it a zoomed
+  frame re-projects the entire planet to paint a ~10° sliver. Culling generously is
+  the point: a piece wrongly kept costs its vertices, one wrongly dropped is a hole
+  in the map, so `cull.test.ts` asserts the **superset property** — anything that
+  draws on the board, or that contains the view centre, survives — swept over many
+  centres × zooms × layers. That test caught both bugs in the first draft (an
+  inverted `lonDelta`, and boxes spanning >180° of longitude snapping to the wrong
+  edge); keep it green if you touch the maths.
 - `src/lib/scoring.ts` — **pure**: `evaluateLeg` (leg / running total / remaining /
   bearing / over / win — a guess from a given previous point onto the running total),
   `scoreRound` (golf: guess count + final total), and `tempLevel` (the shared hot→cold
@@ -149,6 +162,10 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   contoured at a small threshold — so the two great ice caps read as ice, not the
   brown highlands their surface height would otherwise colour them. Presentational
   only — no game logic reads it.
+- `src/data/outline.json` — **committed** fine coastline + country borders (world-atlas
+  50m, thinned by `scripts/build-outline.mjs`), the detail tier the globe swaps in when
+  zoomed past `DETAIL_ZOOM`. Same shape as world-atlas (`objects.land` + `objects.countries`)
+  so both tiers hydrate through one code path. Presentational only.
 - `src/modes/daily.ts` — the `GameMode` descriptors (`generate(seed)`/`apply`/
   `score`/`share`) built by a shared `makeMode` factory + a `modes` registry. Each
   descriptor pairs a **`ModeLogic`** (the pure play strategy — Classic's is
@@ -210,7 +227,14 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   borders** (`--globe-border`) inland of it. One `world-atlas` file feeds both:
   its `land` object is the coastline, and `topojson-client`'s `mesh(…, (a, b) =>
   a !== b)` over its `countries` object yields the interior boundaries only — each
-  border drawn once, coastlines not double-stroked. The band tints are the
+  border drawn once, coastlines not double-stroked.
+  **Two detail tiers**, both bundled: 110m carries the whole-globe view, and past
+  `DETAIL_ZOOM` (2.2) the finer `@/data/outline.json` takes over, so zooming *reveals*
+  island chains and inlets instead of magnifying polygons. The fine tier is hydrated
+  on **first use**, not at module load — a round that never zooms in shouldn't pay for
+  it. Every map layer is then drawn through `lib/cull.ts`: only the pieces the board
+  can reach get re-projected, which is what pays for the extra detail (a zoomed drag
+  measured **36.7 → 49.2 fps** with the finer coastline, A/B against the same build). The band tints are the
   `--hypso-*` CSS ramp (theme-aware); the deepest ocean is the sphere's
   `--globe-ocean` base.
   Purely presentational — all geometry comes
@@ -230,6 +254,15 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   the dashed **missed leg** from where the player stopped. Spins to face the
   start on load and smoothly **re-centres on the latest guess** (rAF-animated; drag
   interrupts). Far-hemisphere points are hidden via a `geoDistance` great-circle test.
+  **Zoom** feels like moving in rather than the picture growing: the `+`/`−` buttons
+  **ease** to their target (`ZOOM_DURATION`, interpolated *geometrically* — equal
+  ratios per frame, since equal increments visibly decelerate as the globe grows), and
+  wheel + pinch are **anchored**, keeping whatever is under the pointer (or the middle
+  of the pinch) under it. Scaling alone happens about the globe's centre, which slides
+  the anchor outward; `zoomAbout` measures where the anchor points before versus after
+  the scale change and spins by the difference — exact at the anchor, invisible error
+  away from it (measured drift 37 px → 2.5 px). A drag, a pinch or a wheel cancels an
+  easing zoom.
   **Zoom** (pinch / wheel / `+`−` buttons) magnifies the globe via `projection.scale`
   and draws an **explorable city layer** from the `cities` prop: quiet dots for real
   cities, filtered by `exploreMinPopulation(zoom, rules)` (biggest first, more as you
@@ -268,6 +301,7 @@ npm run typecheck    # tsc -b --noEmit
 npm run build        # production build → dist/ (static, Vercel)
 npm run data:build   # rebuild src/data/cities.json from ./data-src (see below)
 npm run data:elevation    # rebuild src/data/elevation.json from NOAA ETOPO (needs network)
+npm run data:outline      # rebuild src/data/outline.json (fine coastline; no network)
 npm run preview:puzzles   # eyeball generated puzzles for several dates
 npm run build && npm run screenshot   # phone-sized screenshots of the real UI
 ```
@@ -308,6 +342,15 @@ national capitals, detected from the `PPLC` feature code in `cities15000.txt`
 `cities.json` without a full rebuild: `npm run data:capitals -- <cities15000.txt>`
 (`scripts/enrich-capitals.mjs`) intersects `PPLC` ids with the dataset (~160 capitals,
 pop ≥ 100k) and rewrites just the `capitals` list, leaving translations intact.
+
+**Globe outline.** `src/data/outline.json` is the globe's *fine* coastline + borders —
+the tier that appears when you zoom in. Rebuild with `npm run data:outline`
+(`scripts/build-outline.mjs`, no network): it takes world-atlas's 50m outline, thins it
+with `topojson-simplify` and rebuilds the topology, keeping **every ring** (the small
+islands are the whole point) while dropping the sub-pixel wiggle. That's ~2.7× the
+vertices of 110m instead of 10×, and 739 KB → ~205 KB — small enough to bundle, so the
+detail costs no runtime fetch and the globe still works offline. `SIMPLIFY` trades
+coastline richness against drag frame rate; re-measure a drag if you change it.
 
 **Globe elevation.** `src/data/elevation.json` is the other committed, bundled
 artifact — the hypsometric relief the globe paints under the coastline. Rebuild it

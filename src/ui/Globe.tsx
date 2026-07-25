@@ -30,12 +30,14 @@ import { geoOrthographic, geoPath, geoGraticule10, geoDistance } from 'd3-geo'
 import { feature, mesh } from 'topojson-client'
 import type { Feature, FeatureCollection, MultiLineString } from 'geojson'
 import worldTopo from 'world-atlas/countries-110m.json'
+import fineTopo from '@/data/outline.json'
 import elevationTopo from '@/data/elevation.json'
 import type { AnswerCity, City, GuessResult } from '@/lib/types'
 import type { GameRules, Unit } from '@/config/rules'
 import { tempLevel } from '@/lib/scoring'
 import { cityLabel, localizedName } from '@/lib/cities'
 import { exploreMinPopulation } from '@/lib/explore'
+import { toLayer, visible, visibleRadiusDeg, type Layer } from '@/lib/cull'
 import { formatDistance } from '@/lib/format'
 import { useI18n } from '@/i18n/context'
 
@@ -61,6 +63,42 @@ const borders: MultiLineString = mesh(
   (a, b) => a !== b,
 )
 
+/** A coastline + border pair at one level of detail. */
+interface WorldOutline {
+  land: FeatureCollection
+  borders: MultiLineString
+}
+
+// Hydrate a world-atlas-shaped topology into the outline pair the globe draws.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toOutline(topo: any): WorldOutline {
+  return {
+    land: feature(topo, topo.objects.land) as unknown as FeatureCollection,
+    borders: mesh(topo, topo.objects.countries, (a, b) => a !== b),
+  }
+}
+
+// Two detail tiers, both bundled. The 110m outline carries the whole-globe view;
+// `outline.json` (world-atlas 50m, thinned by scripts/build-outline.mjs) takes
+// over past DETAIL_ZOOM, where 110m starts reading as polygons and its missing
+// island chains are conspicuous. Zoomed out we stay on the coarse one — nothing
+// is gained by re-projecting 2.7× the vertices for a globe the size of a coin.
+// Hydrated on first use, not at module load: turning the fine topology into
+// GeoJSON allocates a lot of objects, and a round that never zooms in shouldn't
+// pay for them — measurably, in dropped frames on the opening view.
+interface OutlineLayers {
+  land: Layer
+  borders: Layer
+}
+const asLayers = (o: WorldOutline): OutlineLayers => ({
+  land: toLayer(o.land),
+  borders: toLayer(o.borders),
+})
+
+const coarseWorld: OutlineLayers = asLayers({ land, borders })
+let fineCache: OutlineLayers | null = null
+const fineWorld = (): OutlineLayers => (fineCache ??= asLayers(toOutline(fineTopo)))
+
 // Hypsometric elevation bands (ocean depth + land height), likewise hydrated
 // once. Sorted by threshold ascending so painting them in order stacks deepest
 // → highest into a nested brown/blue relief; the array index is the band's tint
@@ -77,6 +115,9 @@ const elevationBands: Feature[] = (() => {
   )
 })()
 
+// One cullable layer per band, so a band keeps its own tint.
+const elevationLayers: Layer[] = elevationBands.map((f) => toLayer(f))
+
 // The ice-sheet overlay (Greenland + Antarctica), painted over the bands so the
 // two great ice caps read as ice, not the brown highlands their surface height
 // would otherwise colour them.
@@ -86,6 +127,8 @@ const iceSheets: FeatureCollection = feature(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (elevationTopo as any).objects.ice,
 ) as unknown as FeatureCollection
+
+const iceLayer: Layer = toLayer(iceSheets)
 
 const SIZE = 320 // internal SVG units; CSS scales it to the column width
 const MARGIN = 3
@@ -98,6 +141,14 @@ const TAP_MOVE_TOLERANCE = 6
 const CULL_PAD = 8
 // Multiplier per press of the +/− zoom buttons.
 const ZOOM_STEP = 1.4
+// How long a button-press zoom takes to ease in (ms). Wheel and pinch are
+// already continuous — only the buttons would otherwise cut straight to the new
+// scale, which reads as a jump rather than as moving closer.
+const ZOOM_DURATION = 320
+// Zoom past this and the globe swaps its 110m outline for the finer one (see
+// `fineWorld`). Chosen a little above the first button press, so the swap lands
+// when a player is clearly going in for a look rather than nudging the scale.
+const DETAIL_ZOOM = 2.2
 // Pinch sensitivity: the change in finger separation is raised to this power
 // before it scales the zoom, so a small spread magnifies more (>1 = faster,
 // snappier pinch). 1 would track the fingers exactly.
@@ -219,6 +270,7 @@ export function Globe({
   const rotationRef = useRef<LngLat>(rotation)
   const zoomRef = useRef(zoom)
   const animRef = useRef<number | null>(null)
+  const zoomAnimRef = useRef<number | null>(null)
   // Active (pressed) pointers, for pinch-zoom. A plain mouse hover never lands
   // here — only pointers that went down on the globe.
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map())
@@ -240,6 +292,74 @@ export function Globe({
       cancelAnimationFrame(animRef.current)
       animRef.current = null
     }
+  }
+  const stopZoomAnim = () => {
+    if (zoomAnimRef.current !== null) {
+      cancelAnimationFrame(zoomAnimRef.current)
+      zoomAnimRef.current = null
+    }
+  }
+
+  // Ease the zoom to a target rather than cutting to it, so a button press reads
+  // as moving closer. Interpolates *geometrically* — equal ratios per frame —
+  // because equal increments of scale visibly decelerate as the globe grows.
+  const animateZoom = (target: number) => {
+    stopZoomAnim()
+    const from = zoomRef.current
+    const to = clampZoom(target)
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (reduce || Math.abs(to - from) < 1e-3) {
+      setZoom(to)
+      return
+    }
+    const startTime = performance.now()
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - startTime) / ZOOM_DURATION)
+      // easeInOutQuad, matching the spin
+      const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2
+      setZoom(from * Math.pow(to / from, e))
+      zoomAnimRef.current = p < 1 ? requestAnimationFrame(tick) : null
+    }
+    zoomAnimRef.current = requestAnimationFrame(tick)
+  }
+
+  // Zoom about a point on screen, keeping whatever sits under the pointer (or
+  // under the middle of a pinch) *under* it — the thing that makes a zoom feel
+  // like moving in rather than like the picture growing.
+  //
+  // Scaling alone happens about the globe's centre, which slides the anchor
+  // outward. An orthographic rotation is not a translation, so we can't cancel
+  // that exactly; instead we measure the drift — where the anchor points before
+  // versus after the scale change — and spin by the difference. That's exact at
+  // the anchor itself, and the small-angle error away from it is invisible.
+  const zoomAbout = (target: number, clientX: number, clientY: number) => {
+    const next = clampZoom(target)
+    const rect = svgRef.current?.getBoundingClientRect()
+    setZoom(next)
+    if (!rect || rect.width === 0) return
+    const toSvg = SIZE / rect.width
+    const p: [number, number] = [
+      (clientX - rect.left) * toSvg,
+      (clientY - rect.top) * toSvg,
+    ]
+    const [λ, φ] = rotationRef.current
+    const at = (scale: number) =>
+      geoOrthographic()
+        .scale(RADIUS * scale)
+        .translate([SIZE / 2, SIZE / 2])
+        .rotate([λ, φ, 0])
+        .clipAngle(90)
+        .invert?.(p)
+    const before = at(zoomRef.current)
+    const after = at(next)
+    if (!before || !after) return
+    const dλ = ((((after[0] - before[0] + 180) % 360) + 360) % 360) - 180
+    const dφ = after[1] - before[1]
+    // Outside the disc the inverse is meaningless and can swing wildly; a sane
+    // anchor only ever drifts a few degrees per step.
+    if (!Number.isFinite(dλ) || !Number.isFinite(dφ)) return
+    if (Math.abs(dλ) > 45 || Math.abs(dφ) > 45) return
+    setRotation(([rλ, rφ]) => [rλ + dλ, Math.max(-90, Math.min(90, rφ + dφ))])
   }
 
   // Smoothly spin the globe so [lng, lat] comes to the centre, taking the
@@ -273,6 +393,7 @@ export function Globe({
   const startLat = start?.lat
   useEffect(() => {
     stopAnim()
+    stopZoomAnim()
     setRotation(
       startLng !== undefined && startLat !== undefined
         ? [-startLng, -startLat]
@@ -289,8 +410,14 @@ export function Globe({
     if (lastLng !== undefined && lastLat !== undefined) animateTo(lastLng, lastLat)
   }, [lastLng, lastLat])
 
-  // Stop any in-flight spin on unmount.
-  useEffect(() => stopAnim, [])
+  // Stop any in-flight spin or zoom on unmount.
+  useEffect(
+    () => () => {
+      stopAnim()
+      stopZoomAnim()
+    },
+    [],
+  )
 
   // Wheel to zoom. A native, non-passive listener so we can preventDefault and
   // stop the page scrolling under the gesture.
@@ -299,10 +426,13 @@ export function Globe({
     if (!el) return
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
+      stopZoomAnim()
       const factor = Math.exp(-e.deltaY * 0.0015)
-      setZoom((z) => Math.max(minZoom, Math.min(maxZoom, z * factor)))
+      zoomAbout(zoomRef.current * factor, e.clientX, e.clientY)
     }
     el.addEventListener('wheel', onWheel, { passive: false })
+    // zoomAbout reads rotation + zoom through refs, so this listener never needs
+    // re-subscribing as they change.
     return () => el.removeEventListener('wheel', onWheel)
   }, [minZoom, maxZoom])
 
@@ -397,14 +527,29 @@ export function Globe({
   const place = (lng: number, lat: number): [number, number] | null =>
     isVisible(lng, lat) ? (projection([lng, lat]) ?? null) : null
 
-  const landPath = useMemo(() => path(land) ?? '', [path])
-  const bordersPath = useMemo(() => path(borders) ?? '', [path])
+  // Which detail tier is on screen (see the tier note by `fineWorld`).
+  const outline = zoom >= DETAIL_ZOOM ? fineWorld() : coarseWorld
+  // Everything below is drawn from the pieces that fall inside the view, so a
+  // zoomed-in frame costs what it shows rather than what the planet holds.
+  // Reach the board's corner, not its edge — the diagonal is what stays visible.
+  const cullRadius = visibleRadiusDeg(RADIUS * zoom, Math.SQRT2 * (SIZE / 2) + CULL_PAD)
+  const near = useMemo(
+    () => (layer: Layer) => visible(layer, viewCenter, cullRadius),
+    // viewCenter is derived from rotation; both change together.
+    [rotation[0], rotation[1], cullRadius],
+  )
+
+  const landPath = useMemo(() => path(near(outline.land)) ?? '', [path, near, outline])
+  const bordersPath = useMemo(() => path(near(outline.borders)) ?? '', [path, near, outline])
   const graticulePath = useMemo(() => path(geoGraticule10()) ?? '', [path])
   // The hypsometric bands, projected at the current rotation/zoom. One path per
   // elevation band; d3-geo clips each to the near hemisphere for us.
-  const bandPaths = useMemo(() => elevationBands.map((f) => path(f) ?? ''), [path])
+  const bandPaths = useMemo(
+    () => elevationLayers.map((layer) => path(near(layer)) ?? ''),
+    [path, near],
+  )
   // The ice sheets, projected the same way (a single combined path).
-  const icePath = useMemo(() => path(iceSheets) ?? '', [path])
+  const icePath = useMemo(() => path(near(iceLayer)) ?? '', [path, near])
   // The running journey: start → each guessed city, in order.
   const journeyPath = useMemo(() => {
     if (!showJourney || !start || guesses.length === 0) return ''
@@ -458,8 +603,10 @@ export function Globe({
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
     e.currentTarget.setPointerCapture(e.pointerId)
     if (pointers.current.size >= 2) {
-      // Enter pinch: abandon any single-finger spin/tap in progress.
+      // Enter pinch: abandon any single-finger spin/tap in progress, and any
+      // button zoom still easing — the fingers own the scale now.
       stopAnim()
+      stopZoomAnim()
       drag.current = null
       press.current = null
       const [a, b] = [...pointers.current.values()]
@@ -467,6 +614,7 @@ export function Globe({
       return
     }
     stopAnim() // hand control to the drag mid-spin
+    stopZoomAnim()
     drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId }
     press.current = { x: e.clientX, y: e.clientY, moved: false }
   }
@@ -485,7 +633,9 @@ export function Globe({
         pinchDist.current = dist
         if (prev && prev > 0) {
           const ratio = Math.pow(dist / prev, PINCH_SENSITIVITY)
-          setZoom((z) => clampZoom(z * ratio))
+          // Anchor on the middle of the pinch, so the globe grows around the
+          // fingers rather than around its own centre.
+          zoomAbout(zoomRef.current * ratio, (a.x + b.x) / 2, (a.y + b.y) / 2)
         }
       }
       return
@@ -727,7 +877,7 @@ export function Globe({
             type="button"
             className="globe__zoom-btn"
             aria-label={t.globe.zoomIn}
-            onClick={() => setZoom((z) => clampZoom(z * ZOOM_STEP))}
+            onClick={() => animateZoom(zoomRef.current * ZOOM_STEP)}
             disabled={zoom >= maxZoom - 1e-3}
           >
             +
@@ -736,7 +886,7 @@ export function Globe({
             type="button"
             className="globe__zoom-btn"
             aria-label={t.globe.zoomOut}
-            onClick={() => setZoom((z) => clampZoom(z / ZOOM_STEP))}
+            onClick={() => animateZoom(zoomRef.current / ZOOM_STEP)}
             disabled={zoom <= minZoom + 1e-3}
           >
             −
