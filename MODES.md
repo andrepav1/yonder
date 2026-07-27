@@ -118,8 +118,8 @@ A **deduction** game — find a secret city.
   work a guess is meant to do. Deterministic in the seed.
 - **Play.** Each guess is a **capital** (the guess input is restricted to the same pool
   — every guess is both a probe and a possible answer, no wasted turns). Its reading is
-  the **distance from the guess to the hidden city + the bearing toward it**, shown as a
-  globe pin coloured hot/cold by proximity with an arrow pointing at the target.
+  the **distance from the guess to the hidden city + the (flat-map) bearing toward it**,
+  shown as a globe pin coloured hot/cold by proximity with an arrow pointing at the target.
 - **Goal.** Win by naming the **exact** hidden capital. **Generous try count**
   (default **8**, tunable) — running out is a loss.
 - **Present.** No cumulative total / overshoot at all — each guess is an independent

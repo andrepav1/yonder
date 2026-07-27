@@ -57,7 +57,11 @@ export interface GuessResult {
   cumulativeKm: number
   /** targetKm − cumulativeKm: distance still to cover (negative once overshot). */
   remainingKm: number
-  /** Initial bearing from the previous point to this city, degrees [0,360). */
+  /**
+   * Flat-map bearing (see `flatBearingDeg`) from the previous point to this
+   * city, degrees clockwise from north, [0,360). Deliberately *not* the
+   * great-circle azimuth — the arrow points where the city sits on the map.
+   */
   bearingDeg: number
   /** True when the running total has overshot the target (an instant loss). */
   over: boolean

@@ -77,6 +77,12 @@ bust), the exact **bearing in degrees + an arrow** (e.g. `47° ↗`) for that le
 hot→cold colour cue that warms as the total nears the target. A km/mi toggle switches
 all displayed distances (the win band is a percentage, so it's identical either way).
 
+The bearing is a **map direction**, not a flight heading: it reads off a flat world map,
+so two cities on the same parallel always point due east/west of each other. (Distances
+are true great-circle distances — but a great-circle *heading* between distant cities
+arcs toward the pole, so Lisbon → Pyongyang would read "north-east" despite the two
+sitting on the same latitude. The arrow tells you where to look, not how to fly.)
+
 ### End of round — explore the map
 
 On a win, a bust, or after 6 guesses the globe turns into a **learning reveal** you can
@@ -162,7 +168,7 @@ src/
   config/monetization.ts  # ← ads + donation switches (opt-in; UI-only, never in lib/)
   lib/                # pure, tested core (no I/O)
     prng.ts           # mulberry32 + date-string hash
-    geo.ts            # haversine, bearing, compass, unit conversion
+    geo.ts            # haversine, bearings (flat-map + great-circle), compass, units
     types.ts          # City, PuzzleSpec, RoundState, … (serializable)
     cities.ts         # dataset load + fuzzy, locale-aware autocomplete
     puzzle.ts         # deterministic daily generator
