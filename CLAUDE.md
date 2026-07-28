@@ -50,8 +50,14 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 - `src/lib/weighted.ts` — `weightedByPopulation(pool, exponent)`: builds a
   population-weighted picker (`r ∈ [0,1)` → pool member, binary search over cumulative
   weights). Pure; shared by both puzzle generators (`puzzle.ts`, `hidden.ts`).
-- `src/lib/geo.ts` — `haversineKm`, `initialBearingDeg`, `compass16`,
-  `bearingArrow`, km/mi conversion. Pure.
+- `src/lib/geo.ts` — `haversineKm`, `flatBearingDeg`, `initialBearingDeg`, `compass16`,
+  `bearingArrow`, km/mi conversion. Pure. **Two bearings, on purpose:**
+  `flatBearingDeg` is the **flat-map (plate carrée) direction** — plain x/y over
+  lon/lat, with the longitude delta wrapped the shorter way — and is the one every
+  player-facing arrow/degree uses, so same-latitude cities always read due east/west.
+  `initialBearingDeg` is the true great-circle azimuth (curves poleward over long
+  spans); kept as the geometric counterpart to `haversineKm` but **not** displayed.
+  See `DECISIONS.md`.
 - `src/lib/types.ts` — serializable domain types (`City`, `PuzzleSpec`, `AnswerCity`).
   `City.names` is an optional `{ locale: name }` map (`CityNames`) carrying only the
   localized names that **differ** from the canonical `name` (English is never stored).
@@ -89,7 +95,7 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   cities to draw as its explorable dot layer; the projection-dependent culling stays in
   the component.
 - `src/lib/scoring.ts` — **pure**: `evaluateLeg` (leg / running total / remaining /
-  bearing / over / win — a guess from a given previous point onto the running total),
+  bearing (flat-map) / over / win — a guess from a given previous point onto the running total),
   `scoreRound` (golf: guess count + final total), and `tempLevel` (the shared hot→cold
   level, graded by how much of the journey remains; 0 also = bust/overshoot).
 - `src/lib/mode.ts` — the **mode seam**: the pure `ModeLogic` interface the engine
@@ -116,7 +122,7 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   picks a population-weighted capital target and **nothing else** — no origin and no
   opening clue, since a named start plus its distance+bearing would pin the answer for
   free; the first guess is the opening probe. `hiddenLogic` (`ModeLogic`) evaluates each guess
-  as an independent probe (distance + bearing to the target, proximity `temp`), wins
+  as an independent probe (distance + flat-map bearing to the target, proximity `temp`), wins
   only on the exact capital, and ends after `rules.guesses` (8) tries; `hiddenTempLevel`
   grades hot→cold by distance; `buildHiddenShare` is its spoiler-free share. Draws the
   answer + guess pool from `capitals()`.

@@ -674,3 +674,40 @@ at and read as a leftover from the single-shot game.
 - **Not determinism-sacred.** Changing these never affects puzzle generation, scoring,
   or the shared result, so they carry no invariant tests — the `render-nothing` default
   is the safety property that matters.
+
+## 2026-07-27 — The bearing arrow reads off a flat map, not the great circle
+
+- **Context.** A Hidden Destination round put the mystery city in Pyongyang; a Lisbon
+  probe reported `33° ↗`. The two sit on nearly the same parallel (38.7°N / 39.0°N),
+  so the arrow pointing north-east reads as a bug. It wasn't: 33.4° is the correct
+  **initial great-circle azimuth**. The shortest path between two points 135° of
+  longitude apart at that latitude climbs to ~64.6°N over the Urals before coming back
+  down — the same reason Europe→East Asia flights cross Siberia. The tangent to that
+  arc at Lisbon genuinely points north-east.
+- **Decision — show the flat-map (plate carrée) direction instead.** New pure
+  `flatBearingDeg(a, b)` in `geo.ts` treats lon/lat as plain x/y
+  (`atan2(Δlng, Δlat)`); both bearing producers — `scoring.evaluateLeg` (Classic) and
+  `hidden.play` — now use it. Same-latitude cities read due east/west at any
+  separation; the arrow answers *"which way is it on the map?"*.
+- **Why, despite being "less correct".** The arrow is a **hint about where to look on a
+  mental world map**, not a flight plan. A technically-true azimuth that tells a player
+  to look north-east for a city due east is actively misleading feedback, and the
+  poleward curve is invisible on the board anyway. Correctness that costs
+  interpretability loses in a guessing game.
+- **Distances stay great-circle.** `haversineKm` is untouched. Distance is the game's
+  *currency* (it's what the target band is measured in, and what Classic accumulates),
+  so it must be true; direction is *flavour text* on top of it. That asymmetry is
+  deliberate — the two answer different questions.
+- **Longitude wraps the shorter way** (`Δlng` normalized to ±180), so Tokyo → Los
+  Angeles points east across the Pacific rather than west across a map's arbitrary
+  seam. The seam is a projection artifact; the globe has none.
+- **Plate carrée, not a rhumb line.** A true constant-heading (Mercator) bearing also
+  fixes the same-latitude case, but its Mercator-stretched latitude tilts long,
+  high-latitude readings back toward the pole — reintroducing the surprise this change
+  removes. Naive x/y is the thing players actually picture.
+- **`initialBearingDeg` stays exported**, tested, and documented as the true azimuth —
+  it's the geometric counterpart to `haversineKm` — but nothing player-facing calls it.
+- **Not determinism-sacred, but it does change share strings.** Bearing feeds the leg
+  arrows in `buildShare` / `buildHiddenShare`, so shares from before and after this
+  change can differ for the same played round. No stored round replays bearings, and
+  no puzzle generation, scoring, win condition or streak depends on it.

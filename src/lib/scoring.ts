@@ -5,7 +5,7 @@
 
 import type { City, GuessResult, PuzzleSpec, ScoreBreakdown } from './types'
 import type { GameRules } from '@/config/rules'
-import { haversineKm, initialBearingDeg, type LatLng } from './geo'
+import { haversineKm, flatBearingDeg, type LatLng } from './geo'
 
 /**
  * Evaluate adding `city` to the path. `from` is the previous point (the start
@@ -21,7 +21,9 @@ export function evaluateLeg(
   const legKm = haversineKm(from, city)
   const cumulativeKm = priorCumulativeKm + legKm
   const remainingKm = puzzle.targetKm - cumulativeKm
-  const bearingDeg = initialBearingDeg(from, city)
+  // Flat-map direction, not the great-circle azimuth: the arrow says where to
+  // look on the map. Distances stay great-circle — those are the game's currency.
+  const bearingDeg = flatBearingDeg(from, city)
   const over = cumulativeKm > puzzle.targetKm
   // Win = inside the one-sided band below the target (never over).
   const won = !over && remainingKm <= puzzle.targetKm * rules.tolerancePct

@@ -1,7 +1,7 @@
 // Hidden Destination — a deduction mode: find a secret capital. Unlike Classic,
 // there's no start city, no cumulative path and no overshoot; each guess is an
-// independent probe that reports its great-circle distance + bearing to the
-// mystery city, and you win by naming that city exactly. Every clue is earned:
+// independent probe that reports its great-circle distance + flat-map bearing
+// to the mystery city, and you win by naming that city exactly. Every clue is earned:
 // the board opens empty, so the first guess is the opening probe. Pure +
 // deterministic in the seed, like the rest of `lib/*`. The answer (and the guess
 // pool) is drawn from national capitals (see `capitals()` in `cities.ts`) so the
@@ -10,7 +10,7 @@
 import type { City, GuessResult, PuzzleSpec, RoundState } from './types'
 import type { GameRules } from '@/config/rules'
 import { defaultRules } from '@/config/rules'
-import { haversineKm, initialBearingDeg, bearingArrow } from './geo'
+import { haversineKm, flatBearingDeg, bearingArrow } from './geo'
 import { rngFromString, hashString } from './prng'
 import { weightedByPopulation } from './weighted'
 import { capitals as allCapitals } from './cities'
@@ -80,8 +80,9 @@ function play(
     legKm: 0,
     cumulativeKm: 0,
     remainingKm: 0,
-    // Bearing points from the guess *toward* the mystery city.
-    bearingDeg: initialBearingDeg(city, target),
+    // Bearing points from the guess *toward* the mystery city — flat-map, so
+    // "same latitude" reads as due east/west even across half the world.
+    bearingDeg: flatBearingDeg(city, target),
     over: false,
     won,
     toTargetKm,

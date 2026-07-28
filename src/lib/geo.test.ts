@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   haversineKm,
   initialBearingDeg,
+  flatBearingDeg,
   compass16,
   bearingArrow,
   kmToMiles,
@@ -57,6 +58,63 @@ describe('initialBearingDeg', () => {
     const b = initialBearingDeg(London, Paris)
     expect(b).toBeGreaterThan(120)
     expect(b).toBeLessThan(170)
+  })
+})
+
+describe('flatBearingDeg', () => {
+  const origin = { lat: 0, lng: 0 }
+
+  it('reads cardinal directions exactly', () => {
+    expect(flatBearingDeg(origin, { lat: 1, lng: 0 })).toBeCloseTo(0, 6) // N
+    expect(flatBearingDeg(origin, { lat: 0, lng: 1 })).toBeCloseTo(90, 6) // E
+    expect(flatBearingDeg(origin, { lat: -1, lng: 0 })).toBeCloseTo(180, 6) // S
+    expect(flatBearingDeg(origin, { lat: 0, lng: -1 })).toBeCloseTo(270, 6) // W
+    expect(flatBearingDeg(origin, { lat: 1, lng: 1 })).toBeCloseTo(45, 6) // NE
+  })
+
+  it('reads due east/west for same-latitude pairs at any separation', () => {
+    const far = { lat: 62, lng: -150 }
+    expect(flatBearingDeg({ lat: 62, lng: 10 }, far)).toBeCloseTo(270, 6)
+    expect(flatBearingDeg(far, { lat: 62, lng: 10 })).toBeCloseTo(90, 6)
+  })
+
+  it('points east from Lisbon to Pyongyang, where the great circle arcs north', () => {
+    const Lisbon = { lat: 38.7251, lng: -9.1498 }
+    const Pyongyang = { lat: 39.0339, lng: 125.7543 }
+    // Nearly the same parallel, so the flat reading is essentially due east...
+    expect(flatBearingDeg(Lisbon, Pyongyang)).toBeCloseTo(90, 0)
+    expect(bearingArrow(flatBearingDeg(Lisbon, Pyongyang))).toBe('→')
+    // ...while the true azimuth heads north-east, over Siberia.
+    expect(initialBearingDeg(Lisbon, Pyongyang)).toBeCloseTo(33.4, 1)
+  })
+
+  it('wraps longitude the shorter way rather than across the map seam', () => {
+    const Tokyo = { lat: 35.6762, lng: 139.6503 }
+    const LosAngeles = { lat: 34.0522, lng: -118.2437 }
+    // 257° apart the long way, 103° east across the Pacific — the arrow takes
+    // the short way, so it reads east, not west.
+    const b = flatBearingDeg(Tokyo, LosAngeles)
+    expect(b).toBeGreaterThan(90)
+    expect(b).toBeLessThan(100)
+  })
+
+  it('normalizes to [0,360)', () => {
+    for (const [a, b] of [
+      [Paris, London],
+      [London, Paris],
+      [NYC, LA],
+      [LA, NYC],
+    ] as const) {
+      const deg = flatBearingDeg(a, b)
+      expect(deg).toBeGreaterThanOrEqual(0)
+      expect(deg).toBeLessThan(360)
+    }
+  })
+
+  it('is reciprocal — unlike the great-circle azimuth', () => {
+    const there = flatBearingDeg(NYC, LA)
+    const back = flatBearingDeg(LA, NYC)
+    expect((there + 180) % 360).toBeCloseTo(back, 6)
   })
 })
 
