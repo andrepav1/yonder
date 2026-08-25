@@ -324,7 +324,6 @@ export default function App() {
           // The ring the player aims at. Hidden Destination measures nothing
           // from anywhere, so it gets none.
           targetKm={hidden ? 0 : puzzle.targetKm}
-          toleranceKm={puzzle.toleranceKm}
         />
 
         {!finished && (

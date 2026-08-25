@@ -168,16 +168,17 @@ interface GlobeProps {
   /**
    * Draw the **range ring**: the circle of points exactly `targetKm` away from
    * where the journey currently stands — the start before the first hop, the
-   * last guessed city after it — with the win band shaded either side.
+   * last guessed city after it.
    *
    * This is the difference between reading "5,601 km to go" and *seeing* where
    * that lands. Without it the player is asked to estimate great-circle
    * distances from a number, which is the part of the game nobody can actually
    * do. Omitted (or 0) draws nothing — deduction modes have no ring to draw.
+   *
+   * The win band isn't drawn: the halo's falloff already reads as slack, and
+   * the exact tolerance is spelled out in the prompt copy.
    */
   targetKm?: number
-  /** Half-width of the win band in km; shades the ring. Needs `targetKm`. */
-  toleranceKm?: number
 }
 
 export function Globe({
@@ -192,7 +193,6 @@ export function Globe({
   finished,
   showJourney = true,
   targetKm = 0,
-  toleranceKm = 0,
 }: GlobeProps) {
   const { t, locale } = useI18n()
   const { minZoom, maxZoom } = rules.explore
@@ -416,32 +416,24 @@ export function Globe({
     return path({ type: 'LineString', coordinates }) ?? ''
   }, [path, start, guesses, showJourney])
 
-  // The range ring: where the *remaining* distance would land you, measured
-  // from wherever the journey currently stands. Three concentric geodesic
-  // circles — the band's near edge, the exact target, the far edge — so the
-  // player can see the goal instead of estimating it from a number.
-  const rangeRings = useMemo(() => {
-    if (!showJourney || targetKm <= 0) return null
+  // The range ring: the geodesic circle at the distance still to cover, centred
+  // on wherever the journey currently stands — so the player can *see* the goal
+  // instead of estimating it from a number. One path, drawn as a soft glow with
+  // a hairline down its middle (see the `globe__range-*` rules).
+  const rangePath = useMemo(() => {
+    if (!showJourney || targetKm <= 0) return ''
     const last = guesses[guesses.length - 1]
     const anchor = last ? last.city : start
-    if (!anchor) return null
-    // What's left to cover from here. Once past the band there's no ring to aim
-    // at any more, so stop drawing it.
+    if (!anchor) return ''
+    // What's left to cover from here. Once past the target there's no ring to
+    // aim at any more, so stop drawing it.
     const remainingKm = last ? targetKm - last.cumulativeKm : targetKm
-    if (remainingKm <= 0) return null
-
-    const centre: LngLat = [anchor.lng, anchor.lat]
+    if (remainingKm <= 0) return ''
     // Great-circle distance → angular radius. A degree of arc is ~111.195 km.
-    const arc = (km: number) => (km / EARTH_RADIUS_KM) * (180 / Math.PI)
-    const ringAt = (km: number) =>
-      km > 0 ? (path(geoCircle().center(centre).radius(arc(km))()) ?? '') : ''
-
-    return {
-      target: ringAt(remainingKm),
-      near: ringAt(remainingKm - toleranceKm),
-      far: ringAt(remainingKm + toleranceKm),
-    }
-  }, [path, start, guesses, showJourney, targetKm, toleranceKm])
+    const radius = (remainingKm / EARTH_RADIUS_KM) * (180 / Math.PI)
+    const circle = geoCircle().center([anchor.lng, anchor.lat]).radius(radius)
+    return path(circle()) ?? ''
+  }, [path, start, guesses, showJourney, targetKm])
 
   // The explore dots actually on screen: projected, culled to the near
   // hemisphere + viewport, and capped (biggest kept — candidates are pop-sorted).
@@ -645,14 +637,14 @@ export function Globe({
             {/* Crisp coastline over the bands */}
             <path className="globe__coast" d={landPath} />
 
-            {/* Range ring: aim here. Under the city dots so it never hides one. */}
-            {rangeRings && (
+            {/* Range ring: aim here. Under the city dots so it never hides one.
+                Three passes of the same circle — two wide, near-transparent
+                strokes for the falloff, then the hairline itself. */}
+            {rangePath && (
               <g className="globe__range">
-                {rangeRings.far && <path className="globe__range-band" d={rangeRings.far} />}
-                {rangeRings.near && (
-                  <path className="globe__range-band globe__range-band--inner" d={rangeRings.near} />
-                )}
-                <path className="globe__range-ring" d={rangeRings.target} />
+                <path className="globe__range-glow globe__range-glow--wide" d={rangePath} />
+                <path className="globe__range-glow" d={rangePath} />
+                <path className="globe__range-ring" d={rangePath} />
               </g>
             )}
 

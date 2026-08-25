@@ -225,12 +225,15 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   from props. Renders the start-city marker (`start` is **optional** — Hidden
   Destination has no origin, so the globe opens on a neutral world view), the
   **journey** (a line linking start →
-  each guess in order — the legs that sum toward the target), the **range ring** (`targetKm`
-  + `toleranceKm` props: a `geoCircle` at the distance still to cover, centred on wherever
-  the journey stands — the start, then each latest guess — with the band's edges as
-  hairlines either side, so the player aims at a city on the ring instead of estimating
-  great-circle distances in their head; it stops being drawn once the total is past the
-  band, and deduction modes pass no `targetKm` and get none) and guess pins coloured by
+  each guess in order — the legs that sum toward the target), the **range ring**
+  (`targetKm` prop: a `geoCircle` at the distance still to cover, centred on wherever the
+  journey stands — the start, then each latest guess — so the player aims at a city on the
+  ring instead of estimating great-circle distances in their head; it stops being drawn
+  once the total is past the target, and deduction modes pass no `targetKm` and get none.
+  Drawn as a **soft halo**: the same path stroked three times — two wide, near-transparent
+  passes for the falloff, then a quiet hairline — rather than an SVG blur filter, which
+  would re-rasterize on every frame of a drag. The win band isn't drawn; the halo's
+  falloff reads as slack and the exact tolerance is in the prompt copy) and guess pins coloured by
   `tempLevel`, and — only once `finished` — an explorable **reveal** (via the `reveal`
   prop): the ideal single-hop wins (violet `--reveal` dots) plus the completions from the
   player's stopping point (win-coloured dots) — both distinct from the smaller,

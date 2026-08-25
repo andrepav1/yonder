@@ -41,9 +41,9 @@ is a better score.
   the only way to lose is to use up all six guesses. The band is a flat distance rather
   than a percentage of the target, so the precision asked of you is the same on a
   2,000 km day and a 9,000 km one — see `DECISIONS.md`.
-- **The range ring:** the globe draws the distance you still have to cover as a dashed
-  circle around wherever your journey stands, with the band's edges either side. You
-  aim at a city on the ring rather than estimating great-circle distances in your head.
+- **The range ring:** the globe draws the distance you still have to cover as a softly
+  glowing circle around wherever your journey stands. You aim at a city on the ring
+  rather than estimating great-circle distances in your head.
 - **Score (bragging rights):** it's golf — the streak and guess distribution reward
   reaching the band in as **few hops** as possible.
 - **Guessable cities:** only cities with a population **≥ 100,000** are in the game
