@@ -17,7 +17,7 @@ const puzzle: PuzzleSpec = {
     population: 1_000_000,
   },
   targetKm: 1000,
-  tolerancePct: defaultRules.tolerancePct,
+  toleranceKm: 20,
   answers: [],
   exploreAnswers: [],
   validAnswerCount: 0,

@@ -27,13 +27,15 @@ function eastCity(deg: number, id = 100): City {
   }
 }
 
-function puzzleWithTarget(targetKm: number): PuzzleSpec {
+// A tight ±20 km band, so these 1,000 km fixtures can tell "in the band" from
+// "past it". The shipped default is a much wider ±500 km.
+function puzzleWithTarget(targetKm: number, toleranceKm = 20): PuzzleSpec {
   return {
     date: '2026-07-15',
     seed: 0,
     start,
     targetKm,
-    tolerancePct: defaultRules.tolerancePct,
+    toleranceKm,
     answers: [],
     exploreAnswers: [],
     validAnswerCount: 0,
@@ -59,17 +61,25 @@ describe('evaluateLeg', () => {
     expect(g.remainingKm).toBeCloseTo(1000 - g.cumulativeKm, 6)
   })
 
-  it('wins when the running total lands in the one-sided band below target', () => {
+  it('wins when the running total lands just short of the target', () => {
     const puzzle = puzzleWithTarget(1000)
-    // ~999 km east — inside [980, 1000], not over.
+    // ~999 km east — inside [980, 1020].
     const g = evaluateLeg(puzzle, start, 0, eastCity(8.983), defaultRules)
     expect(g.cumulativeKm).toBeGreaterThanOrEqual(980)
-    expect(g.cumulativeKm).toBeLessThanOrEqual(1000)
     expect(g.over).toBe(false)
     expect(g.won).toBe(true)
   })
 
-  it('overshoots (loses) when the running total passes the target', () => {
+  it('also wins just past the target — the band is two-sided', () => {
+    const puzzle = puzzleWithTarget(1000)
+    // ~1,001 km east: past the target, still inside the band.
+    const g = evaluateLeg(puzzle, start, 0, eastCity(9), defaultRules)
+    expect(g.remainingKm).toBeLessThan(0)
+    expect(g.over).toBe(false)
+    expect(g.won).toBe(true)
+  })
+
+  it('flags `over` only past the far edge of the band', () => {
     const puzzle = puzzleWithTarget(1000)
     const g = evaluateLeg(puzzle, start, 0, eastCity(20), defaultRules) // ~2225 km
     expect(g.over).toBe(true)
@@ -128,8 +138,12 @@ describe('tempLevel', () => {
   it('returns the hottest level for a win', () => {
     expect(tempLevel(leg(990, true), defaultRules)).toBe(4)
   })
-  it('returns the coldest level for a bust (overshoot)', () => {
-    expect(tempLevel(leg(1100, false, true), defaultRules)).toBe(0)
+  it('grades an overshoot on how far past it went, not as an automatic 0', () => {
+    // 60 km past a 1,000 km target is 6% off — as hot as 60 km short.
+    expect(tempLevel(leg(1060, false, true), defaultRules)).toBe(3)
+    expect(tempLevel(leg(940), defaultRules)).toBe(3)
+    // Miles past is still cold.
+    expect(tempLevel(leg(1800, false, true), defaultRules)).toBe(0)
   })
   it('heats up as the running total nears the target', () => {
     expect(tempLevel(leg(940), defaultRules)).toBe(3) // ~6% to go

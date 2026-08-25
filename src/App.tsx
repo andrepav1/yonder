@@ -294,10 +294,7 @@ export default function App() {
                 {formatDistance(puzzle.targetKm, unit, t)}
               </div>
               <div className="prompt__hint">
-                {t.prompt.hint(
-                  bandLabel(puzzle.targetKm, rules.tolerancePct, unit, t),
-                  rules.guesses,
-                )}
+                {t.prompt.hint(bandLabel(puzzle.toleranceKm, unit, t), rules.guesses)}
               </div>
             </>
           )}

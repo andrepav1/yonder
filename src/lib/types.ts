@@ -59,9 +59,13 @@ export interface GuessResult {
   remainingKm: number
   /** Initial bearing from the previous point to this city, degrees [0,360). */
   bearingDeg: number
-  /** True when the running total has overshot the target (an instant loss). */
+  /**
+   * True when the running total has climbed past the *far* edge of the win
+   * band — too far to still win. Not a loss on its own: under the default
+   * `overshoot: 'continue'` the round plays on to the guess limit.
+   */
   over: boolean
-  /** True when the running total lands in [target·(1−tol), target] — a win. */
+  /** True when the running total lands in [target−tol, target+tol] — a win. */
   won: boolean
   /**
    * Hidden Destination: great-circle distance from this guess to the mystery
@@ -98,7 +102,7 @@ export interface ScoreBreakdown {
   totalKm: number
   /** targetKm − totalKm: how far short (or, if negative, past) the finish. */
   remainingKm: number
-  /** True when the round ended by overshooting the target. */
+  /** True when the final total sits past the far edge of the win band. */
   overshot: boolean
 }
 
@@ -122,14 +126,21 @@ export interface PuzzleSpec {
    * Absent in Classic.
    */
   target?: City
-  /** One-sided win-band width below the target, as a fraction (mirrors rules.tolerancePct). */
-  tolerancePct: number
-  /** The `revealCount` cities closest to the target distance. */
+  /**
+   * Half-width of the win band in km, applied on both sides of `targetKm`
+   * (mirrors rules.toleranceKm). The puzzle carries its own band so a saved
+   * round is scored against the rules it was generated under.
+   */
+  toleranceKm: number
+  /** The first `revealCount` of `exploreAnswers`. */
   answers: AnswerCity[]
   /**
-   * The `exploreCount` cities closest to the target distance — the end-of-round
-   * "explore" reveal set. A superset of `answers`, sorted the same way. These are
-   * the single-hop wins a finished player can browse on the globe.
+   * The end-of-round "explore" reveal set: up to `exploreCount` single-hop wins
+   * a finished player can browse on the globe. Chosen as the most
+   * **recognizable** cities in the band (every city in the band wins equally,
+   * so the most precisely-centred ones are no better an answer — just less
+   * nameable), then ordered closest-to-target for display. A superset of
+   * `answers`, sorted the same way.
    */
   exploreAnswers: AnswerCity[]
   /** How many dataset cities fall inside the win band. */

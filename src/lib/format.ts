@@ -15,16 +15,13 @@ export function formatDistance(km: number, unit: Unit, t: Messages = en): string
 }
 
 /**
- * The win band's width (how far below the target still wins) as a display
- * string, e.g. "45 km". One source of truth for the prompt + how-to copy.
+ * The win band's half-width (how far off the target still wins, either way) as
+ * a display string, e.g. "500 km". One source of truth for the prompt + how-to
+ * copy. Flat in km, so unlike the old percentage band it doesn't change with
+ * the day's target.
  */
-export function bandLabel(
-  targetKm: number,
-  tolerancePct: number,
-  unit: Unit,
-  t: Messages = en,
-): string {
-  return formatDistance(targetKm * tolerancePct, unit, t)
+export function bandLabel(toleranceKm: number, unit: Unit, t: Messages = en): string {
+  return formatDistance(toleranceKm, unit, t)
 }
 
 /**

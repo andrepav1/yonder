@@ -55,7 +55,7 @@ export function generateHidden(seed: string, opts: HiddenOptions = {}): PuzzleSp
     seed: hashString(seed),
     // No start and no target distance — every clue is earned by guessing.
     targetKm: 0,
-    tolerancePct: rules.tolerancePct,
+    toleranceKm: rules.toleranceKm,
     target: pickTarget(rng()),
     answers: [],
     exploreAnswers: [],

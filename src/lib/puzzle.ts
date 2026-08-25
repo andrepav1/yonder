@@ -23,11 +23,12 @@ export interface GenerateOptions {
 /**
  * Generate the puzzle for a UTC date string. Deterministic in `date`.
  *
- * Draws a population-weighted start city and a target distance in
- * [minKm, maxKm], then keeps re-drawing (advancing the seeded rng) until at
- * least `minValidAnswers` cities sit within [target·(1−tol), target] of the
- * start — cities that win in a single hop — guaranteeing every daily puzzle is
- * solvable. (Multi-hop paths only add more ways to reach the band.)
+ * Draws a country-balanced, population-weighted start city and a target
+ * distance in [minKm, maxKm], then keeps re-drawing (advancing the seeded rng)
+ * until the day is both **solvable** (at least `minValidAnswers` cities sit
+ * inside the win band around the start — cities that win in a single hop) and
+ * **guessable** (at least `minFamousAnswers` of them are recognizable). Multi-
+ * hop paths only add more ways to reach the band.
  */
 export function generatePuzzle(date: string, opts: GenerateOptions = {}): PuzzleSpec {
   const rules = opts.rules ?? defaultRules
@@ -39,32 +40,46 @@ export function generatePuzzle(date: string, opts: GenerateOptions = {}): Puzzle
   if (pool.length === 0) {
     throw new Error('No cities meet startCity.minPopulation')
   }
-  const pickStart = weightedByPopulation(pool, rules.startCity.weightExponent)
+  const pickStart = weightedByPopulation(
+    pool,
+    rules.startCity.weightExponent,
+    rules.startCity.countryBalance,
+  )
 
   const { minKm, maxKm } = rules.target
-  const tol = rules.tolerancePct
+  const toleranceKm = rules.toleranceKm
+  const { minValidAnswers, minFamousAnswers, famousPopulation } = rules.generation
 
   for (let attempt = 0; attempt < rules.generation.maxAttempts; attempt++) {
     const start = pickStart(rng())
     const targetKm = Math.round(minKm + rng() * (maxKm - minKm))
-    // One-sided win band: a single-hop answer must be at/under the target
-    // (reaching it exactly wins; going past it would overshoot and lose).
-    const low = targetKm * (1 - tol)
-    const high = targetKm
+    // Two-sided win band: landing a little past the target wins too, so a hop
+    // that slightly overshoots is a win rather than a bust.
+    const low = targetKm - toleranceKm
+    const high = targetKm + toleranceKm
 
     const answers: AnswerCity[] = []
-    let validCount = 0
+    let famousCount = 0
     for (const c of cities) {
       if (c.id === start.id) continue
       const distanceKm = haversineKm(start, c)
       if (distanceKm >= low && distanceKm <= high) {
-        validCount++
         answers.push({ city: c, distanceKm })
+        if (c.population >= famousPopulation) famousCount++
       }
     }
 
-    if (validCount >= rules.generation.minValidAnswers) {
-      answers.sort(
+    if (answers.length >= minValidAnswers && famousCount >= minFamousAnswers) {
+      // Every city in the band wins equally, so there's nothing to gain from
+      // revealing the ones that land most precisely on the target — that just
+      // surfaced 200k-population towns nobody could have named. Pick the most
+      // *recognizable* winners instead (the reveal is the "learn the map"
+      // layer), then order the chosen set closest-to-target for display.
+      const revealed = answers
+        .slice()
+        .sort((a, b) => b.city.population - a.city.population)
+        .slice(0, rules.generation.exploreCount)
+      revealed.sort(
         (a, b) => Math.abs(a.distanceKm - targetKm) - Math.abs(b.distanceKm - targetKm),
       )
       return {
@@ -72,10 +87,10 @@ export function generatePuzzle(date: string, opts: GenerateOptions = {}): Puzzle
         seed: hashString(date),
         start,
         targetKm,
-        tolerancePct: tol,
-        answers: answers.slice(0, rules.generation.revealCount),
-        exploreAnswers: answers.slice(0, rules.generation.exploreCount),
-        validAnswerCount: validCount,
+        toleranceKm,
+        answers: revealed.slice(0, rules.generation.revealCount),
+        exploreAnswers: revealed,
+        validAnswerCount: answers.length,
       }
     }
   }

@@ -15,15 +15,16 @@ const dates = [
 
 for (const date of dates) {
   const p = generatePuzzle(date)
-  const band = `${Math.round(p.targetKm * (1 - p.tolerancePct))}–${p.targetKm} km`
+  const band = `${p.targetKm - p.toleranceKm}–${p.targetKm + p.toleranceKm} km`
   console.log(`\n${date}  seed=${p.seed}`)
   console.log(
     `  START: ${cityLabel(p.start!)}  (pop ${p.start!.population.toLocaleString()})`,
   )
   console.log(
-    `  TARGET: ${p.targetKm} km   win band ${p.tolerancePct * 100}% under = ${band} (single hop; don't overshoot)`,
+    `  TARGET: ${p.targetKm} km   win band ±${p.toleranceKm} km = ${band} (single hop)`,
   )
-  console.log(`  single-hop wins in band: ${p.validAnswerCount}`)
+  const famous = p.exploreAnswers.filter((a) => a.city.population >= 1_000_000).length
+  console.log(`  single-hop wins in band: ${p.validAnswerCount} (${famous}+ recognizable)`)
   console.log(`  closest ${p.answers.length}:`)
   for (const a of p.answers) {
     const delta = a.distanceKm - p.targetKm

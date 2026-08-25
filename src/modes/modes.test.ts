@@ -29,9 +29,12 @@ describe('classic free-play mode', () => {
       expect(p.validAnswerCount).toBeGreaterThanOrEqual(
         defaultRules.generation.minValidAnswers,
       )
-      // The closest revealed answer is a genuine single-hop win (at/under target).
+      // The closest revealed answer is a genuine single-hop win — inside the
+      // two-sided band, so it may sit a little past the target.
       const nearest = p.answers[0]!
-      expect(haversineKm(p.start!, nearest.city)).toBeLessThanOrEqual(p.targetKm)
+      const dist = haversineKm(p.start!, nearest.city)
+      expect(dist).toBeGreaterThanOrEqual(p.targetKm - p.toleranceKm)
+      expect(dist).toBeLessThanOrEqual(p.targetKm + p.toleranceKm)
     }
   })
 

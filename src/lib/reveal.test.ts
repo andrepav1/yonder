@@ -16,8 +16,8 @@ describe('findCompletions', () => {
     expect(out.length).toBeGreaterThan(0)
     for (const { city, distanceKm } of out) {
       const total = 0 + distanceKm
-      expect(total).toBeGreaterThanOrEqual(puzzle.targetKm * (1 - rules.tolerancePct))
-      expect(total).toBeLessThanOrEqual(puzzle.targetKm)
+      expect(total).toBeGreaterThanOrEqual(puzzle.targetKm - puzzle.toleranceKm)
+      expect(total).toBeLessThanOrEqual(puzzle.targetKm + puzzle.toleranceKm)
       // The leg distance we report matches the great-circle from `from`.
       expect(distanceKm).toBeCloseTo(haversineKm(puzzle.start!, city), 6)
     }
@@ -32,14 +32,24 @@ describe('findCompletions', () => {
     for (const { city, distanceKm } of out) {
       expect(distanceKm).toBeCloseTo(haversineKm(from, city), 6)
       const total = mid + distanceKm
-      expect(total).toBeLessThanOrEqual(puzzle.targetKm + 1e-6)
-      expect(total).toBeGreaterThanOrEqual(puzzle.targetKm * (1 - rules.tolerancePct) - 1e-6)
+      expect(total).toBeLessThanOrEqual(puzzle.targetKm + puzzle.toleranceKm + 1e-6)
+      expect(total).toBeGreaterThanOrEqual(puzzle.targetKm - puzzle.toleranceKm - 1e-6)
     }
   })
 
-  it('is empty once the target is reached or overshot', () => {
+  it('is empty once the total is past the far edge of the band', () => {
     const puzzle = generatePuzzle('2026-07-15')
-    expect(findCompletions(puzzle, puzzle.start!, puzzle.targetKm, cities, rules, 20)).toEqual([])
+    // Exactly on the far edge: no hop can add zero distance.
+    expect(
+      findCompletions(
+        puzzle,
+        puzzle.start!,
+        puzzle.targetKm + puzzle.toleranceKm,
+        cities,
+        rules,
+        20,
+      ),
+    ).toEqual([])
     expect(
       findCompletions(puzzle, puzzle.start!, puzzle.targetKm * 1.5, cities, rules, 20),
     ).toEqual([])

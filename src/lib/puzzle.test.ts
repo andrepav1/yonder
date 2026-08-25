@@ -80,12 +80,13 @@ describe('generatePuzzle — invariants over a full year', () => {
       for (let i = 0; i < p.answers.length; i++) {
         expect(p.exploreAnswers[i]!.city.id).toBe(p.answers[i]!.city.id)
       }
-      const low = p.targetKm * (1 - p.tolerancePct)
+      const low = p.targetKm - p.toleranceKm
+      const high = p.targetKm + p.toleranceKm
       let prevDelta = -1
       for (const a of p.exploreAnswers) {
         const dist = haversineKm(p.start!, a.city)
         expect(dist).toBeGreaterThanOrEqual(low - 0.01)
-        expect(dist).toBeLessThanOrEqual(p.targetKm + 0.01)
+        expect(dist).toBeLessThanOrEqual(high + 0.01)
         const delta = Math.abs(a.distanceKm - p.targetKm)
         expect(delta).toBeGreaterThanOrEqual(prevDelta - 1e-9)
         prevDelta = delta
@@ -96,8 +97,8 @@ describe('generatePuzzle — invariants over a full year', () => {
   it('reveals single-hop wins actually inside the band, ordered by closeness', () => {
     for (const date of dates.slice(0, 40)) {
       const p = generatePuzzle(date)
-      const low = p.targetKm * (1 - p.tolerancePct)
-      const high = p.targetKm // one-sided: a single-hop win is never over target
+      const low = p.targetKm - p.toleranceKm
+      const high = p.targetKm + p.toleranceKm // two-sided: a little past still wins
       let prevDelta = -1
       for (const a of p.answers) {
         const dist = haversineKm(p.start!, a.city)
@@ -112,16 +113,48 @@ describe('generatePuzzle — invariants over a full year', () => {
   })
 })
 
+describe('generatePuzzle — guessable, not just solvable', () => {
+  const dates = datesOf(2026)
+  const cities = allCities()
+  const { famousPopulation, minFamousAnswers } = defaultRules.generation
+
+  it('always puts a recognizable city inside the win band', () => {
+    for (const date of dates) {
+      const p = generatePuzzle(date)
+      let famous = 0
+      for (const c of cities) {
+        if (c.id === p.start!.id || c.population < famousPopulation) continue
+        const km = haversineKm(p.start!, c)
+        if (km >= p.targetKm - p.toleranceKm && km <= p.targetKm + p.toleranceKm) famous++
+      }
+      expect(famous).toBeGreaterThanOrEqual(minFamousAnswers)
+    }
+  })
+
+  it('spreads start cities across many countries', () => {
+    // Population weight alone gave China ~37% of the calendar; countryBalance
+    // is what keeps any one country from owning the year.
+    const perCountry = new Map<string, number>()
+    for (const date of dates) {
+      const country = generatePuzzle(date).start!.country
+      perCountry.set(country, (perCountry.get(country) ?? 0) + 1)
+    }
+    const busiest = Math.max(...perCountry.values())
+    expect(perCountry.size).toBeGreaterThan(50)
+    expect(busiest / dates.length).toBeLessThan(0.15)
+  })
+})
+
 describe('generatePuzzle — rules are honoured', () => {
   it('respects a custom tolerance and target range', () => {
     const cities = allCities()
     const rules = {
       ...defaultRules,
-      tolerancePct: 0.1,
+      toleranceKm: 50,
       target: { minKm: 500, maxKm: 600 },
     }
     const p = generatePuzzle('2026-07-15', { cities, rules })
-    expect(p.tolerancePct).toBe(0.1)
+    expect(p.toleranceKm).toBe(50)
     expect(p.targetKm).toBeGreaterThanOrEqual(500)
     expect(p.targetKm).toBeLessThanOrEqual(600)
   })
