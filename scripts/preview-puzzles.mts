@@ -24,7 +24,9 @@ for (const date of dates) {
     `  TARGET: ${p.targetKm} km   win band ±${p.toleranceKm} km = ${band} (single hop)`,
   )
   const famous = p.exploreAnswers.filter((a) => a.city.population >= 1_000_000).length
-  console.log(`  single-hop wins in band: ${p.validAnswerCount} (${famous}+ recognizable)`)
+  console.log(
+    `  single-hop wins in band: ${p.validAnswerCount} (${famous}+ recognizable)`,
+  )
   console.log(`  closest ${p.answers.length}:`)
   for (const a of p.answers) {
     const delta = a.distanceKm - p.targetKm

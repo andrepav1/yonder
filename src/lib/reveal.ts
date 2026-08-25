@@ -46,6 +46,8 @@ export function findCompletions(
   }
 
   // Closest to a perfect landing (the target) first — the most satisfying wins.
-  found.sort((a, b) => Math.abs(a.distanceKm - perfect) - Math.abs(b.distanceKm - perfect))
+  found.sort(
+    (a, b) => Math.abs(a.distanceKm - perfect) - Math.abs(b.distanceKm - perfect),
+  )
   return found.slice(0, limit)
 }

@@ -25,7 +25,8 @@ export const en: Messages = {
     catalog: {
       classic: {
         name: 'Classic',
-        blurb: 'Hop city to city until your running total lands close to the target distance.',
+        blurb:
+          'Hop city to city until your running total lands close to the target distance.',
       },
       hidden: {
         name: 'Hidden Destination',

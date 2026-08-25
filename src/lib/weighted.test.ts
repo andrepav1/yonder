@@ -38,7 +38,10 @@ describe('weightedByPopulation — countryBalance', () => {
   // One country crowds the pool with many equal cities; another has a single
   // city of the same size. Population weight alone hands the crowded country
   // ~80% of picks purely on member count — the China problem in miniature.
-  const crowded = Array.from({ length: 4 }, () => ({ population: 100, country: 'Crowded' }))
+  const crowded = Array.from({ length: 4 }, () => ({
+    population: 100,
+    country: 'Crowded',
+  }))
   const skewed = [...crowded, { population: 100, country: 'Lonely' }]
 
   const shareOfLonely = (countryBalance: number) => {

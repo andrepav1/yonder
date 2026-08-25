@@ -102,10 +102,12 @@ modes can carry their own shape (a hidden `target` city, a per-leg `kind`, a
 ### Classic — `daily` + `free`  *(shipped, to be ported onto the framework)*
 
 Build a journey city by city; each hop adds the great-circle distance from your
-previous city to a running total. Land the total in `[target·(1−tol), target]` without
-overshooting, in as few hops as possible. Overshooting **ends the round** as a loss;
-setting `overshoot.endsRound: false` blocks the busting hop instead (no turn spent) —
-see `DECISIONS.md` 2026-07-24. 6 guesses.
+previous city to a running total. Land the total in `[target−tol, target+tol]` — a flat
+±500 km band, two-sided — in as few hops as possible. Overshooting is **not** a loss:
+under the default `overshoot.mode: 'continue'` the round plays on to the guess limit, so
+you lose only by exhausting your 6 guesses. `'lose'` (the old sudden death) and
+`'block'` (reject the hop) remain available. See `DECISIONS.md` 2026-08-25 for the
+measurements behind the rework.
 
 ### Hidden Destination — `free`  *(first new mode)*
 
