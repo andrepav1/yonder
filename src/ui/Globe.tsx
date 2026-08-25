@@ -26,7 +26,7 @@
 // off-viewport city dots are culled.
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { geoOrthographic, geoPath, geoGraticule10, geoDistance } from 'd3-geo'
+import { geoOrthographic, geoPath, geoGraticule10, geoDistance, geoCircle } from 'd3-geo'
 import { feature } from 'topojson-client'
 import type { Feature, FeatureCollection } from 'geojson'
 import landTopo from 'world-atlas/land-110m.json'
@@ -36,6 +36,7 @@ import type { GameRules, Unit } from '@/config/rules'
 import { tempLevel } from '@/lib/scoring'
 import { cityLabel, localizedName } from '@/lib/cities'
 import { exploreMinPopulation } from '@/lib/explore'
+import { EARTH_RADIUS_KM } from '@/lib/geo'
 import { formatDistance } from '@/lib/format'
 import { useI18n } from '@/i18n/context'
 
@@ -164,6 +165,19 @@ interface GlobeProps {
    * Destination, where guesses aren't a connected route.
    */
   showJourney?: boolean
+  /**
+   * Draw the **range ring**: the circle of points exactly `targetKm` away from
+   * where the journey currently stands — the start before the first hop, the
+   * last guessed city after it — with the win band shaded either side.
+   *
+   * This is the difference between reading "5,601 km to go" and *seeing* where
+   * that lands. Without it the player is asked to estimate great-circle
+   * distances from a number, which is the part of the game nobody can actually
+   * do. Omitted (or 0) draws nothing — deduction modes have no ring to draw.
+   */
+  targetKm?: number
+  /** Half-width of the win band in km; shades the ring. Needs `targetKm`. */
+  toleranceKm?: number
 }
 
 export function Globe({
@@ -177,6 +191,8 @@ export function Globe({
   reveal,
   finished,
   showJourney = true,
+  targetKm = 0,
+  toleranceKm = 0,
 }: GlobeProps) {
   const { t, locale } = useI18n()
   const { minZoom, maxZoom } = rules.explore
@@ -400,6 +416,33 @@ export function Globe({
     return path({ type: 'LineString', coordinates }) ?? ''
   }, [path, start, guesses, showJourney])
 
+  // The range ring: where the *remaining* distance would land you, measured
+  // from wherever the journey currently stands. Three concentric geodesic
+  // circles — the band's near edge, the exact target, the far edge — so the
+  // player can see the goal instead of estimating it from a number.
+  const rangeRings = useMemo(() => {
+    if (!showJourney || targetKm <= 0) return null
+    const last = guesses[guesses.length - 1]
+    const anchor = last ? last.city : start
+    if (!anchor) return null
+    // What's left to cover from here. Once past the band there's no ring to aim
+    // at any more, so stop drawing it.
+    const remainingKm = last ? targetKm - last.cumulativeKm : targetKm
+    if (remainingKm <= 0) return null
+
+    const centre: LngLat = [anchor.lng, anchor.lat]
+    // Great-circle distance → angular radius. A degree of arc is ~111.195 km.
+    const arc = (km: number) => (km / EARTH_RADIUS_KM) * (180 / Math.PI)
+    const ringAt = (km: number) =>
+      km > 0 ? (path(geoCircle().center(centre).radius(arc(km))()) ?? '') : ''
+
+    return {
+      target: ringAt(remainingKm),
+      near: ringAt(remainingKm - toleranceKm),
+      far: ringAt(remainingKm + toleranceKm),
+    }
+  }, [path, start, guesses, showJourney, targetKm, toleranceKm])
+
   // The explore dots actually on screen: projected, culled to the near
   // hemisphere + viewport, and capped (biggest kept — candidates are pop-sorted).
   const exploreDots = useMemo(() => {
@@ -601,6 +644,17 @@ export function Globe({
             <path className="globe__graticule" d={graticulePath} />
             {/* Crisp coastline over the bands */}
             <path className="globe__coast" d={landPath} />
+
+            {/* Range ring: aim here. Under the city dots so it never hides one. */}
+            {rangeRings && (
+              <g className="globe__range">
+                {rangeRings.far && <path className="globe__range-band" d={rangeRings.far} />}
+                {rangeRings.near && (
+                  <path className="globe__range-band globe__range-band--inner" d={rangeRings.near} />
+                )}
+                <path className="globe__range-ring" d={rangeRings.target} />
+              </g>
+            )}
 
             {/* Explorable cities: biggest first, more as you zoom in */}
             {exploreDots.map((dot) => {

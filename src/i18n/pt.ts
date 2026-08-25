@@ -25,7 +25,7 @@ export const pt: Messages = {
       classic: {
         name: 'Clássico',
         blurb:
-          'Salte de cidade em cidade para atingir a distância-alvo sem ultrapassar.',
+          'Salte de cidade em cidade até o seu total chegar perto da distância-alvo.',
       },
       hidden: {
         name: 'Destino oculto',
@@ -68,7 +68,7 @@ export const pt: Messages = {
     intro:
       'Todos os dias (UTC), todos recebem o mesmo desafio: uma cidade de partida e uma distância-alvo. Crie um trajeto nomeando cidades — cada salto soma a distância da sua última cidade a um total acumulado.',
     rules:
-      'Alcance o alvo sem ultrapassá-lo, no menor número de saltos. Você tem 6 tentativas. Mude para o modo Treino para desafios aleatórios ilimitados que não afetam a sua sequência.',
+      'Chegue perto o bastante do alvo, no menor número de saltos. Você tem 6 tentativas, e ultrapassar o alvo não encerra a rodada. Escolha um modo no menu para desafios aleatórios ilimitados que não afetam a sua sequência.',
     credits:
       'Dados de cidades © GeoNames (CC BY 4.0). Aplicação web estática e disponível offline.',
   },
@@ -77,7 +77,7 @@ export const pt: Messages = {
     eyebrow: 'Partida de hoje',
     targetLabel: 'Alcance um total de',
     hint: (band, guesses) =>
-      `pule de cidade em cidade · pare a menos de ${band} abaixo do alvo · não passe · ${guesses} tentativas`,
+      `pule de cidade em cidade · pare a menos de ${band} do alvo · ${guesses} tentativas`,
     guessesLeft: (n) => `${n} tentativas restantes`,
   },
 
@@ -144,13 +144,13 @@ export const pt: Messages = {
   howTo: {
     title: 'Como jogar',
     intro:
-      'Todo dia, uma cidade de partida e uma distância alvo. Monte um trajeto cidade por cidade e some os saltos — alcance o alvo sem passar.',
+      'Todo dia, uma cidade de partida e uma distância alvo. Monte um trajeto cidade por cidade e some os saltos — chegue perto o bastante do alvo.',
     step1:
       'Palpite uma cidade. Sua pontuação é a distância da partida até ela (em linha reta). Palpite outra e o salto da sua última cidade para a nova é somado.',
     step2:
-      'Continue saltando para se aproximar do alvo. A dica quente / frio esquenta conforme seu total se aproxima — veja o número «faltam» diminuir.',
+      'O anel tracejado no globo mostra exatamente quanto falta percorrer — mire uma cidade que caia sobre ele. A dica quente / frio esquenta conforme seu total se aproxima.',
     step3: (band, guesses) =>
-      `Pare seu total a menos de ${band} abaixo do alvo para vencer. Um salto que ultrapassaria o alvo é bloqueado — basta escolher uma cidade mais próxima. Você só perde ao esgotar as ${guesses} tentativas. Menos saltos, melhor pontuação.`,
+      `Pare seu total a menos de ${band} do alvo — para qualquer lado — para vencer. Ultrapassar custa apenas o turno: não dá para estourar, você só perde ao esgotar as ${guesses} tentativas. Menos saltos, melhor pontuação.`,
     note: (min) =>
       `Só as cidades com mais de ${min} habitantes estão no jogo — as menores não podem ser adivinhadas.`,
     cta: 'Vamos explorar',

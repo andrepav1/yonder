@@ -25,7 +25,7 @@ export const en: Messages = {
     catalog: {
       classic: {
         name: 'Classic',
-        blurb: 'Hop city to city to reach the target distance without overshooting.',
+        blurb: 'Hop city to city until your running total lands close to the target distance.',
       },
       hidden: {
         name: 'Hidden Destination',
@@ -67,7 +67,7 @@ export const en: Messages = {
     intro:
       'Every UTC day, everyone gets the same puzzle: one start city and one target distance. Build a journey by naming cities — each hop adds the distance from your last city to a running total.',
     rules:
-      'Reach the target without overshooting, in as few hops as possible. You get 6 guesses. Switch to Practice for unlimited random puzzles that don’t affect your streak.',
+      'Land your total close enough to the target, in as few hops as possible. You get 6 guesses, and going past the target doesn’t end the round. Pick a mode from the menu for unlimited random puzzles that don’t affect your streak.',
     credits:
       'City data © GeoNames (CC BY 4.0). Built as a static, offline-friendly web app.',
   },
@@ -76,7 +76,7 @@ export const en: Messages = {
     eyebrow: 'Today’s departure',
     targetLabel: 'Reach a total of',
     hint: (band, guesses) =>
-      `hop city to city · land within ${band} below the target · don’t overshoot · ${guesses} guesses`,
+      `hop city to city · land within ${band} of the target · ${guesses} guesses`,
     guessesLeft: (n) => `${n} guesses left`,
   },
 
@@ -143,13 +143,13 @@ export const en: Messages = {
   howTo: {
     title: 'How to play',
     intro:
-      'Every day, one start city and one target distance. Build a journey city by city and add up the hops — reach the target without going over.',
+      'Every day, one start city and one target distance. Build a journey city by city and add up the hops — get your total close enough to the target.',
     step1:
       'Guess a city. Your score is the distance from the start to it (as the crow flies). Guess again and the hop from your last city to the new one is added on.',
     step2:
-      'Keep hopping to climb toward the target. The hot / cold cue warms up as your running total nears it — watch the “to go” number shrink.',
+      'The dashed ring on the globe shows exactly how far you still have to travel — aim for a city on it. The hot / cold cue warms up as your total closes in.',
     step3: (band, guesses) =>
-      `Land your total within ${band} below the target to win. A hop that would go over is blocked — just pick a closer city. You only lose by using up all ${guesses} guesses. Fewer hops is a better score.`,
+      `Land your total within ${band} of the target — either side — to win. Going past it costs you nothing but the turn, so there’s no way to bust: you only lose by using up all ${guesses} guesses. Fewer hops is a better score.`,
     note: (min) =>
       `Only cities with more than ${min} people are in the game — smaller towns can’t be guessed.`,
     cta: 'Let’s wander',
