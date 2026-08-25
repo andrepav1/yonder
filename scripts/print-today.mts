@@ -28,7 +28,7 @@ const answerCity =
 // The city closest to half the target that is unambiguous and stays short of
 // the win band (so guessing it leaves the round in progress).
 const half = p.targetKm * 0.5
-const bandLow = p.targetKm * (1 - p.tolerancePct)
+const bandLow = p.targetKm - p.toleranceKm
 const partialCity = allCities()
   .filter((c) => c.id !== p.start!.id)
   .map((c) => ({ c, dist: haversineKm(p.start!, c) }))

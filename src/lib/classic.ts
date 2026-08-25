@@ -1,9 +1,10 @@
 // Classic — the original Yondle game, expressed as a `ModeLogic` (the first
 // mode on the framework seam). Build a journey city by city: each guess adds the
-// great-circle leg from the previous point onto a running total that must climb
-// into the win band without overshooting. This is the play logic lifted verbatim
-// out of the old hard-coded engine; the distance/band primitives still live in
-// `scoring.ts` (and stay shared). Pure.
+// great-circle leg from the previous point onto a running total that must land
+// inside the win band around the target. The band is two-sided and overshooting
+// no longer ends the round, so the whole game is "get close", not "get close
+// without dying". The distance/band primitives live in `scoring.ts` (and stay
+// shared). Pure.
 
 import type { ModeLogic, PlayOutcome } from './mode'
 import type { RoundState, PuzzleSpec, City, RoundStatus } from './types'
@@ -25,15 +26,16 @@ function play(
   const from = last ? last.city : start
   const priorCumulativeKm = last ? last.cumulativeKm : 0
   const result = evaluateLeg(puzzle, from, priorCumulativeKm, city, rules)
-  // Legs only add, so an overshoot is unrecoverable — by default it ends the
-  // round. Flipping `overshoot.endsRound` off instead blocks the hop (no turn
-  // spent), which is gentler but can strand a player with no legal move left.
-  if (result.over && !rules.overshoot.endsRound) return { error: 'overshoot' }
+  // Past the far edge of the band. Legs only add, so it can't be undone — but
+  // by default that no longer ends anything: the round plays on to the guess
+  // limit and is scored on how close it came. See `rules.overshoot`.
+  const { mode } = rules.overshoot
+  if (result.over && mode === 'block') return { error: 'overshoot' }
 
   const willBe = state.guesses.length + 1
   const status: RoundStatus = result.won
     ? 'won'
-    : result.over || willBe >= rules.guesses
+    : (result.over && mode === 'lose') || willBe >= rules.guesses
       ? 'lost'
       : 'playing'
   return { result, status }

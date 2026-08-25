@@ -595,6 +595,28 @@ button {
   stroke-linecap: round;
   opacity: 0.55;
 }
+
+/* Range ring — the circle of cities exactly the remaining distance away, drawn
+   as a soft halo: two wide, near-transparent strokes give the falloff, then a
+   quiet hairline marks the line itself. Layered strokes rather than an SVG blur
+   filter, which would re-rasterize on every frame of a drag. */
+.globe__range {
+  pointer-events: none;
+  fill: none;
+  stroke: var(--accent);
+}
+.globe__range-glow {
+  stroke-width: 11;
+  opacity: 0.055;
+}
+.globe__range-glow--wide {
+  stroke-width: 22;
+  opacity: 0.035;
+}
+.globe__range-ring {
+  stroke-width: 0.9;
+  opacity: 0.42;
+}
 .globe__pin {
   fill: var(--temp);
   stroke: var(--surface);

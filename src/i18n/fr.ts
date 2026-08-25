@@ -25,7 +25,7 @@ export const fr: Messages = {
       classic: {
         name: 'Classique',
         blurb:
-          'Sautez de ville en ville pour atteindre la distance cible sans la dépasser.',
+          'Sautez de ville en ville jusqu’à ce que votre total approche la distance cible.',
       },
       hidden: {
         name: 'Destination cachée',
@@ -68,7 +68,7 @@ export const fr: Messages = {
     intro:
       'Chaque jour (UTC), tout le monde reçoit le même défi : une ville de départ et une distance cible. Construisez un trajet en nommant des villes — chaque étape ajoute la distance depuis votre dernière ville à un total cumulé.',
     rules:
-      'Atteignez la cible sans la dépasser, en un minimum d’étapes. Vous avez 6 essais. Passez en mode Entraînement pour des défis aléatoires illimités qui n’affectent pas votre série.',
+      'Approchez la cible d’assez près, en un minimum d’étapes. Vous avez 6 essais, et dépasser la cible ne met pas fin à la manche. Choisissez un mode dans le menu pour des défis aléatoires illimités qui n’affectent pas votre série.',
     credits:
       'Données des villes © GeoNames (CC BY 4.0). Application web statique, utilisable hors ligne.',
   },
@@ -77,7 +77,7 @@ export const fr: Messages = {
     eyebrow: 'Départ du jour',
     targetLabel: 'Atteignez un total de',
     hint: (band, guesses) =>
-      `sautez de ville en ville · terminez à moins de ${band} sous la cible · ne dépassez pas · ${guesses} essais`,
+      `sautez de ville en ville · terminez à moins de ${band} de la cible · ${guesses} essais`,
     guessesLeft: (n) => `${n} essais restants`,
   },
 
@@ -144,13 +144,13 @@ export const fr: Messages = {
   howTo: {
     title: 'Comment jouer',
     intro:
-      'Chaque jour, une ville de départ et une distance cible. Construisez un parcours ville par ville et additionnez les sauts — atteignez la cible sans la dépasser.',
+      'Chaque jour, une ville de départ et une distance cible. Construisez un parcours ville par ville et additionnez les sauts — approchez la cible d’assez près.',
     step1:
       'Proposez une ville. Votre score est la distance depuis le départ jusqu’à elle (à vol d’oiseau). Proposez-en une autre et le saut depuis votre dernière ville vers la nouvelle s’ajoute.',
     step2:
-      'Continuez à sauter pour grimper vers la cible. L’indice chaud / froid se réchauffe à mesure que votre total s’en approche — regardez le nombre « restants » diminuer.',
+      'L’anneau pointillé sur le globe montre exactement la distance qu’il vous reste à parcourir — visez une ville posée dessus. L’indice chaud / froid se réchauffe à mesure que votre total s’en approche.',
     step3: (band, guesses) =>
-      `Terminez votre total à moins de ${band} sous la cible pour gagner. Un saut qui dépasserait la cible est bloqué — choisissez simplement une ville plus proche. Vous ne perdez qu’en épuisant vos ${guesses} essais. Moins de sauts, meilleur score.`,
+      `Terminez votre total à moins de ${band} de la cible — d’un côté ou de l’autre — pour gagner. La dépasser ne coûte que le tour : impossible de se griller, vous ne perdez qu’en épuisant vos ${guesses} essais. Moins de sauts, meilleur score.`,
     note: (min) =>
       `Seules les villes de plus de ${min} habitants sont dans le jeu — les plus petites ne sont pas devinables.`,
     cta: 'C’est parti',

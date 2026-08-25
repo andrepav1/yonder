@@ -13,8 +13,9 @@ const start: City = {
   lng: 0,
   population: 1_000_000,
 }
-// The opt-in forgiving variant: a busting hop is rejected rather than fatal.
-const blocking = { ...defaultRules, overshoot: { endsRound: false } }
+// The two opt-in variants of the overshoot rule (the default is 'continue').
+const blocking = { ...defaultRules, overshoot: { mode: 'block' as const } }
+const suddenDeath = { ...defaultRules, overshoot: { mode: 'lose' as const } }
 const east = (deg: number, id: number): City => ({
   id,
   name: `E${id}`,
@@ -30,7 +31,9 @@ const puzzle: PuzzleSpec = {
   seed: 0,
   start,
   targetKm: 1000,
-  tolerancePct: defaultRules.tolerancePct,
+  // A deliberately tight band so these fixtures can distinguish "in the band"
+  // from "past it" at 1,000 km scale; the shipped default is much wider.
+  toleranceKm: 20,
   answers: [],
   exploreAnswers: [],
   validAnswerCount: 0,
@@ -87,16 +90,39 @@ describe('engine', () => {
     expect(guessesLeft(state, defaultRules)).toBeGreaterThan(0)
   })
 
-  it('loses immediately on an overshoot (the default)', () => {
-    // ~2225 km — past the target.
+  it('wins on a small overshoot — the band is two-sided', () => {
+    // ~1,001 km east: 1 km *past* the target, well inside the ±20 km band.
+    const { state } = guess(createRound('2026-07-15'), east(9, 3))
+    expect(state.guesses[0]!.remainingKm).toBeLessThan(0)
+    expect(state.guesses[0]!.over).toBe(false)
+    expect(state.status).toBe('won')
+  })
+
+  it('keeps playing after overshooting the band (the default)', () => {
+    // ~2225 km — past the far edge of the band, but no longer fatal.
     const { state, error } = guess(createRound('2026-07-15'), east(20, 2))
+    expect(error).toBeUndefined()
+    expect(state.guesses[0]!.over).toBe(true)
+    expect(state.status).toBe('playing')
+    expect(guessesLeft(state, defaultRules)).toBe(defaultRules.guesses - 1)
+  })
+
+  it('plays a busted round out to the guess limit rather than ending it', () => {
+    let s = guess(createRound('2026-07-15'), east(20, 2)).state
+    for (let i = 2; i <= defaultRules.guesses; i++) s = guess(s, east(20 + i, 10 + i)).state
+    expect(s.status).toBe('lost')
+    expect(guessesLeft(s, defaultRules)).toBe(0)
+  })
+
+  it('loses immediately on an overshoot when overshoot.mode is "lose"', () => {
+    const { state, error } = guess(createRound('2026-07-15'), east(20, 2), suddenDeath)
     expect(error).toBeUndefined()
     expect(state.status).toBe('lost')
     expect(state.guesses[0]!.over).toBe(true)
-    expect(guessesLeft(state, defaultRules)).toBeGreaterThan(0)
+    expect(guessesLeft(state, suddenDeath)).toBeGreaterThan(0)
   })
 
-  it('blocks an overshooting hop instead when overshoot.endsRound is off', () => {
+  it('blocks an overshooting hop instead when overshoot.mode is "block"', () => {
     // ~2225 km — past the target.
     const { state, error } = guess(createRound('2026-07-15'), east(20, 2), blocking)
     expect(error).toBe('overshoot')

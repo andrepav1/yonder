@@ -4,8 +4,9 @@ A daily, mobile-first **geography guessing game**. Every UTC day everyone gets t
 same puzzle: one **start city** + one **target distance**. Build a journey by naming
 cities: each guess adds the great-circle (haversine) distance from your **previous**
 city (the start for the first hop) to a **running total**. Reach the target — land in
-`[target·(1−tol), target]` — without overshooting. Overshoot (the round ends there —
-the total only climbs), or run out of the 6 guesses, and you lose. Fewer hops is a better (golf) score. See `README.md` for the
+`[target−tol, target+tol]`, a flat ±500 km band. There is **no bust**: passing the
+target costs the turn but never the round, so you lose only by running out of the 6
+guesses. Fewer hops is a better (golf) score. See `README.md` for the
 player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
 
 > **Status:** v1 is fully built — the pure core (distance/bearing, dataset +
@@ -47,9 +48,13 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   fully static + offline-friendly by default. Not game rules → not determinism-sacred.
   See `MONETIZATION.md` for the playbook (current values + AdSense activation steps).
 - `src/lib/prng.ts` — `hashString` (FNV-1a) + `mulberry32` seeded PRNG. Pure.
-- `src/lib/weighted.ts` — `weightedByPopulation(pool, exponent)`: builds a
-  population-weighted picker (`r ∈ [0,1)` → pool member, binary search over cumulative
-  weights). Pure; shared by both puzzle generators (`puzzle.ts`, `hidden.ts`).
+- `src/lib/weighted.ts` — `weightedByPopulation(pool, exponent, countryBalance?)`:
+  builds a weighted picker (`r ∈ [0,1)` → pool member, binary search over cumulative
+  weights). `countryBalance` divides each weight by its country's member count raised to
+  that power — the fix for geographic skew, which the exponent alone cannot touch (it's
+  a member-count problem: China put ~100 cities in the ≥1M pool and won ~35% of days at
+  *every* exponent from 1 down to flat). Pure; shared by both puzzle generators
+  (`puzzle.ts`, `hidden.ts`).
 - `src/lib/geo.ts` — `haversineKm`, `initialBearingDeg`, `compass16`,
   `bearingArrow`, km/mi conversion. Pure.
 - `src/lib/types.ts` — serializable domain types (`City`, `PuzzleSpec`, `AnswerCity`).
@@ -71,12 +76,15 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   the canonical name, and country/region qualifiers stay in their (English) dataset form.
   `capitals()` returns the national-capital pool (~160, memoized) and `isCapital(city)`
   tests the flag — a small, famous city set for modes like Hidden Destination.
-- `src/lib/puzzle.ts` — `generatePuzzle(date, {cities?, rules?})`: population-weighted
-  start city + validated target so every day has ≥ `minValidAnswers` cities within
-  `[target·(1−tol), target]` of the start — i.e. **single-hop wins** — guaranteeing
-  solvability (multi-hop paths only add more options). Deterministic in `date`. Emits
-  `answers` (the `revealCount` closest to target, for share) and `exploreAnswers` (the
-  `exploreCount` closest — a superset, powering the end-of-round explore reveal).
+- `src/lib/puzzle.ts` — `generatePuzzle(date, {cities?, rules?})`: country-balanced,
+  population-weighted start city + a validated target, re-drawn until the day is both
+  **solvable** (≥ `minValidAnswers` cities inside the two-sided band around the start —
+  i.e. **single-hop wins**) and **guessable** (≥ `minFamousAnswers` of them at/above
+  `famousPopulation`). Solvable is not the same as guessable: the old generator shipped
+  days whose only answers were 150k-population towns nobody could name. Deterministic in
+  `date`. Emits `exploreAnswers` — the most **recognizable** winners (every city in the
+  band wins equally, so precision buys nothing and costs nameability), ordered
+  closest-to-target — plus `answers`, its first `revealCount`.
 - `src/lib/reveal.ts` — **pure** end-of-round "learn the map" helper: `findCompletions`
   returns the cities that would have finished the run in one more hop **from where the
   player actually stopped** (the personal near-miss layer; empty once the target is
@@ -89,9 +97,12 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   cities to draw as its explorable dot layer; the projection-dependent culling stays in
   the component.
 - `src/lib/scoring.ts` — **pure**: `evaluateLeg` (leg / running total / remaining /
-  bearing / over / win — a guess from a given previous point onto the running total),
-  `scoreRound` (golf: guess count + final total), and `tempLevel` (the shared hot→cold
-  level, graded by how much of the journey remains; 0 also = bust/overshoot).
+  bearing / over / win — a guess from a given previous point onto the running total; the
+  band comes from the **puzzle**, so a saved round is scored under the rules it was
+  generated with), `scoreRound` (golf: guess count + final total), and `tempLevel` (the
+  shared hot→cold level, graded on the **absolute** miss, so a small overshoot reads hot
+  instead of being forced to 0). `over` now means "past the *far* edge of the band" —
+  no longer winnable, but not a loss on its own.
 - `src/lib/mode.ts` — the **mode seam**: the pure `ModeLogic` interface the engine
   delegates to (`play` → validate+evaluate a guess into a rejection or a
   `{result, status}`; `score`), plus `GuessError` / `ApplyResult` / `PlayOutcome`.
@@ -104,13 +115,14 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   back-compat. Every transition returns a new serializable `RoundState`.
 - `src/lib/classic.ts` — **pure**: `classicLogic`, the original game as the first
   `ModeLogic`. A guess adds the next leg from the previous city; rejects start-city /
-  duplicate without using a turn; ends the round on a win, an **overshoot**, or out of
-  guesses. Because legs only ever add, an overshoot can never recover, so by default
-  (`rules.overshoot.endsRound: true`) it **ends the round** as a loss. Flipping the knob
-  to `false` **blocks** the busting hop instead (rejected, no turn spent): gentler, but
-  it can strand a player whose remaining distance is shorter than the nearest city,
-  leaving a round that can neither be won nor ended — see `DECISIONS.md`. Composes the
-  distance/band primitives from `scoring.ts`.
+  duplicate without using a turn; ends the round on a win or out of guesses. Passing the
+  band is **not** an ending under the default `rules.overshoot.mode: 'continue'` — legs
+  only add so the total can't come back down, but the round plays on to the guess limit
+  rather than slamming shut on what used to be a coin flip (62.5% of all cities busted
+  as a first guess). `'lose'` restores the old sudden death and `'block'` rejects the
+  hop instead (gentler, but it can strand a player whose remaining distance is shorter
+  than the nearest city) — see `DECISIONS.md`. Composes the distance/band primitives
+  from `scoring.ts`.
 - `src/lib/hidden.ts` — **pure**: Hidden Destination, a deduction mode (find a secret
   **capital**; no start city, no cumulative path, no overshoot). `generateHidden(seed)`
   picks a population-weighted capital target and **nothing else** — no origin and no
@@ -213,7 +225,15 @@ player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
   from props. Renders the start-city marker (`start` is **optional** — Hidden
   Destination has no origin, so the globe opens on a neutral world view), the
   **journey** (a line linking start →
-  each guess in order — the legs that sum toward the target) and guess pins coloured by
+  each guess in order — the legs that sum toward the target), the **range ring**
+  (`targetKm` prop: a `geoCircle` at the distance still to cover, centred on wherever the
+  journey stands — the start, then each latest guess — so the player aims at a city on the
+  ring instead of estimating great-circle distances in their head; it stops being drawn
+  once the total is past the target, and deduction modes pass no `targetKm` and get none.
+  Drawn as a **soft halo**: the same path stroked three times — two wide, near-transparent
+  passes for the falloff, then a quiet hairline — rather than an SVG blur filter, which
+  would re-rasterize on every frame of a drag. The win band isn't drawn; the halo's
+  falloff reads as slack and the exact tolerance is in the prompt copy) and guess pins coloured by
   `tempLevel`, and — only once `finished` — an explorable **reveal** (via the `reveal`
   prop): the ideal single-hop wins (violet `--reveal` dots) plus the completions from the
   player's stopping point (win-coloured dots) — both distinct from the smaller,

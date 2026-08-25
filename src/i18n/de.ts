@@ -25,7 +25,7 @@ export const de: Messages = {
       classic: {
         name: 'Klassisch',
         blurb:
-          'Springe von Stadt zu Stadt, um die Zieldistanz zu erreichen, ohne sie zu überschreiten.',
+          'Springe von Stadt zu Stadt, bis deine Gesamtstrecke nahe an der Zieldistanz liegt.',
       },
       hidden: {
         name: 'Verstecktes Ziel',
@@ -68,7 +68,7 @@ export const de: Messages = {
     intro:
       'Jeden Tag (UTC) bekommen alle dasselbe Rätsel: eine Startstadt und eine Zieldistanz. Baue eine Reise, indem du Städte nennst — jeder Sprung addiert die Distanz von deiner letzten Stadt zu einer laufenden Summe.',
     rules:
-      'Erreiche das Ziel, ohne es zu überschreiten, in möglichst wenigen Sprüngen. Du hast 6 Versuche. Wechsle in den Übungsmodus für unbegrenzte Zufallsrätsel, die deine Serie nicht beeinflussen.',
+      'Komm dem Ziel nah genug, in möglichst wenigen Sprüngen. Du hast 6 Versuche, und das Ziel zu überschreiten beendet die Runde nicht. Wähle im Menü einen Modus für unbegrenzte Zufallsrätsel, die deine Serie nicht beeinflussen.',
     credits:
       'Städtedaten © GeoNames (CC BY 4.0). Als statische, offline-taugliche Web-App gebaut.',
   },
@@ -77,7 +77,7 @@ export const de: Messages = {
     eyebrow: 'Heutiger Start',
     targetLabel: 'Erreiche eine Summe von',
     hint: (band, guesses) =>
-      `von Stadt zu Stadt springen · bis ${band} unter dem Ziel landen · nicht überschreiten · ${guesses} Versuche`,
+      `von Stadt zu Stadt springen · bis ${band} ans Ziel herankommen · ${guesses} Versuche`,
     guessesLeft: (n) => `${n} Versuche übrig`,
   },
 
@@ -144,13 +144,13 @@ export const de: Messages = {
   howTo: {
     title: 'Spielanleitung',
     intro:
-      'Jeden Tag eine Startstadt und eine Zieldistanz. Baue Stadt für Stadt eine Reise und addiere die Sprünge — erreiche das Ziel, ohne es zu überschreiten.',
+      'Jeden Tag eine Startstadt und eine Zieldistanz. Baue Stadt für Stadt eine Reise und addiere die Sprünge — komm dem Ziel nah genug.',
     step1:
       'Rate eine Stadt. Deine Punktzahl ist die Luftlinie vom Start zu ihr. Rate erneut, und der Sprung von deiner letzten Stadt zur neuen wird hinzuaddiert.',
     step2:
-      'Springe weiter, um dem Ziel näherzukommen. Der Heiß-/Kalt-Hinweis wird wärmer, je näher deine Summe kommt — sieh zu, wie die „noch“-Zahl schrumpft.',
+      'Der gestrichelte Ring auf dem Globus zeigt genau, wie weit du noch musst — ziele auf eine Stadt darauf. Der Heiß-/Kalt-Hinweis wird wärmer, je näher deine Summe kommt.',
     step3: (band, guesses) =>
-      `Lande deine Summe bis ${band} unter dem Ziel, um zu gewinnen. Ein Sprung, der darüber hinausginge, wird blockiert — wähle einfach eine nähere Stadt. Du verlierst nur, wenn deine ${guesses} Versuche aufgebraucht sind. Weniger Sprünge sind besser.`,
+      `Lande deine Summe innerhalb von ${band} um das Ziel — in beide Richtungen — um zu gewinnen. Darüber hinauszugehen kostet nur den Zug: Überkaufen ist unmöglich, du verlierst nur, wenn deine ${guesses} Versuche aufgebraucht sind. Weniger Sprünge sind besser.`,
     note: (min) =>
       `Nur Städte mit mehr als ${min} Einwohnern sind im Spiel — kleinere Orte kannst du nicht raten.`,
     cta: 'Auf geht’s',

@@ -23,12 +23,12 @@ is a better score.
 | --------------- | -------------------------------------------------------------- | ---------------------------------- |
 | Guesses per day | **6** hops                                                     | `rules.guesses`                    |
 | Scoring         | **cumulative** — sum of each leg (previous city → next)        | `src/lib/scoring.ts`               |
-| Win band        | running total in **[target·98%, target]** (one-sided; no over) | `rules.tolerancePct`               |
-| Overshoot       | going **over** ends the round as a loss (`endsRound: false` blocks the hop instead) | `rules.overshoot.endsRound`        |
-| Lose            | overshooting, or out of 6 guesses short of the band             | `src/lib/engine.ts`                |
+| Win band        | running total within **±500 km** of the target (two-sided)     | `rules.toleranceKm`                |
+| Overshoot       | **not a loss** — the round plays on (`'block'` / `'lose'` opt back in) | `rules.overshoot.mode`      |
+| Lose            | only by using up all 6 guesses without reaching the band        | `src/lib/engine.ts`                |
 | Score           | golf: **fewer hops is better**                                 | guess distribution                 |
-| Target distance | **500–10000 km**, validated to have ≥3 single-hop wins         | `rules.target`, `rules.generation` |
-| Start city      | population-weighted, **≥ 1,000,000** (recognizable)            | `rules.startCity`                  |
+| Target distance | **1500–10000 km**, validated for ≥3 single-hop wins incl. ≥1 recognizable | `rules.target`, `rules.generation` |
+| Start city      | population-weighted **and country-balanced**, **≥ 1,000,000**  | `rules.startCity`                  |
 | Dataset         | GeoNames cities, **pop ≥ 100k** (~6.2k cities)                 | `rules.dataset`                    |
 | Daily reset     | **UTC midnight**, seeded from the date                         | `rules.reset`                      |
 
@@ -36,9 +36,14 @@ is a better score.
   total = dist(Rome→Milan); guess Turin → total += dist(Milan→Turin); and so on. You
   can revisit no city (each is used once), and the legs only ever add up.
 - **Win/lose (drives the streak):** you win the moment the total lands in the band —
-  within **2% below** the target (for 2000 km, that's 1960–2000 km). Cross the target
-  and you **bust** immediately; so does running out of guesses. The band is a
-  percentage, so it's unit-independent (same in km or miles).
+  within **500 km either side** of the target (for 2000 km, that's 1500–2500 km).
+  There is **no bust**: passing the target costs you the turn but never the round, and
+  the only way to lose is to use up all six guesses. The band is a flat distance rather
+  than a percentage of the target, so the precision asked of you is the same on a
+  2,000 km day and a 9,000 km one — see `DECISIONS.md`.
+- **The range ring:** the globe draws the distance you still have to cover as a softly
+  glowing circle around wherever your journey stands. You aim at a city on the ring
+  rather than estimating great-circle distances in your head.
 - **Score (bragging rights):** it's golf — the streak and guess distribution reward
   reaching the band in as **few hops** as possible.
 - **Guessable cities:** only cities with a population **≥ 100,000** are in the game
@@ -150,7 +155,7 @@ npm run preview:puzzles   # print generated puzzles for several dates
 Peek at the deterministic generator (same for everyone on that date):
 
 ```
-2026-07-16  START: Saint Petersburg   TARGET: 2264 km   win band 2219–2264 km (single hop; don't overshoot)
+2026-07-16  START: Saint Petersburg   TARGET: 2264 km   win band ±500 km = 1764–2764 km (single hop)
             single-hop wins in band: 3   closest: Balıkesir 2262 km (−2) ...
 ```
 

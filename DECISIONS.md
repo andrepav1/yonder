@@ -4,6 +4,56 @@ Short, ADR-style record of the choices behind the design, captured during the
 requirements interview. Append a dated entry when a non-trivial decision is made or
 changed. The "why" matters as much as the "what".
 
+## 2026-08-25 — Classic was unwinnable by design; four fixes
+
+- **Context.** Playtest feedback: the game isn't fun, it's too hard, and "half the
+  starting cities are China". Measured against a full year of generated dailies, all of
+  that was true, and each had a distinct cause:
+
+  | Symptom | Measurement |
+  | --- | --- |
+  | China dominates | China started **36.7%** of days; China + India **46.8%**. 224 distinct start cities, Shanghai 10× a year |
+  | Precision is inhuman | 2% one-sided band = a **109 km mean** window on a **5,601 km median** target |
+  | Right answers are unknowable | **70%** of the closest answers were under 300k population (median 196k); **24%** of days had *no* ≥1M city in the band |
+  | Opening move is a coin flip | **62.5%** of all cities overshoot on guess one, and overshoot was sudden death |
+
+- **Decision 1 — country-balanced start selection.** The obvious knob was useless:
+  `weightExponent` moved China only from 35% (exponent 1) to 33% (flat), because it is a
+  **member-count** problem, not a weight problem — China puts ~100 cities into the ≥1M
+  pool. `weightedByPopulation` gained a `countryBalance` exponent dividing each
+  candidate's weight by its country's pool count. At 1.0 it over-corrects (the calendar
+  fills with whichever single city a small country has — Zambia, Azerbaijan). The
+  default **0.5** gives China 7.9% and spreads the year over 90 countries while keeping
+  starts famous.
+- **Decision 2 — the band is a flat ±500 km, two-sided.** A percentage band scales with
+  the target, so precision demanded grew with distance exactly where the player's
+  intuition gets worse. A flat band asks the same of you every day. Two-sided because
+  the one-sided band existed *only* to make overshoot lethal, which is Decision 3.
+  `target.minKm` rises 500 → 1500 so the band stays a real constraint.
+- **Decision 3 — no bust (`overshoot.mode: 'continue'`).** Ending the round on a hop
+  that 62.5% of the map would have triggered made the opening move a coin flip rather
+  than a decision. Passing the band now costs the turn and nothing else; the round runs
+  to the guess limit. `'lose'` (the old sudden death) and `'block'` (reject the hop)
+  stay available as rule values. **Known limitation:** legs only add, so a player past
+  the band cannot win with their remaining guesses. Continuing is still better than
+  slamming the door — the round ends on the player's terms with the reveal intact —
+  but if this reads as busywork the next move is to score the round on its *closest
+  approach* rather than its final total.
+- **Decision 4 — reveal the recognizable winners, not the precise ones.** Every city in
+  the band wins equally, so ranking the reveal by "closest to the target" bought nothing
+  and cost nameability. The explore set is now chosen by population and then ordered by
+  closeness for display; median revealed-answer population goes 196k → 2.6M. Generation
+  also re-draws until at least `minFamousAnswers` (1) recognizable city is in the band,
+  which now holds on 365/365 days.
+- **Follow-on — the range ring.** The rules changes make the game winnable; the ring
+  makes it *playable*. Asking someone to name a city 2,324 km away means asking them to
+  estimate great-circle distances unaided, which is the one thing a map can do for you.
+  The globe draws that distance as a geodesic circle around wherever the journey stands.
+- **Consequence.** Today's puzzle changes for a given date (different start city, band,
+  and answers), so an in-progress round saved under the old rules will not line up with
+  the regenerated puzzle. Accepted: the daily is ephemeral and the streak record is what
+  players care about keeping.
+
 ## 2026-07-24 (later) — The city hint reveals only what can be the answer
 
 - **Context.** The in-round hint ("Show cities") draws the explorable dot layer, filtered

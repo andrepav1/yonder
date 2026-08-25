@@ -25,7 +25,7 @@ export const es: Messages = {
       classic: {
         name: 'Clásico',
         blurb:
-          'Salta de ciudad en ciudad para alcanzar la distancia objetivo sin pasarte.',
+          'Salta de ciudad en ciudad hasta que tu total se acerque a la distancia objetivo.',
       },
       hidden: {
         name: 'Destino oculto',
@@ -68,7 +68,7 @@ export const es: Messages = {
     intro:
       'Cada día (UTC), todos reciben el mismo reto: una ciudad de salida y una distancia objetivo. Crea un recorrido nombrando ciudades — cada salto suma la distancia desde tu última ciudad a un total acumulado.',
     rules:
-      'Alcanza el objetivo sin pasarte, en los menos saltos posibles. Tienes 6 intentos. Cambia al modo Práctica para retos aleatorios ilimitados que no afectan tu racha.',
+      'Acércate lo suficiente al objetivo, en los menos saltos posibles. Tienes 6 intentos, y pasarte del objetivo no termina la ronda. Elige un modo en el menú para retos aleatorios ilimitados que no afectan tu racha.',
     credits:
       'Datos de ciudades © GeoNames (CC BY 4.0). Aplicación web estática y disponible sin conexión.',
   },
@@ -77,7 +77,7 @@ export const es: Messages = {
     eyebrow: 'Salida de hoy',
     targetLabel: 'Alcanza un total de',
     hint: (band, guesses) =>
-      `salta de ciudad en ciudad · termina a menos de ${band} bajo el objetivo · no te pases · ${guesses} intentos`,
+      `salta de ciudad en ciudad · termina a menos de ${band} del objetivo · ${guesses} intentos`,
     guessesLeft: (n) => `${n} intentos restantes`,
   },
 
@@ -144,13 +144,13 @@ export const es: Messages = {
   howTo: {
     title: 'Cómo jugar',
     intro:
-      'Cada día, una ciudad de salida y una distancia objetivo. Construye un recorrido ciudad a ciudad y suma los saltos — alcanza el objetivo sin pasarte.',
+      'Cada día, una ciudad de salida y una distancia objetivo. Construye un recorrido ciudad a ciudad y suma los saltos — acércate lo suficiente al objetivo.',
     step1:
       'Propón una ciudad. Tu puntuación es la distancia desde la salida hasta ella (en línea recta). Propón otra y el salto desde tu última ciudad a la nueva se suma.',
     step2:
-      'Sigue saltando para acercarte al objetivo. La pista de calor / frío se calienta a medida que tu total se aproxima — mira cómo baja el número «restante».',
+      'El anillo punteado del globo muestra exactamente la distancia que te queda — apunta a una ciudad que caiga sobre él. La pista de calor / frío se calienta a medida que tu total se aproxima.',
     step3: (band, guesses) =>
-      `Termina tu total a menos de ${band} bajo el objetivo para ganar. Un salto que se pasaría queda bloqueado — solo elige una ciudad más cercana. Solo pierdes si agotas los ${guesses} intentos. Menos saltos, mejor puntuación.`,
+      `Termina tu total a menos de ${band} del objetivo — por arriba o por abajo — para ganar. Pasarte solo cuesta el turno: no puedes reventar, solo pierdes si agotas los ${guesses} intentos. Menos saltos, mejor puntuación.`,
     note: (min) =>
       `Solo las ciudades con más de ${min} habitantes están en el juego — las más pequeñas no se pueden adivinar.`,
     cta: 'A explorar',

@@ -13,7 +13,7 @@ interface HowToPlayProps {
 
 export function HowToPlay({ rules, puzzle, unit, onClose }: HowToPlayProps) {
   const { t } = useI18n()
-  const band = bandLabel(puzzle.targetKm, rules.tolerancePct, unit, t)
+  const band = bandLabel(puzzle.toleranceKm, unit, t)
   const minPop = rules.dataset.minPopulation.toLocaleString(t.numberLocale)
   return (
     <Modal title={t.howTo.title} onClose={onClose}>

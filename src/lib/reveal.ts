@@ -16,8 +16,8 @@ import { haversineKm } from './geo'
  * guessed), given `cumulativeKm` already covered.
  *
  * Returns the `limit` closest-to-a-perfect-landing cities, each paired with the
- * leg distance *from `from`* (not from the start). Empty when the player has
- * already reached or overshot the target — there's nothing left to complete.
+ * leg distance *from `from`* (not from the start). Empty when the player is
+ * already past the band — legs only add, so nothing can complete the run.
  *
  * `excludeIds` skips the start city and any city already on the path, so the
  * reveal only shows moves the player could still have made.
@@ -27,14 +27,15 @@ export function findCompletions(
   from: City,
   cumulativeKm: number,
   cities: City[],
-  rules: GameRules,
+  _rules: GameRules,
   limit: number,
   excludeIds: ReadonlySet<number> = new Set(),
 ): AnswerCity[] {
-  // The leg from `from` must carry the total into [target·(1−tol), target].
-  const high = puzzle.targetKm - cumulativeKm // exact landing on the target
-  const low = puzzle.targetKm * (1 - rules.tolerancePct) - cumulativeKm
-  // Already in the band or past it: no next hop can complete the run.
+  // The leg from `from` must carry the total into [target−tol, target+tol].
+  const perfect = puzzle.targetKm - cumulativeKm // an exact landing on the target
+  const low = perfect - puzzle.toleranceKm
+  const high = perfect + puzzle.toleranceKm
+  // Already past the band: no next hop can complete the run (legs only add).
   if (high <= 0) return []
 
   const found: AnswerCity[] = []
@@ -45,6 +46,8 @@ export function findCompletions(
   }
 
   // Closest to a perfect landing (the target) first — the most satisfying wins.
-  found.sort((a, b) => Math.abs(a.distanceKm - high) - Math.abs(b.distanceKm - high))
+  found.sort(
+    (a, b) => Math.abs(a.distanceKm - perfect) - Math.abs(b.distanceKm - perfect),
+  )
   return found.slice(0, limit)
 }
