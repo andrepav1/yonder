@@ -201,7 +201,8 @@ scripts/
 The core is intentionally **pure and data-driven** so puzzles can later be
 precomputed server-side and the game can grow additional modes / multiplayer without
 rewrites. See `CLAUDE.md` for architecture notes and `DECISIONS.md` for the rationale
-behind each rule.
+behind each rule. `GAME-LOOP.md` collects game-design research on why the Classic
+loop isn't fun yet, with variants to prototype.
 
 ## Data & deployment
 

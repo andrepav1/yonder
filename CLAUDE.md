@@ -8,6 +8,8 @@ city (the start for the first hop) to a **running total**. Reach the target — 
 target costs the turn but never the round, so you lose only by running out of the 6
 guesses. Fewer hops is a better (golf) score. See `README.md` for the
 player-facing picture and `DECISIONS.md` for _why_ the rules are what they are.
+`GAME-LOOP.md` is game-design research (core-loop frameworks, an audit of Classic,
+variants to prototype) — read it before reworking the core loop.
 
 > **Status:** v1 is fully built — the pure core (distance/bearing, dataset +
 > autocomplete, seeded generator, scoring, engine, share, stats) **and** the React
